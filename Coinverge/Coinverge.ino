@@ -385,45 +385,29 @@ bool executeDispense(String args) {
         if (need == 0) continue;
 
         Serial.printf("[HOP] Dispensing %d x P%d\n", need, denom);
-        openhop(i);
 
 #if DEBUG_MODE
+        openhop(i);
         int ms = need * HOP_MS_PER_COIN;
         Serial.printf("[DEBUG] Simulating %d coins (%d ms)\n", need, ms);
         delay(min(ms, 3000));
         g_coinStock[i] -= need;
+        closehop(i);
 
 #else
-        if (HOP_SENSOR_PIN >= 0) {
-            // Sensor-counted dispensing
-            for (int c = 0; c < need; c++) {
-                unsigned long start = millis();
-                bool sensed = false;
-                while (millis() - start < HOP_COIN_TIMEOUT_MS) {
-                    if (digitalRead(HOP_SENSOR_PIN) == LOW) {
-                        delay(20);
-                        while (digitalRead(HOP_SENSOR_PIN) == LOW);
-                        sensed = true;
-                        break;
-                    }
-                    delay(5);
-                }
-                if (!sensed) {
-                    Serial.printf("DISPENSED:ERROR:SENSOR_TIMEOUT:P%d:coin=%d/%d\n",
-                                  denom, c + 1, need);
-                    closehop(i);
-                    closeAllHoppers();
-                    return false;
-                }
-                g_coinStock[i]--;
+        // Pulse-style dispensing: one coin at a time
+        // Motor ON for HOP_MS_PER_COIN, OFF for HOP_PAUSE_BETWEEN_MS, repeat
+        for (int c = 0; c < need; c++) {
+            openhop(i);
+            delay(HOP_MS_PER_COIN);
+            closehop(i);
+            g_coinStock[i]--;
+            Serial.printf("[HOP] Coin %d/%d dispensed (P%d)\n", c + 1, need, denom);
+            if (c < need - 1) {
+                delay(HOP_PAUSE_BETWEEN_MS);  // pause between coins
             }
-        } else {
-            // Timed dispensing fallback
-            delay(need * HOP_MS_PER_COIN);
-            g_coinStock[i] -= need;
         }
 #endif
-        closehop(i);
     }
 
     // ── Done ─────────────────────────────────────────────────

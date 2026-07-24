@@ -48,9 +48,12 @@ const int HOPPER_MAP[DENOM_COUNT][2] = {
 #define MAX_COINS_PER_HOPPER  200
 
 // ms per coin for timed dispensing (tune to your hopper speed)
+// Uses pulse-style: motor ON for this duration, then OFF briefly, repeat per coin.
 // If dispensing fewer coins than expected, INCREASE this value.
-// 700ms tested — adjust up/down based on actual hopper speed.
-#define HOP_MS_PER_COIN       700
+#define HOP_MS_PER_COIN       1000
+
+// ms pause between coins (motor OFF gap)
+#define HOP_PAUSE_BETWEEN_MS  300
 
 // Hopper opto-sensor pin (-1 = not connected)
 #define HOP_SENSOR_PIN        -1
@@ -76,7 +79,7 @@ const int HOPPER_MAP[DENOM_COUNT][2] = {
 // -----------------------------------------------------------------------------
 #define BILL_PIN            32      // ✅ confirmed GPIO32
 #define BILL_IDLE_STATE     HIGH    // INPUT_PULLUP: pin idles HIGH, pulses go LOW (open-collector)
-#define BILL_INHIBIT_PIN    -1      // DISABLED — set to GPIO pin once inhibit wire is confirmed
+#define BILL_INHIBIT_PIN    33      // GPIO33 — confirmed wired (Yellow=INHIBIT+, Green=GND)
 #define BILL_INHIBIT_ACTIVE HIGH    // HIGH = acceptor disabled (rejects/spits back bills)
 #define BILL_DEBOUNCE_MS    20      // ignore transitions shorter than this (pulses are ~25-50ms)
 #define BILL_WINDOW_MS      800     // wait this long after last pulse to decode (needs headroom for ₱500/₱1000)
