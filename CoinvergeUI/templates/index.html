@@ -23,6 +23,13 @@
                     <span class="bill-chip">₱50</span>
                     <span class="bill-chip">₱100</span>
                 </div>
+                <div class="epay-section">
+                    <button class="epay-btn" onclick="showEpay()">📱 E-Payment</button>
+                </div>
+            </div>
+            <!-- Low stock warning banner -->
+            <div id="low-stock-banner" class="low-stock-banner hidden">
+                ⚠️ Limited stock available
             </div>
         </div>
         <!-- Admin access: tap 5 times on brand icon -->
@@ -37,14 +44,60 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCREEN: OUT OF STOCK — All hoppers empty                          -->
+    <!-- SCREEN: UNAVAILABLE — Out of stock or maintenance                 -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <div id="screen-empty" class="screen">
         <div class="empty-container">
-            <div class="empty-icon">🚫</div>
-            <h2>Walang Barya</h2>
-            <p>Out of coins — please try again later.</p>
-            <p class="empty-sub">Pakitawagan ang operator para sa refill.</p>
+            <div class="empty-icon" id="empty-icon">🚫</div>
+            <h2 id="empty-title">Walang Barya</h2>
+            <p id="empty-message">Out of coins — please try again later.</p>
+            <p class="empty-sub" id="empty-sub">Pakitawagan ang operator para sa refill.</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: E-PAYMENT — GCash/Maya mockup                             -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="screen-epay" class="screen">
+        <!-- Step 1: Choose payment method -->
+        <div id="epay-step-method" class="epay-container">
+            <h2 class="epay-title">E-Payment</h2>
+            <p class="epay-subtitle">Pumili ng payment method</p>
+            <div class="epay-methods">
+                <button class="epay-method-btn gcash" onclick="selectEpayMethod('gcash')">
+                    <span class="epay-method-icon">📱</span>
+                    <span class="epay-method-name">GCash</span>
+                </button>
+                <button class="epay-method-btn maya" onclick="selectEpayMethod('maya')">
+                    <span class="epay-method-icon">💚</span>
+                    <span class="epay-method-name">Maya</span>
+                </button>
+            </div>
+            <button class="epay-back-btn" onclick="cancelEpay()">← Back</button>
+        </div>
+
+        <!-- Step 2: Choose amount -->
+        <div id="epay-step-amount" class="epay-container hidden">
+            <h2 class="epay-title">Enter Amount</h2>
+            <p class="epay-subtitle">Piliin ang halaga na i-pay via <span id="epay-method-label">GCash</span></p>
+            <div class="epay-amounts">
+                <button class="epay-amount-btn" onclick="selectEpayAmount(20)">₱20</button>
+                <button class="epay-amount-btn" onclick="selectEpayAmount(50)">₱50</button>
+                <button class="epay-amount-btn" onclick="selectEpayAmount(100)">₱100</button>
+            </div>
+            <button class="epay-back-btn" onclick="epayBackToMethod()">← Back</button>
+        </div>
+
+        <!-- Step 3: QR/Processing -->
+        <div id="epay-step-qr" class="epay-container hidden">
+            <h2 class="epay-title">Scan to Pay</h2>
+            <div class="epay-qr-box">
+                <div class="epay-qr-placeholder">
+                    <div class="qr-fake">▓▓▓▓▓▓▓▓<br>▓░░░░░░▓<br>▓░▓▓▓░░▓<br>▓░▓▓▓░░▓<br>▓░░░░░░▓<br>▓▓▓▓▓▓▓▓</div>
+                </div>
+                <p class="epay-ref">Ref: <span id="epay-ref-num">CVG-000000</span></p>
+            </div>
+            <p class="epay-processing" id="epay-processing-msg">Waiting for payment...</p>
         </div>
     </div>
 

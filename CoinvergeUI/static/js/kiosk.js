@@ -16,6 +16,10 @@ const state = {
     adminTimer: null,
     inactivityTimer: null,
     lastDispense: null, // stores what was dispensed for Done screen
+    maintenanceMode: false,
+    lowStock: [],
+    epayMethod: null,
+    epayAmount: null,
 };
 
 // ── Init ────────────────────────────────────────────────────────────────────
@@ -31,6 +35,8 @@ async function fetchStatus() {
         const data = await res.json();
         state.simulate = data.simulate;
         state.balance = data.balance;
+        state.maintenanceMode = data.maintenance_mode || false;
+        state.lowStock = data.low_stock || [];
         state.stock = {};
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
@@ -40,10 +46,14 @@ async function fetchStatus() {
             document.getElementById("sim-controls").classList.remove("hidden");
         }
 
-        if (!data.any_stock) {
-            showScreen("empty");
+        // Show unavailable screen if no stock or maintenance mode
+        if (!data.any_stock || data.maintenance_mode) {
+            showUnavailable(data.maintenance_mode, !data.any_stock);
         } else if (state.balance > 0) {
             showPicker();
+        } else {
+            // Update low stock banner on idle
+            updateLowStockBanner();
         }
     } catch (e) { /* retry on next poll */ }
 }
@@ -56,6 +66,8 @@ async function refreshStock() {
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
         }
+        state.maintenanceMode = data.maintenance_mode || false;
+        state.lowStock = data.low_stock || [];
     } catch (e) { /* use cached */ }
 }
 
@@ -75,6 +87,11 @@ async function pollEvents() {
 function handleEvent(ev) {
     switch (ev.type) {
         case "bill":
+            // Ignore bills during maintenance mode
+            if (state.maintenanceMode) {
+                toast("Machine under maintenance");
+                break;
+            }
             // Cap balance at ₱100 on UI side (ESP32 also enforces this)
             if (ev.data.balance > 100) {
                 toast("Maximum ₱100 reached");
@@ -347,4 +364,100 @@ function toast(msg) {
     document.getElementById("toast-msg").textContent = msg;
     el.classList.remove("hidden");
     setTimeout(() => el.classList.add("hidden"), 3000);
+}
+
+// ── Unavailable Screen (out of stock / maintenance) ─────────────────────────
+
+function showUnavailable(isMaintenance, isNoStock) {
+    const icon = document.getElementById("empty-icon");
+    const title = document.getElementById("empty-title");
+    const msg = document.getElementById("empty-message");
+    const sub = document.getElementById("empty-sub");
+
+    if (isMaintenance) {
+        icon.textContent = "🔧";
+        title.textContent = "Under Maintenance";
+        msg.textContent = "Pakibalik mamaya";
+        sub.textContent = "The machine is temporarily unavailable.";
+    } else if (isNoStock) {
+        icon.textContent = "🚫";
+        title.textContent = "Walang Barya";
+        msg.textContent = "Out of coins — please try again later.";
+        sub.textContent = "Pakitawagan ang operator para sa refill.";
+    }
+    showScreen("empty");
+}
+
+// ── Low Stock Banner ────────────────────────────────────────────────────────
+
+function updateLowStockBanner() {
+    const banner = document.getElementById("low-stock-banner");
+    if (!banner) return;
+    if (state.lowStock && state.lowStock.length > 0) {
+        banner.classList.remove("hidden");
+    } else {
+        banner.classList.add("hidden");
+    }
+}
+
+// ── E-Payment Flow ──────────────────────────────────────────────────────────
+
+function showEpay() {
+    state.epayMethod = null;
+    state.epayAmount = null;
+    // Reset steps visibility
+    document.getElementById("epay-step-method").classList.remove("hidden");
+    document.getElementById("epay-step-amount").classList.add("hidden");
+    document.getElementById("epay-step-qr").classList.add("hidden");
+    showScreen("epay");
+}
+
+function cancelEpay() {
+    showScreen("idle");
+}
+
+function selectEpayMethod(method) {
+    state.epayMethod = method;
+    document.getElementById("epay-method-label").textContent = method === "gcash" ? "GCash" : "Maya";
+    document.getElementById("epay-step-method").classList.add("hidden");
+    document.getElementById("epay-step-amount").classList.remove("hidden");
+}
+
+function epayBackToMethod() {
+    document.getElementById("epay-step-amount").classList.add("hidden");
+    document.getElementById("epay-step-method").classList.remove("hidden");
+}
+
+function selectEpayAmount(amount) {
+    state.epayAmount = amount;
+    // Generate fake reference number
+    const refNum = "CVG-" + String(Date.now()).slice(-6);
+    document.getElementById("epay-ref-num").textContent = refNum;
+    document.getElementById("epay-processing-msg").textContent = "Waiting for payment...";
+
+    document.getElementById("epay-step-amount").classList.add("hidden");
+    document.getElementById("epay-step-qr").classList.remove("hidden");
+
+    // Simulate payment received after 3 seconds
+    setTimeout(async () => {
+        document.getElementById("epay-processing-msg").textContent = "✅ Payment received!";
+        try {
+            const res = await fetch("/api/epay", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ method: state.epayMethod, amount: state.epayAmount }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                state.balance = data.balance;
+                setTimeout(() => showPicker(), 800);
+            } else {
+                toast(data.error || "Payment failed");
+                setTimeout(() => showScreen("idle"), 1500);
+            }
+        } catch (e) {
+            toast("Connection error");
+            setTimeout(() => showScreen("idle"), 1500);
+        }
+    }, 3000);
 }

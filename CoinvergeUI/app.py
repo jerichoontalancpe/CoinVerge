@@ -17,7 +17,9 @@ from flask import Flask, render_template, jsonify, request, session
 from database import (
     init_db, log_transaction, get_transactions, get_transaction_count,
     get_summary, get_stock, update_stock, deduct_stock, refill_stock,
-    refill_all, is_any_stock_available, verify_pin, get_setting, set_setting
+    refill_all, is_any_stock_available, verify_pin, get_setting, set_setting,
+    get_maintenance_mode, set_maintenance_mode, get_low_stock_denominations,
+    REFILL_THRESHOLD
 )
 
 # ── ESP32 Serial Connection ──────────────────────────────────────────────────
@@ -175,12 +177,17 @@ def admin_page():
 @app.route("/api/status")
 def api_status():
     stock = get_stock()
+    low_stock = get_low_stock_denominations()
+    maintenance = get_maintenance_mode()
     return jsonify({
         "connected": esp32.connected,
         "simulate": esp32.simulate,
         "balance": esp32.balance,
         "stock": {str(d): s["current"] for d, s in stock.items()},
         "any_stock": is_any_stock_available(),
+        "maintenance_mode": maintenance,
+        "low_stock": low_stock,
+        "refill_threshold": REFILL_THRESHOLD,
     })
 
 
@@ -194,6 +201,9 @@ def api_events():
 
 @app.route("/api/dispense", methods=["POST"])
 def api_dispense():
+    if get_maintenance_mode():
+        return jsonify({"error": "Machine is under maintenance"}), 503
+
     data = request.get_json()
     if not data or "combination" not in data:
         return jsonify({"error": "Missing combination"}), 400
@@ -263,6 +273,32 @@ def api_simulate_bill():
 
     esp32.simulate_bill(amount)
     return jsonify({"status": "ok", "balance": esp32.balance})
+
+
+@app.route("/api/epay", methods=["POST"])
+def api_epay():
+    """E-Payment mockup — simulates GCash/Maya payment received."""
+    if get_maintenance_mode():
+        return jsonify({"error": "Machine is under maintenance"}), 503
+
+    data = request.get_json()
+    method = data.get("method", "")
+    amount = data.get("amount", 0)
+
+    if method not in ["gcash", "maya"]:
+        return jsonify({"error": "Invalid payment method. Use gcash or maya"}), 400
+    if amount not in [20, 50, 100]:
+        return jsonify({"error": "Invalid amount. Use 20, 50, or 100"}), 400
+
+    # Reject if would exceed max balance
+    if esp32.balance + amount > 100:
+        return jsonify({"error": f"Cannot exceed ₱100 balance (current: ₱{esp32.balance})"}), 400
+
+    # Credit the balance same as bill insertion
+    esp32.balance += amount
+    on_esp32_event("bill", {"amount": amount, "balance": esp32.balance})
+
+    return jsonify({"status": "ok", "balance": esp32.balance, "method": method})
 
 
 @app.route("/api/reset", methods=["POST"])
@@ -380,6 +416,51 @@ def api_admin_set_stock():
         return jsonify({"error": "Count cannot be negative"}), 400
 
     update_stock(denom, count)
+    return jsonify({"status": "ok", "stock": get_stock()})
+
+
+@app.route("/api/admin/maintenance", methods=["POST"])
+def api_admin_maintenance():
+    """Toggle maintenance mode on/off."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    active = data.get("active", None)
+
+    if active is None:
+        # Toggle current state
+        current = get_maintenance_mode()
+        active = not current
+
+    set_maintenance_mode(active)
+    return jsonify({"status": "ok", "maintenance_mode": get_maintenance_mode()})
+
+
+@app.route("/api/admin/sync_stock", methods=["POST"])
+def api_admin_sync_stock():
+    """
+    Manually sync stock counts — admin enters physical count for each denomination.
+    Accepts: {"stock": {"1": 150, "5": 80, "10": 120, "20": 95}}
+    """
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    stock_counts = data.get("stock", {})
+
+    if not stock_counts:
+        return jsonify({"error": "No stock data provided"}), 400
+
+    for denom_str, count in stock_counts.items():
+        denom = int(denom_str)
+        count = int(count)
+        if denom not in [1, 5, 10, 20]:
+            return jsonify({"error": f"Invalid denomination: {denom}"}), 400
+        if count < 0:
+            return jsonify({"error": f"Count cannot be negative for ₱{denom}"}), 400
+        update_stock(denom, count)
+
     return jsonify({"status": "ok", "stock": get_stock()})
 
 

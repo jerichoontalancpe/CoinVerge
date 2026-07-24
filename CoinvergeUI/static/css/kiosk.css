@@ -279,3 +279,181 @@ html, body {
     .idle-cta { margin-top: 0; }
     .cta-text { font-size: 1.1rem; }
 }
+
+/* ── LOW STOCK BANNER ────────────────────────────────────────────────────── */
+
+.low-stock-banner {
+    position: absolute;
+    bottom: 50px;
+    left: 50%; transform: translateX(-50%);
+    background: rgba(252, 209, 22, 0.15);
+    border: 1px solid var(--ph-gold-dim);
+    color: var(--ph-gold);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    animation: pulse 2s ease-in-out infinite;
+}
+.low-stock-banner.hidden { display: none; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* ── E-PAYMENT BUTTON (IDLE SCREEN) ─────────────────────────────────────── */
+
+.epay-section {
+    margin-top: 1rem;
+}
+
+.epay-btn {
+    padding: 10px 24px;
+    border-radius: 25px;
+    border: 2px solid var(--ph-gold-dim);
+    background: var(--bg-card);
+    color: var(--ph-gold);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+}
+.epay-btn:active {
+    transform: scale(0.95);
+    background: var(--bg-surface);
+}
+
+/* ── E-PAYMENT SCREEN ────────────────────────────────────────────────────── */
+
+#screen-epay {
+    flex-direction: column;
+    padding: 1.5rem;
+}
+
+.epay-container {
+    text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+.epay-container.hidden { display: none; }
+
+.epay-title {
+    font-size: 1.6rem;
+    color: var(--ph-gold);
+    margin-bottom: 0.5rem;
+}
+.epay-subtitle {
+    color: var(--text-dim);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.epay-methods {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.epay-method-btn {
+    width: 140px;
+    height: 120px;
+    border-radius: var(--radius);
+    border: 2px solid var(--ph-gold-dim);
+    background: var(--bg-card);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.1s, border-color 0.2s;
+}
+.epay-method-btn:active {
+    transform: scale(0.95);
+    border-color: var(--ph-gold);
+}
+.epay-method-btn.gcash { border-color: #007bff; }
+.epay-method-btn.maya { border-color: #00b300; }
+
+.epay-method-icon { font-size: 2.5rem; }
+.epay-method-name { font-size: 1.1rem; font-weight: 700; }
+
+.epay-amounts {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.epay-amount-btn {
+    width: 100px;
+    height: 70px;
+    border-radius: var(--radius);
+    border: 2px solid var(--ph-gold-dim);
+    background: var(--bg-card);
+    color: var(--ph-gold);
+    font-size: 1.4rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.epay-amount-btn:active {
+    transform: scale(0.95);
+    background: var(--bg-surface);
+}
+
+.epay-back-btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--text-dim);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.epay-back-btn:active { background: var(--bg-surface); }
+
+.epay-qr-box {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.epay-qr-placeholder {
+    width: 160px;
+    height: 160px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.qr-fake {
+    font-family: monospace;
+    font-size: 1rem;
+    line-height: 1.2;
+    color: #000;
+    letter-spacing: 2px;
+}
+
+.epay-ref {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-top: 0.75rem;
+}
+
+.epay-processing {
+    color: var(--ph-gold);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+}

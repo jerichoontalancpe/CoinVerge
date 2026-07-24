@@ -9,6 +9,9 @@ from datetime import datetime, timedelta
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "coinverge.db")
 
+# Refill threshold — denominations below this count trigger warnings
+REFILL_THRESHOLD = 20
+
 
 def get_db():
     """Get a database connection."""
@@ -62,7 +65,13 @@ def init_db():
         conn.executemany("INSERT INTO settings (key, value) VALUES (?, ?)", [
             ("admin_pin", "1234"),
             ("machine_name", "CoinVerge Unit 1"),
+            ("maintenance_mode", "0"),
         ])
+    else:
+        # Ensure maintenance_mode exists (for upgrades)
+        row = conn.execute("SELECT value FROM settings WHERE key = 'maintenance_mode'").fetchone()
+        if row is None:
+            conn.execute("INSERT INTO settings (key, value) VALUES (?, ?)", ("maintenance_mode", "0"))
 
     conn.commit()
     conn.close()
@@ -243,3 +252,28 @@ def verify_pin(pin):
     """Verify admin PIN."""
     stored_pin = get_setting("admin_pin")
     return pin == stored_pin
+
+
+# ── Maintenance Mode Functions ───────────────────────────────────────────────
+
+def get_maintenance_mode():
+    """Get maintenance mode status. Returns True if maintenance is active."""
+    val = get_setting("maintenance_mode")
+    return val == "1"
+
+
+def set_maintenance_mode(active):
+    """Set maintenance mode on or off. active: bool."""
+    set_setting("maintenance_mode", "1" if active else "0")
+
+
+# ── Low Stock Functions ──────────────────────────────────────────────────────
+
+def get_low_stock_denominations():
+    """Return list of denominations below REFILL_THRESHOLD."""
+    stock = get_stock()
+    low = []
+    for denom, info in stock.items():
+        if info["current"] < REFILL_THRESHOLD:
+            low.append(denom)
+    return low

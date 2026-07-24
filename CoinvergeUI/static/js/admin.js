@@ -61,6 +61,7 @@ function showAdminDashboard() {
     document.getElementById("admin-login").classList.remove("active");
     document.getElementById("admin-dashboard").classList.add("active");
     loadStock();
+    loadMaintenanceStatus();
     switchTab("stock");
 }
 
@@ -98,6 +99,14 @@ async function loadStock() {
         if (!res.ok) return;
         const stock = await res.json();
 
+        // Fetch status to get low_stock and maintenance info
+        const statusRes = await fetch("/api/status");
+        const statusData = statusRes.ok ? await statusRes.json() : {};
+        const lowStock = statusData.low_stock || [];
+        const threshold = statusData.refill_threshold || 20;
+
+        let anyLow = false;
+
         for (const [denom, info] of Object.entries(stock)) {
             const pct = info.max > 0 ? (info.current / info.max * 100) : 0;
             const fill = document.getElementById(`sfill-${denom}`);
@@ -108,6 +117,22 @@ async function loadStock() {
 
             document.getElementById(`scount-${denom}`).textContent = info.current;
             document.getElementById(`smax-${denom}`).textContent = info.max;
+
+            // Low stock warning indicator
+            const warnEl = document.getElementById(`swarn-${denom}`);
+            const cardEl = document.getElementById(`scard-${denom}`);
+            if (warnEl && cardEl) {
+                const isLow = lowStock.includes(parseInt(denom));
+                warnEl.classList.toggle("hidden", !isLow);
+                cardEl.classList.toggle("stock-low", isLow);
+                if (isLow) anyLow = true;
+            }
+        }
+
+        // Show/hide alert banner
+        const alertBanner = document.getElementById("stock-alert-banner");
+        if (alertBanner) {
+            alertBanner.classList.toggle("hidden", !anyLow);
         }
 
         // Machine status
@@ -119,6 +144,9 @@ async function loadStock() {
                 `ESP32: ${machine.esp32_connected ? "✅ Connected" : "❌ Disconnected"} | ` +
                 `Mode: ${machine.simulate_mode ? "Simulation" : "Hardware"}`;
         }
+
+        // Update maintenance status indicator
+        updateMaintenanceUI(statusData.maintenance_mode || false);
     } catch (e) { /* silent */ }
 }
 
@@ -269,5 +297,82 @@ async function changePin() {
         alert("PIN changed successfully");
     } else {
         alert("Failed to change PIN");
+    }
+}
+
+// ── Maintenance Mode ────────────────────────────────────────────────────────
+
+async function toggleMaintenance() {
+    try {
+        const res = await fetch("/api/admin/maintenance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+        });
+        if (res.ok) {
+            const data = await res.json();
+            updateMaintenanceUI(data.maintenance_mode);
+        } else {
+            alert("Failed to toggle maintenance mode");
+        }
+    } catch (e) {
+        alert("Connection error");
+    }
+}
+
+function updateMaintenanceUI(active) {
+    const statusEl = document.getElementById("maintenance-status");
+    const toggleBtn = document.getElementById("maintenance-toggle");
+    if (statusEl) {
+        statusEl.textContent = active ? "ON" : "OFF";
+    }
+    if (toggleBtn) {
+        toggleBtn.classList.toggle("maintenance-active", active);
+    }
+}
+
+async function loadMaintenanceStatus() {
+    try {
+        const res = await fetch("/api/status");
+        if (res.ok) {
+            const data = await res.json();
+            updateMaintenanceUI(data.maintenance_mode || false);
+        }
+    } catch (e) { /* silent */ }
+}
+
+// ── Sync Stock ──────────────────────────────────────────────────────────────
+
+async function syncStock() {
+    const stock = {};
+    const denoms = [1, 5, 10, 20];
+    for (const d of denoms) {
+        const currentEl = document.getElementById(`scount-${d}`);
+        const current = currentEl ? currentEl.textContent : "0";
+        const input = prompt(`Physical count for ₱${d} coins (current in system: ${current}):`, current);
+        if (input === null) return; // User cancelled
+        const count = parseInt(input);
+        if (isNaN(count) || count < 0) {
+            alert(`Invalid number for ₱${d}`);
+            return;
+        }
+        stock[String(d)] = count;
+    }
+
+    try {
+        const res = await fetch("/api/admin/sync_stock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stock: stock }),
+        });
+        if (res.ok) {
+            alert("Stock synced successfully!");
+            loadStock();
+        } else {
+            const data = await res.json();
+            alert("Sync failed: " + (data.error || "Unknown error"));
+        }
+    } catch (e) {
+        alert("Connection error");
     }
 }

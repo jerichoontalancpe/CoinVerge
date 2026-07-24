@@ -59,8 +59,12 @@
 
         <!-- TAB: Stock Management -->
         <div id="tab-stock" class="tab-content active">
+            <div id="stock-alert-banner" class="stock-alert-banner hidden">
+                ⚠️ Some hoppers are below refill threshold
+            </div>
             <div class="stock-grid">
                 <div class="stock-card" id="scard-1">
+                    <div class="scard-warning hidden" id="swarn-1">⚠️ LOW</div>
                     <div class="scard-denom">₱1</div>
                     <div class="scard-bar">
                         <div class="scard-fill" id="sfill-1"></div>
@@ -75,6 +79,7 @@
                 </div>
 
                 <div class="stock-card" id="scard-5">
+                    <div class="scard-warning hidden" id="swarn-5">⚠️ LOW</div>
                     <div class="scard-denom">₱5</div>
                     <div class="scard-bar">
                         <div class="scard-fill" id="sfill-5"></div>
@@ -89,6 +94,7 @@
                 </div>
 
                 <div class="stock-card" id="scard-10">
+                    <div class="scard-warning hidden" id="swarn-10">⚠️ LOW</div>
                     <div class="scard-denom">₱10</div>
                     <div class="scard-bar">
                         <div class="scard-fill" id="sfill-10"></div>
@@ -103,6 +109,7 @@
                 </div>
 
                 <div class="stock-card" id="scard-20">
+                    <div class="scard-warning hidden" id="swarn-20">⚠️ LOW</div>
                     <div class="scard-denom">₱20</div>
                     <div class="scard-bar">
                         <div class="scard-fill" id="sfill-20"></div>
@@ -173,6 +180,13 @@
 
         <!-- TAB: Settings -->
         <div id="tab-settings" class="tab-content">
+            <div class="settings-section">
+                <h3>Machine Control</h3>
+                <button class="settings-btn maintenance-btn" id="maintenance-toggle" onclick="toggleMaintenance()">
+                    🔧 Maintenance Mode: <span id="maintenance-status">OFF</span>
+                </button>
+                <button class="settings-btn" onclick="syncStock()">🔄 Sync Stock (Manual Count)</button>
+            </div>
             <div class="settings-section">
                 <h3>Security</h3>
                 <button class="settings-btn" onclick="changePin()">🔒 Change Admin PIN</button>
