@@ -48,12 +48,8 @@ const int HOPPER_MAP[DENOM_COUNT][2] = {
 #define MAX_COINS_PER_HOPPER  200
 
 // ms per coin for timed dispensing (tune to your hopper speed)
-// Uses pulse-style: motor ON for this duration, then OFF briefly, repeat per coin.
-// If dispensing fewer coins than expected, INCREASE this value.
-#define HOP_MS_PER_COIN       1000
-
-// ms pause between coins (motor OFF gap)
-#define HOP_PAUSE_BETWEEN_MS  300
+// Motor runs continuously for (coins × this value). Increase if under-dispensing.
+#define HOP_MS_PER_COIN       1500
 
 // Hopper opto-sensor pin (-1 = not connected)
 #define HOP_SENSOR_PIN        -1

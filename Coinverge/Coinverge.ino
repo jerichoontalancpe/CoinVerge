@@ -395,18 +395,12 @@ bool executeDispense(String args) {
         closehop(i);
 
 #else
-        // Pulse-style dispensing: one coin at a time
-        // Motor ON for HOP_MS_PER_COIN, OFF for HOP_PAUSE_BETWEEN_MS, repeat
-        for (int c = 0; c < need; c++) {
-            openhop(i);
-            delay(HOP_MS_PER_COIN);
-            closehop(i);
-            g_coinStock[i]--;
-            Serial.printf("[HOP] Coin %d/%d dispensed (P%d)\n", c + 1, need, denom);
-            if (c < need - 1) {
-                delay(HOP_PAUSE_BETWEEN_MS);  // pause between coins
-            }
-        }
+        // Continuous motor dispensing — runs for (coins × HOP_MS_PER_COIN)
+        openhop(i);
+        delay(need * HOP_MS_PER_COIN);
+        closehop(i);
+        g_coinStock[i] -= need;
+        Serial.printf("[HOP] Done: %d x P%d (%d ms)\n", need, denom, need * HOP_MS_PER_COIN);
 #endif
     }
 
