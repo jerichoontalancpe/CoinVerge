@@ -420,6 +420,60 @@ html, body {
 }
 .epay-back-btn:active { background: var(--bg-surface); }
 
+.epay-cancel-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 2px solid var(--danger);
+    background: rgba(206, 17, 38, 0.1);
+    color: var(--danger);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+}
+.epay-cancel-btn:active {
+    transform: scale(0.95);
+    background: rgba(206, 17, 38, 0.25);
+}
+
+.epay-nav-buttons {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+}
+
+.epay-qr-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.epay-paid-btn {
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: 2px solid var(--success);
+    background: rgba(0, 200, 83, 0.15);
+    color: var(--success);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+}
+.epay-paid-btn:active {
+    transform: scale(0.95);
+    background: rgba(0, 200, 83, 0.3);
+}
+
+.epay-amount-display {
+    color: var(--ph-gold);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+}
+
 .epay-qr-box {
     margin: 1rem 0;
     text-align: center;

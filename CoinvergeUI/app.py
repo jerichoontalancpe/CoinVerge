@@ -10,6 +10,7 @@ Run:
 
 import argparse
 import json
+import random
 import threading
 import time
 import sys
@@ -149,6 +150,7 @@ app.secret_key = "coinverge-secret-key-change-in-production"
 esp32 = None
 event_queue = []
 event_lock = threading.Lock()
+pending_epay = None  # Tracks pending e-payment: {method, amount, reference_number}
 
 
 def on_esp32_event(event_type, data):
@@ -299,6 +301,99 @@ def api_epay():
     on_esp32_event("bill", {"amount": amount, "balance": esp32.balance})
 
     return jsonify({"status": "ok", "balance": esp32.balance, "method": method})
+
+
+@app.route("/api/epay/initiate", methods=["POST"])
+def api_epay_initiate():
+    """Initiate a pending e-payment — called when kiosk user selects method+amount."""
+    global pending_epay
+
+    if get_maintenance_mode():
+        return jsonify({"error": "Machine is under maintenance"}), 503
+
+    data = request.get_json()
+    method = data.get("method", "")
+    amount = data.get("amount", 0)
+
+    if method not in ["gcash", "maya"]:
+        return jsonify({"error": "Invalid payment method"}), 400
+    if amount not in [20, 50, 100]:
+        return jsonify({"error": "Invalid amount"}), 400
+
+    # Reject if would exceed max balance
+    if esp32.balance + amount > 100:
+        return jsonify({"error": f"Cannot exceed ₱100 balance (current: ₱{esp32.balance})"}), 400
+
+    # Generate random 12-digit reference number
+    ref_number = ''.join([str(random.randint(0, 9)) for _ in range(12)])
+
+    pending_epay = {
+        "method": method,
+        "amount": amount,
+        "reference_number": ref_number,
+        "timestamp": time.time()
+    }
+
+    return jsonify({
+        "status": "ok",
+        "reference_number": ref_number,
+        "method": method,
+        "amount": amount
+    })
+
+
+@app.route("/api/epay/pending", methods=["GET"])
+def api_epay_pending():
+    """Returns current pending e-payment info, or null if none."""
+    if pending_epay is None:
+        return jsonify(None)
+    return jsonify(pending_epay)
+
+
+@app.route("/api/epay/confirm", methods=["POST"])
+def api_epay_confirm():
+    """Confirms the pending e-payment — credits balance and notifies kiosk via event."""
+    global pending_epay
+
+    if pending_epay is None:
+        return jsonify({"error": "No pending payment"}), 400
+
+    if get_maintenance_mode():
+        return jsonify({"error": "Machine is under maintenance"}), 503
+
+    amount = pending_epay["amount"]
+    method = pending_epay["method"]
+
+    # Reject if would exceed max balance
+    if esp32.balance + amount > 100:
+        pending_epay = None
+        return jsonify({"error": f"Cannot exceed ₱100 balance (current: ₱{esp32.balance})"}), 400
+
+    # Credit the balance same as bill insertion
+    esp32.balance += amount
+    on_esp32_event("bill", {"amount": amount, "balance": esp32.balance})
+
+    # Also fire a specific epay_confirmed event so kiosk JS can react
+    on_esp32_event("epay_confirmed", {"method": method, "amount": amount, "balance": esp32.balance})
+
+    # Clear the pending payment
+    pending_epay = None
+
+    return jsonify({"status": "ok", "balance": esp32.balance, "method": method, "amount": amount})
+
+
+@app.route("/api/epay/cancel", methods=["POST"])
+def api_epay_cancel():
+    """Cancel the pending e-payment."""
+    global pending_epay
+    pending_epay = None
+    return jsonify({"status": "ok"})
+
+
+@app.route("/phone")
+def phone_page():
+    """Phone mockup page — simulates GCash/Maya payment app."""
+    return render_template("phone.html")
 
 
 @app.route("/api/reset", methods=["POST"])
@@ -528,6 +623,7 @@ def main():
     print(f"  CoinVerge Kiosk System")
     print(f"  User UI:  http://localhost:{args.web_port}")
     print(f"  Admin:    http://localhost:{args.web_port}/admin")
+    print(f"  Phone:    http://localhost:{args.web_port}/phone")
     print(f"  Mode:     {'SIMULATION' if args.simulate else 'HARDWARE'}")
     print(f"  Admin PIN: {get_setting('admin_pin')}")
     print(f"{'='*50}\n")

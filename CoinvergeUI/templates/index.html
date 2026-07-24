@@ -73,7 +73,7 @@
                     <span class="epay-method-name">Maya</span>
                 </button>
             </div>
-            <button class="epay-back-btn" onclick="cancelEpay()">← Back</button>
+            <button class="epay-cancel-btn" onclick="cancelEpay()">✕ Cancel</button>
         </div>
 
         <!-- Step 2: Choose amount -->
@@ -85,19 +85,27 @@
                 <button class="epay-amount-btn" onclick="selectEpayAmount(50)">₱50</button>
                 <button class="epay-amount-btn" onclick="selectEpayAmount(100)">₱100</button>
             </div>
-            <button class="epay-back-btn" onclick="epayBackToMethod()">← Back</button>
+            <div class="epay-nav-buttons">
+                <button class="epay-back-btn" onclick="epayBackToMethod()">← Back</button>
+                <button class="epay-cancel-btn" onclick="cancelEpay()">✕ Cancel</button>
+            </div>
         </div>
 
-        <!-- Step 3: QR/Processing -->
+        <!-- Step 3: QR/Waiting for payment -->
         <div id="epay-step-qr" class="epay-container hidden">
             <h2 class="epay-title">Scan to Pay</h2>
             <div class="epay-qr-box">
                 <div class="epay-qr-placeholder">
                     <div class="qr-fake">▓▓▓▓▓▓▓▓<br>▓░░░░░░▓<br>▓░▓▓▓░░▓<br>▓░▓▓▓░░▓<br>▓░░░░░░▓<br>▓▓▓▓▓▓▓▓</div>
                 </div>
-                <p class="epay-ref">Ref: <span id="epay-ref-num">CVG-000000</span></p>
+                <p class="epay-ref">Ref: <span id="epay-ref-num">000000000000</span></p>
+                <p class="epay-amount-display">Amount: <span id="epay-amount-display">₱0</span></p>
             </div>
-            <p class="epay-processing" id="epay-processing-msg">Waiting for payment...</p>
+            <p class="epay-processing" id="epay-processing-msg">⏳ Waiting for payment...</p>
+            <div class="epay-qr-actions">
+                <button class="epay-paid-btn" onclick="confirmEpayManual()">✓ Nabayaran ko na (I've Paid)</button>
+                <button class="epay-cancel-btn" onclick="cancelEpay()">✕ Cancel</button>
+            </div>
         </div>
     </div>
 

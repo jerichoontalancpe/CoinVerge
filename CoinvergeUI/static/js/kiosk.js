@@ -110,6 +110,18 @@ function handleEvent(ev) {
                 resetInactivityTimer();
             }
             break;
+        case "epay_confirmed":
+            // Payment confirmed from phone page or external source
+            state.balance = ev.data.balance;
+            if (state.screen === "epay") {
+                if (epayPollTimer) {
+                    clearInterval(epayPollTimer);
+                    epayPollTimer = null;
+                }
+                document.getElementById("epay-processing-msg").textContent = "✅ Payment received!";
+                setTimeout(() => showPicker(), 800);
+            }
+            break;
         case "dispensed":
             if (ev.data.status === "ok") {
                 showDone();
@@ -402,6 +414,8 @@ function updateLowStockBanner() {
 
 // ── E-Payment Flow ──────────────────────────────────────────────────────────
 
+let epayPollTimer = null;
+
 function showEpay() {
     state.epayMethod = null;
     state.epayAmount = null;
@@ -413,6 +427,15 @@ function showEpay() {
 }
 
 function cancelEpay() {
+    // Clear pending payment on server
+    fetch("/api/epay/cancel", { method: "POST" }).catch(() => {});
+    // Stop polling for confirmation
+    if (epayPollTimer) {
+        clearInterval(epayPollTimer);
+        epayPollTimer = null;
+    }
+    state.epayMethod = null;
+    state.epayAmount = null;
     showScreen("idle");
 }
 
@@ -428,36 +451,79 @@ function epayBackToMethod() {
     document.getElementById("epay-step-method").classList.remove("hidden");
 }
 
-function selectEpayAmount(amount) {
+async function selectEpayAmount(amount) {
     state.epayAmount = amount;
-    // Generate fake reference number
-    const refNum = "CVG-" + String(Date.now()).slice(-6);
-    document.getElementById("epay-ref-num").textContent = refNum;
-    document.getElementById("epay-processing-msg").textContent = "Waiting for payment...";
 
-    document.getElementById("epay-step-amount").classList.add("hidden");
-    document.getElementById("epay-step-qr").classList.remove("hidden");
-
-    // Simulate payment received after 3 seconds
-    setTimeout(async () => {
-        document.getElementById("epay-processing-msg").textContent = "✅ Payment received!";
-        try {
-            const res = await fetch("/api/epay", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ method: state.epayMethod, amount: state.epayAmount }),
-            });
-            const data = await res.json();
-            if (res.ok) {
-                state.balance = data.balance;
-                setTimeout(() => showPicker(), 800);
-            } else {
-                toast(data.error || "Payment failed");
-                setTimeout(() => showScreen("idle"), 1500);
-            }
-        } catch (e) {
-            toast("Connection error");
-            setTimeout(() => showScreen("idle"), 1500);
+    // Initiate pending payment on server (generates reference number)
+    try {
+        const res = await fetch("/api/epay/initiate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ method: state.epayMethod, amount: amount }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            toast(data.error || "Payment initiation failed");
+            return;
         }
-    }, 3000);
+
+        // Display reference number and amount
+        document.getElementById("epay-ref-num").textContent = data.reference_number;
+        document.getElementById("epay-amount-display").textContent = `₱${amount}`;
+        document.getElementById("epay-processing-msg").textContent = "⏳ Waiting for payment...";
+
+        document.getElementById("epay-step-amount").classList.add("hidden");
+        document.getElementById("epay-step-qr").classList.remove("hidden");
+
+        // Start polling for confirmation from phone page
+        startEpayPolling();
+
+    } catch (e) {
+        toast("Connection error");
+    }
+}
+
+function startEpayPolling() {
+    // Poll for epay_confirmed event via the normal event system
+    // The event polling already handles this — we just need to listen for it
+    if (epayPollTimer) clearInterval(epayPollTimer);
+    epayPollTimer = setInterval(async () => {
+        // Check if pending payment was confirmed (cleared from server)
+        try {
+            const res = await fetch("/api/epay/pending");
+            const data = await res.json();
+            // If pending is null and we're still on the QR screen, payment was confirmed externally
+            if (data === null && state.screen === "epay") {
+                clearInterval(epayPollTimer);
+                epayPollTimer = null;
+                document.getElementById("epay-processing-msg").textContent = "✅ Payment received!";
+                setTimeout(() => showPicker(), 800);
+            }
+        } catch (e) { /* silent */ }
+    }, 1500);
+}
+
+async function confirmEpayManual() {
+    // "Nabayaran ko na" button — manually confirm payment
+    document.getElementById("epay-processing-msg").textContent = "⏳ Confirming...";
+    try {
+        const res = await fetch("/api/epay/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
+        const data = await res.json();
+        if (res.ok) {
+            if (epayPollTimer) {
+                clearInterval(epayPollTimer);
+                epayPollTimer = null;
+            }
+            state.balance = data.balance;
+            document.getElementById("epay-processing-msg").textContent = "✅ Payment received!";
+            setTimeout(() => showPicker(), 800);
+        } else {
+            toast(data.error || "Payment failed");
+        }
+    } catch (e) {
+        toast("Connection error");
+    }
 }
