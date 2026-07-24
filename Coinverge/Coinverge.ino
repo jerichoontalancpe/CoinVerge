@@ -98,6 +98,13 @@ void setup() {
     Serial.printf("[BILL] GPIO%d current state at boot: %s\n",
                   BILL_PIN, digitalRead(BILL_PIN) == LOW ? "LOW" : "HIGH");
 
+    // ── Bill acceptor inhibit pin ────────────────────────────
+    if (BILL_INHIBIT_PIN >= 0) {
+        pinMode(BILL_INHIBIT_PIN, OUTPUT);
+        digitalWrite(BILL_INHIBIT_PIN, !BILL_INHIBIT_ACTIVE);  // Enable acceptor at boot
+        Serial.printf("[BILL] Inhibit pin GPIO%d ready (enabled)\n", BILL_INHIBIT_PIN);
+    }
+
     // ── Coin acceptor pulse pin ──────────────────────────────
     if (COIN_PIN >= 0) {
         pinMode(COIN_PIN, INPUT_PULLUP);
@@ -175,6 +182,12 @@ void loop() {
                     g_totalMoney += value;
                     Serial.printf("BILL:%d\n", value);   // ← RPi reads this
                     Serial.printf("Total Money: %d\n", g_totalMoney);
+
+                    // Disable bill acceptor if balance reached max
+                    if (BILL_INHIBIT_PIN >= 0 && g_totalMoney >= MAX_BILL_VALUE) {
+                        digitalWrite(BILL_INHIBIT_PIN, BILL_INHIBIT_ACTIVE);
+                        Serial.println("[BILL] Acceptor DISABLED (max balance reached)");
+                    }
                 }
             } else if (value > MAX_BILL_VALUE) {
                 // Bill accepted by hardware but exceeds our software limit
@@ -245,6 +258,10 @@ void processCommand(String cmd) {
     // ── RESET ────────────────────────────────────────────────
     } else if (upper == "RESET") {
         g_totalMoney = 0;
+        // Re-enable bill acceptor
+        if (BILL_INHIBIT_PIN >= 0) {
+            digitalWrite(BILL_INHIBIT_PIN, !BILL_INHIBIT_ACTIVE);
+        }
         Serial.println("RESET:OK");
         Serial.printf("Total Money: %d\n", g_totalMoney);
 
@@ -413,6 +430,13 @@ bool executeDispense(String args) {
     g_totalMoney = 0;
     Serial.println("DISPENSED:OK");
     Serial.printf("Total Money: %d\n", g_totalMoney);
+
+    // Re-enable bill acceptor for next customer
+    if (BILL_INHIBIT_PIN >= 0) {
+        digitalWrite(BILL_INHIBIT_PIN, !BILL_INHIBIT_ACTIVE);
+        Serial.println("[BILL] Acceptor RE-ENABLED");
+    }
+
     return true;
 }
 

@@ -74,6 +74,8 @@ const int HOPPER_MAP[DENOM_COUNT][2] = {
 // -----------------------------------------------------------------------------
 #define BILL_PIN            32      // ✅ confirmed GPIO32
 #define BILL_IDLE_STATE     HIGH    // INPUT_PULLUP: pin idles HIGH, pulses go LOW (open-collector)
+#define BILL_INHIBIT_PIN    33      // GPIO to disable bill acceptor (-1 = not wired)
+#define BILL_INHIBIT_ACTIVE HIGH    // HIGH = acceptor disabled (rejects/spits back bills)
 #define BILL_DEBOUNCE_MS    20      // ignore transitions shorter than this (pulses are ~25-50ms)
 #define BILL_WINDOW_MS      800     // wait this long after last pulse to decode (needs headroom for ₱500/₱1000)
 
