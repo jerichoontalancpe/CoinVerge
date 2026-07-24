@@ -165,9 +165,17 @@ void loop() {
             billPulseCount = 0;
 
             if (value > 0 && value >= MIN_BILL_VALUE && value <= MAX_BILL_VALUE) {
-                g_totalMoney += value;
-                Serial.printf("BILL:%d\n", value);   // ← RPi reads this
-                Serial.printf("Total Money: %d\n", g_totalMoney);
+                // Reject if adding this bill would exceed max allowed balance
+                if (g_totalMoney + value > MAX_BILL_VALUE) {
+                    Serial.printf("[BILL] REJECTED P%d (balance would exceed P%d)\n",
+                                  value, MAX_BILL_VALUE);
+                    // NOTE: bill is physically inside — acceptor should be inhibited
+                    // after first bill. For now just don't credit it.
+                } else {
+                    g_totalMoney += value;
+                    Serial.printf("BILL:%d\n", value);   // ← RPi reads this
+                    Serial.printf("Total Money: %d\n", g_totalMoney);
+                }
             } else if (value > MAX_BILL_VALUE) {
                 // Bill accepted by hardware but exceeds our software limit
                 // (Should not happen if DIP switches are set correctly)

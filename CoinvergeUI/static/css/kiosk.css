@@ -188,17 +188,21 @@ html, body {
 .card-sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
 
 .picker-actions {
-    display: flex; gap: 12px; width: 100%; justify-content: center;
+    display: flex; gap: 8px; width: 100%; justify-content: center;
+    align-items: center; flex-wrap: wrap;
 }
 
 .action-btn {
-    flex: 1; max-width: 200px; padding: 12px; border-radius: var(--radius);
-    border: none; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+    padding: 10px 12px; border-radius: var(--radius);
+    border: none; font-size: 0.9rem; font-weight: 700; cursor: pointer;
     transition: transform 0.1s, opacity 0.3s;
 }
 .action-btn:active { transform: scale(0.95); }
-.action-btn.cancel { background: #401020; color: var(--danger); border: 2px solid var(--danger); }
-.action-btn.confirm { background: var(--success); color: #000; }
+.action-btn.quick {
+    background: var(--bg-card); color: var(--ph-gold);
+    border: 1px solid var(--ph-gold-dim); font-size: 0.8rem;
+}
+.action-btn.confirm { background: var(--success); color: #000; padding: 10px 24px; }
 .action-btn.confirm.disabled { opacity: 0.25; pointer-events: none; }
 
 /* ── DISPENSING SCREEN ───────────────────────────────────────────────────── */

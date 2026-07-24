@@ -257,6 +257,10 @@ def api_simulate_bill():
     if amount not in [20, 50, 100]:
         return jsonify({"error": "Invalid amount. Use 20, 50, or 100"}), 400
 
+    # Reject if would exceed max balance
+    if esp32.balance + amount > 100:
+        return jsonify({"error": f"Cannot exceed ₱100 balance (current: ₱{esp32.balance})"}), 400
+
     esp32.simulate_bill(amount)
     return jsonify({"status": "ok", "balance": esp32.balance})
 

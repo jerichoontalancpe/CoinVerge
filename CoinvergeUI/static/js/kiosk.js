@@ -75,6 +75,11 @@ async function pollEvents() {
 function handleEvent(ev) {
     switch (ev.type) {
         case "bill":
+            // Cap balance at ₱100 on UI side (ESP32 also enforces this)
+            if (ev.data.balance > 100) {
+                toast("Maximum ₱100 reached");
+                break;
+            }
             state.balance = ev.data.balance;
             if (state.screen === "idle" || state.screen === "empty") {
                 showPicker();
@@ -237,6 +242,28 @@ function resetSelection() {
 }
 
 // ── Actions ─────────────────────────────────────────────────────────────────
+
+function quickSelect(denom) {
+    resetInactivityTimer();
+    resetSelection();
+
+    // Fill as many of this denomination as possible
+    const maxByBalance = Math.floor(state.balance / denom);
+    const maxByStock = state.stock[denom] || 0;
+    const qty = Math.min(maxByBalance, maxByStock);
+
+    if (qty === 0) {
+        toast(`No ₱${denom} coins available`);
+        return;
+    }
+
+    state.selection[denom] = qty;
+
+    // If there's remainder, leave it for user to fill manually
+    for (const d of DENOMS) updateCoinCard(d);
+    updateRemaining();
+    updateConfirm();
+}
 
 async function confirmDispense() {
     if (state.balance - getTotal() !== 0) return;
