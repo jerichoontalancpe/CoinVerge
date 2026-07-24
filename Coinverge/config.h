@@ -31,6 +31,13 @@
 #define HOP_PIN_10      19      // ₱10 hopper — confirmed GPIO19
 #define HOP_PIN_20      17      // ₱20 hopper — confirmed GPIO17
 
+// Hopper sensor pins — one per hopper (counts coins as they drop)
+// Confirmed from wire tracing 2026-07-24:
+#define HOP_SENSOR_PIN_1      39      // ₱1  sensor — GPIO39 (VN), blue wire
+#define HOP_SENSOR_PIN_5      34      // ₱5  sensor — GPIO34, white wire
+#define HOP_SENSOR_PIN_10     35      // ₱10 sensor — GPIO35, yellow wire
+#define HOP_SENSOR_PIN_20     36      // ₱20 sensor — GPIO36 (VP), green wire
+
 // -----------------------------------------------------------------------------
 //  COIN DENOMINATIONS
 //  { coin value in pesos, hopper GPIO pin, sensor GPIO pin }
@@ -47,21 +54,10 @@ const int HOPPER_MAP[DENOM_COUNT][3] = {
 // Maximum coins per hopper (0 = disable stock tracking)
 #define MAX_COINS_PER_HOPPER  200
 
-// ms per coin for timed dispensing (tune to your hopper speed)
-// Motor runs continuously for (coins × this value). Increase if under-dispensing.
+// ms per coin for timed dispensing (used as timeout fallback)
 #define HOP_MS_PER_COIN       1500
 
-// Hopper opto-sensor pin (-1 = not connected)
-#define HOP_SENSOR_PIN        -1
-
-// Hopper sensor pins — one per hopper (counts coins as they drop)
-// Confirmed from wire tracing 2026-07-24:
-#define HOP_SENSOR_PIN_1      39      // ₱1  sensor — GPIO39 (VN), blue wire
-#define HOP_SENSOR_PIN_5      34      // ₱5  sensor — GPIO34, white wire
-#define HOP_SENSOR_PIN_10     35      // ₱10 sensor — GPIO35, yellow wire
-#define HOP_SENSOR_PIN_20     36      // ₱20 sensor — GPIO36 (VP), green wire
-
-// Timeout waiting for one coin from opto-sensor (ms)
+// Timeout waiting for one coin from sensor (ms)
 #define HOP_COIN_TIMEOUT_MS   800
 
 // -----------------------------------------------------------------------------
