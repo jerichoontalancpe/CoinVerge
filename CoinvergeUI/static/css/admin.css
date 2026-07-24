@@ -1,0 +1,291 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CoinVerge — Admin Panel Stylesheet
+   Same theme as kiosk but with tables and management UI
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+* {
+    margin: 0; padding: 0; box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+:root {
+    --ph-blue: #0038a8;
+    --ph-blue-dark: #002060;
+    --ph-gold: #fcd116;
+    --ph-gold-dim: #b8960a;
+    --ph-red: #ce1126;
+    --bg: #001a4d;
+    --bg-card: #002a6b;
+    --bg-surface: #003380;
+    --text: #ffffff;
+    --text-dim: #8eaacc;
+    --success: #00c853;
+    --danger: #ff3d3d;
+    --radius: 10px;
+}
+
+html, body {
+    width: 800px; height: 480px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+}
+
+/* ── Admin Screens ───────────────────────────────────────────────────────── */
+
+.admin-screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+}
+.admin-screen.active { opacity: 1; pointer-events: auto; }
+
+/* ── LOGIN ───────────────────────────────────────────────────────────────── */
+
+.login-box { text-align: center; }
+
+.login-brand {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 1.5rem;
+}
+.coin-sym {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--ph-gold); color: var(--ph-blue-dark);
+    font-size: 1.5rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+}
+.login-brand h2 { font-size: 1.5rem; }
+
+.login-prompt { color: var(--text-dim); margin-bottom: 1rem; }
+
+.pin-display {
+    display: flex; gap: 12px; justify-content: center;
+    margin-bottom: 1.5rem;
+}
+.pin-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--text-dim);
+    transition: background 0.2s;
+}
+.pin-dot.filled { background: var(--ph-gold); border-color: var(--ph-gold); }
+
+.pin-pad {
+    display: grid; grid-template-columns: repeat(3, 60px);
+    gap: 8px; justify-content: center;
+}
+.pad-btn {
+    width: 60px; height: 50px; border-radius: 8px;
+    border: none; background: var(--bg-card); color: var(--text);
+    font-size: 1.3rem; font-weight: 600; cursor: pointer;
+    transition: background 0.1s;
+}
+.pad-btn:active { background: var(--bg-surface); }
+.pad-btn.clear { background: #401020; color: var(--danger); }
+.pad-btn.enter { background: #103020; color: var(--success); }
+
+.login-error { color: var(--danger); margin-top: 1rem; font-weight: 600; }
+.login-error.hidden { visibility: hidden; }
+
+.back-link {
+    margin-top: 1.5rem; background: none; border: none;
+    color: var(--text-dim); font-size: 0.85rem; cursor: pointer;
+    text-decoration: underline;
+}
+
+/* ── DASHBOARD ───────────────────────────────────────────────────────────── */
+
+#admin-dashboard {
+    justify-content: flex-start;
+    padding: 0;
+}
+
+.admin-header {
+    width: 100%; padding: 10px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--ph-blue-dark);
+    border-bottom: 2px solid var(--ph-gold-dim);
+}
+.admin-header h1 { font-size: 1.1rem; }
+
+.header-actions { display: flex; gap: 6px; }
+
+.tab-btn {
+    padding: 6px 14px; border-radius: 6px; border: none;
+    background: var(--bg-card); color: var(--text-dim);
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+.tab-btn.active { background: var(--ph-gold); color: var(--ph-blue-dark); }
+
+.logout-btn {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid var(--danger);
+    background: none; color: var(--danger);
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+
+/* ── Tab Content ─────────────────────────────────────────────────────────── */
+
+.tab-content {
+    display: none; width: 100%; height: calc(480px - 52px);
+    overflow-y: auto; padding: 12px 16px;
+}
+.tab-content.active { display: block; }
+
+/* ── STOCK TAB ───────────────────────────────────────────────────────────── */
+
+.stock-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin-bottom: 12px;
+}
+
+.stock-card {
+    background: var(--bg-card); border-radius: var(--radius);
+    padding: 12px; text-align: center;
+}
+.scard-denom { font-size: 1.3rem; font-weight: 800; color: var(--ph-gold); }
+
+.scard-bar {
+    width: 100%; height: 8px; background: #001030;
+    border-radius: 4px; margin: 8px 0; overflow: hidden;
+}
+.scard-fill {
+    height: 100%; background: var(--success);
+    border-radius: 4px; transition: width 0.5s;
+}
+.scard-fill.low { background: var(--ph-gold); }
+.scard-fill.critical { background: var(--danger); }
+
+.scard-info { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
+
+.refill-btn {
+    padding: 6px 12px; border-radius: 6px; border: none;
+    background: var(--ph-blue-light); color: var(--text);
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+}
+.refill-btn:active { background: var(--ph-blue); }
+
+.set-btn {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid var(--text-dim);
+    background: transparent; color: var(--text-dim);
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+}
+.set-btn:active { background: var(--bg-surface); }
+
+.scard-actions { display: flex; gap: 6px; justify-content: center; margin-top: 4px; }
+
+.refill-all-btn {
+    width: 100%; padding: 10px; border-radius: var(--radius);
+    border: 2px solid var(--success); background: #103020;
+    color: var(--success); font-size: 0.9rem; font-weight: 700;
+    cursor: pointer;
+}
+
+.machine-status {
+    margin-top: 12px; padding: 8px 12px;
+    background: var(--bg-card); border-radius: 6px;
+    font-size: 0.8rem; color: var(--text-dim);
+}
+
+/* ── HISTORY TAB ─────────────────────────────────────────────────────────── */
+
+.history-controls {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+}
+.page-btn {
+    padding: 6px 14px; border-radius: 6px; border: none;
+    background: var(--bg-card); color: var(--text);
+    font-size: 0.8rem; cursor: pointer;
+}
+.page-btn:disabled { opacity: 0.3; }
+.export-btn {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--ph-gold-dim);
+    background: var(--bg-card); color: var(--ph-gold);
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+#page-info { font-size: 0.8rem; color: var(--text-dim); }
+
+.history-table-wrap { overflow-y: auto; max-height: 340px; }
+
+.history-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.8rem;
+}
+.history-table th {
+    background: var(--bg-card); padding: 8px 10px;
+    text-align: left; color: var(--text-dim); font-weight: 600;
+    position: sticky; top: 0;
+}
+.history-table td {
+    padding: 7px 10px; border-bottom: 1px solid #0a2a50;
+}
+
+/* ── REPORTS TAB ─────────────────────────────────────────────────────────── */
+
+.report-tabs {
+    display: flex; gap: 8px; margin-bottom: 12px;
+}
+.rpt-btn {
+    padding: 6px 16px; border-radius: 6px; border: none;
+    background: var(--bg-card); color: var(--text-dim);
+    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+.rpt-btn.active { background: var(--ph-gold); color: var(--ph-blue-dark); }
+
+.report-cards {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px; margin-bottom: 16px;
+}
+.rpt-card {
+    background: var(--bg-card); border-radius: var(--radius);
+    padding: 14px; text-align: center;
+}
+.rpt-value { font-size: 1.6rem; font-weight: 800; color: var(--ph-gold); }
+.rpt-label { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+
+.report-breakdown h3 { font-size: 0.9rem; margin-bottom: 8px; color: var(--text-dim); }
+.breakdown-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+}
+.bd-item {
+    background: var(--bg-card); border-radius: 8px;
+    padding: 10px; text-align: center;
+}
+.bd-denom { font-weight: 700; color: var(--ph-gold); font-size: 1rem; }
+.bd-count { font-size: 0.85rem; color: var(--text-dim); margin-top: 4px; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+@media (min-width: 801px) {
+    html, body {
+        width: 100vw; height: 100vh;
+        max-width: 800px; max-height: 480px;
+        margin: auto; border: 2px solid #333;
+        border-radius: 8px; position: relative;
+        top: 50%; transform: translateY(-50%);
+    }
+}
+
+/* ── SETTINGS TAB ────────────────────────────────────────────────────────── */
+
+.settings-section {
+    background: var(--bg-card); border-radius: var(--radius);
+    padding: 16px; margin-bottom: 12px;
+}
+.settings-section h3 {
+    font-size: 0.9rem; color: var(--text-dim);
+    margin-bottom: 10px;
+}
+.settings-btn {
+    padding: 10px 20px; border-radius: 8px; border: none;
+    background: var(--bg-surface); color: var(--text);
+    font-size: 0.9rem; font-weight: 600; cursor: pointer;
+    margin-bottom: 6px; display: block; width: 100%; text-align: left;
+}
+.settings-btn:active { background: var(--ph-blue-light); }
+.settings-info {
+    font-size: 0.85rem; color: var(--text-dim); margin-bottom: 4px;
+}

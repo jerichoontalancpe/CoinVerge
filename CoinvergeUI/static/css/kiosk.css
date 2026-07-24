@@ -1,0 +1,277 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CoinVerge — Kiosk UI Stylesheet
+   Philippine-themed | 7" touchscreen (800×480) | 16:9
+   Colors: Philippine flag blue (#0038a8) + gold (#fcd116) + red (#ce1126)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+* {
+    margin: 0; padding: 0; box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none; user-select: none;
+    touch-action: manipulation;
+}
+
+:root {
+    --ph-blue: #0038a8;
+    --ph-blue-dark: #002060;
+    --ph-blue-light: #1a5cbd;
+    --ph-gold: #fcd116;
+    --ph-gold-dim: #b8960a;
+    --ph-red: #ce1126;
+    --ph-white: #ffffff;
+    --bg: #001a4d;
+    --bg-card: #002a6b;
+    --bg-surface: #003380;
+    --text: #ffffff;
+    --text-dim: #8eaacc;
+    --success: #00c853;
+    --danger: #ff3d3d;
+    --radius: 12px;
+}
+
+html, body {
+    width: 800px; height: 480px;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+}
+
+/* ── Screens ─────────────────────────────────────────────────────────────── */
+
+.screen {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+.screen.active { opacity: 1; pointer-events: auto; }
+
+/* ── IDLE SCREEN ─────────────────────────────────────────────────────────── */
+
+.idle-container {
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 100%; width: 100%;
+    background: linear-gradient(160deg, var(--ph-blue-dark) 0%, var(--bg) 50%, #001030 100%);
+    padding: 2rem;
+}
+
+.idle-brand {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.brand-logo {
+    max-height: 220px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.idle-cta { text-align: center; }
+
+.cta-arrow {
+    font-size: 1.5rem; color: var(--ph-gold);
+    animation: bounce 1.2s ease-in-out infinite;
+}
+
+.cta-text {
+    font-size: 1.3rem; font-weight: 500;
+    margin: 0.5rem 0;
+}
+
+.accepted-bills {
+    display: flex; gap: 0.6rem; justify-content: center;
+    margin-top: 0.75rem;
+}
+
+.bill-chip {
+    background: var(--bg-card);
+    border: 2px solid var(--ph-gold-dim);
+    padding: 0.4rem 1rem; border-radius: 20px;
+    font-weight: 700; color: var(--ph-gold);
+    font-size: 1rem;
+}
+
+.admin-trigger {
+    position: absolute; top: 0; right: 0;
+    width: 60px; height: 60px; z-index: 10;
+}
+
+/* ── SIM BAR ─────────────────────────────────────────────────────────────── */
+
+.sim-bar {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.5); border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 6px 12px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.75rem;
+}
+.sim-bar.hidden { display: none; }
+.sim-bar button {
+    padding: 4px 10px; border-radius: 6px; border: 1px solid var(--ph-gold-dim);
+    background: var(--bg-card); color: var(--ph-gold);
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+}
+
+/* ── EMPTY SCREEN ────────────────────────────────────────────────────────── */
+
+.empty-container {
+    text-align: center; padding: 2rem;
+}
+.empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+.empty-container h2 { font-size: 2rem; color: var(--danger); margin-bottom: 0.5rem; }
+.empty-container p { font-size: 1.1rem; color: var(--text-dim); }
+.empty-sub { margin-top: 1rem; font-size: 0.9rem; }
+
+/* ── PICKER SCREEN ───────────────────────────────────────────────────────── */
+
+#screen-picker {
+    flex-direction: column;
+    padding: 12px 16px;
+    justify-content: space-between;
+}
+
+.picker-top {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; padding: 0 4px;
+}
+
+.picker-balance, .picker-remaining {
+    background: var(--bg-card); border-radius: 8px;
+    padding: 8px 14px;
+}
+.bal-label, .rem-label { font-size: 0.75rem; color: var(--text-dim); }
+.bal-value { font-size: 1.5rem; font-weight: 800; color: var(--ph-gold); margin-left: 6px; }
+.rem-value { font-size: 1.5rem; font-weight: 800; margin-left: 6px; }
+.rem-value.zero { color: var(--success); }
+.rem-value.nonzero { color: var(--ph-red); }
+
+.picker-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; width: 100%; flex: 1;
+    align-content: center; padding: 8px 0;
+}
+
+.coin-card {
+    background: var(--bg-card); border-radius: var(--radius);
+    padding: 10px 6px; text-align: center;
+    border: 2px solid transparent;
+    transition: border-color 0.2s, opacity 0.3s;
+}
+.coin-card.active { border-color: var(--ph-gold); }
+.coin-card.disabled { opacity: 0.3; pointer-events: none; }
+
+.card-header { margin-bottom: 6px; }
+.card-denom { font-size: 1.4rem; font-weight: 800; color: var(--ph-gold); }
+.card-stock { display: block; font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; }
+
+.card-controls {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+.ctrl-btn {
+    width: 38px; height: 38px; border-radius: 50%; border: none;
+    font-size: 1.4rem; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.1s;
+}
+.ctrl-btn:active { transform: scale(0.85); }
+.ctrl-btn.minus { background: #3d1020; color: var(--danger); }
+.ctrl-btn.plus { background: #103d20; color: var(--success); }
+
+.ctrl-count { font-size: 1.4rem; font-weight: 800; min-width: 2rem; text-align: center; }
+
+.card-sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
+
+.picker-actions {
+    display: flex; gap: 12px; width: 100%; justify-content: center;
+}
+
+.action-btn {
+    flex: 1; max-width: 200px; padding: 12px; border-radius: var(--radius);
+    border: none; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+    transition: transform 0.1s, opacity 0.3s;
+}
+.action-btn:active { transform: scale(0.95); }
+.action-btn.cancel { background: #401020; color: var(--danger); border: 2px solid var(--danger); }
+.action-btn.confirm { background: var(--success); color: #000; }
+.action-btn.confirm.disabled { opacity: 0.25; pointer-events: none; }
+
+/* ── DISPENSING SCREEN ───────────────────────────────────────────────────── */
+
+.disp-container { text-align: center; }
+.disp-coins { margin-bottom: 1.5rem; }
+.disp-coin {
+    font-size: 2.5rem; color: var(--ph-gold); margin: 0 6px;
+    display: inline-block; animation: coinDrop 0.8s ease-in-out infinite;
+}
+.disp-coin.c2 { animation-delay: 0.2s; }
+.disp-coin.c3 { animation-delay: 0.4s; }
+.disp-container h2 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+.disp-container p { color: var(--text-dim); }
+
+/* ── DONE SCREEN ─────────────────────────────────────────────────────────── */
+
+.done-container { text-align: center; }
+.done-check {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--success); color: #000;
+    font-size: 3rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem;
+    animation: popIn 0.4s ease;
+}
+.done-container h2 { font-size: 2rem; color: var(--success); margin-bottom: 0.5rem; }
+.done-container p { font-size: 1.2rem; }
+.done-english { color: var(--text-dim); font-size: 1rem; margin-top: 0.25rem; }
+.done-summary { color: var(--ph-gold); font-size: 1rem; font-weight: 600; margin-top: 0.75rem; }
+.done-timer { margin-top: 1rem; color: var(--text-dim); font-size: 0.9rem; }
+
+/* ── TOAST ───────────────────────────────────────────────────────────────── */
+
+.toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--danger); color: #fff; padding: 10px 20px;
+    border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+    transition: opacity 0.3s; z-index: 999;
+}
+.toast.hidden { opacity: 0; pointer-events: none; }
+
+/* ── ANIMATIONS ──────────────────────────────────────────────────────────── */
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+@keyframes coinDrop {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(10px); opacity: 0.5; }
+}
+@keyframes popIn {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* ── RESPONSIVE: actual browser testing on laptop ────────────────────────── */
+@media (min-width: 801px) {
+    html, body {
+        width: 100vw; height: 100vh;
+        max-width: 800px; max-height: 480px;
+        margin: auto;
+        border: 2px solid #333;
+        border-radius: 8px;
+        position: relative;
+        top: 50%; transform: translateY(-50%);
+    }
+}
+
+@media (max-height: 480px) {
+    .brand-logo { max-height: 160px; }
+    .idle-cta { margin-top: 0; }
+    .cta-text { font-size: 1.1rem; }
+}

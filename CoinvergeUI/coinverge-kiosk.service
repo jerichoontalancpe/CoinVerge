@@ -1,0 +1,17 @@
+[Unit]
+Description=CoinVerge Kiosk UI
+After=graphical.target
+Wants=graphical.target
+
+[Service]
+Type=simple
+User=pi
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+WorkingDirectory=/home/pi/CoinvergeUI
+ExecStart=/bin/bash /home/pi/CoinvergeUI/kiosk.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

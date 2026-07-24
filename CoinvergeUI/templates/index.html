@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CoinVerge</title>
+    <link rel="stylesheet" href="/static/css/kiosk.css">
+</head>
+<body>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: IDLE — Waiting for bill                                    -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="screen-idle" class="screen active">
+        <div class="idle-container">
+            <div class="idle-brand">
+                <img src="/static/img/logo.png" alt="CoinVerge" class="brand-logo">
+            </div>
+            <div class="idle-cta">
+                <div class="cta-arrow">▼</div>
+                <p class="cta-text">Magpasukli — Insert bill below</p>
+                <div class="accepted-bills">
+                    <span class="bill-chip">₱20</span>
+                    <span class="bill-chip">₱50</span>
+                    <span class="bill-chip">₱100</span>
+                </div>
+            </div>
+        </div>
+        <!-- Admin access: tap 5 times on brand icon -->
+        <div class="admin-trigger" onclick="adminTap()"></div>
+        <!-- Sim controls -->
+        <div id="sim-controls" class="sim-bar hidden">
+            <span>⚙️ SIM</span>
+            <button onclick="simulateBill(20)">₱20</button>
+            <button onclick="simulateBill(50)">₱50</button>
+            <button onclick="simulateBill(100)">₱100</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: OUT OF STOCK — All hoppers empty                          -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="screen-empty" class="screen">
+        <div class="empty-container">
+            <div class="empty-icon">🚫</div>
+            <h2>Walang Barya</h2>
+            <p>Out of coins — please try again later.</p>
+            <p class="empty-sub">Pakitawagan ang operator para sa refill.</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: PICKER — Select coin denominations                        -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="screen-picker" class="screen">
+        <div class="picker-top">
+            <div class="picker-balance">
+                <span class="bal-label">Inserted:</span>
+                <span id="bal-amount" class="bal-value">₱100</span>
+            </div>
+            <div class="picker-remaining">
+                <span class="rem-label">Remaining:</span>
+                <span id="rem-amount" class="rem-value zero">₱0</span>
+            </div>
+        </div>
+
+        <div class="picker-grid">
+            <div class="coin-card" data-denom="1" id="card-1">
+                <div class="card-header">
+                    <span class="card-denom">₱1</span>
+                    <span class="card-stock" id="stock-1">200 pcs</span>
+                </div>
+                <div class="card-controls">
+                    <button class="ctrl-btn minus" onclick="adjust(1,-1)">−</button>
+                    <span class="ctrl-count" id="count-1">0</span>
+                    <button class="ctrl-btn plus" onclick="adjust(1,1)">+</button>
+                </div>
+                <div class="card-sub" id="sub-1">₱0</div>
+            </div>
+
+            <div class="coin-card" data-denom="5" id="card-5">
+                <div class="card-header">
+                    <span class="card-denom">₱5</span>
+                    <span class="card-stock" id="stock-5">200 pcs</span>
+                </div>
+                <div class="card-controls">
+                    <button class="ctrl-btn minus" onclick="adjust(5,-1)">−</button>
+                    <span class="ctrl-count" id="count-5">0</span>
+                    <button class="ctrl-btn plus" onclick="adjust(5,1)">+</button>
+                </div>
+                <div class="card-sub" id="sub-5">₱0</div>
+            </div>
+
+            <div class="coin-card" data-denom="10" id="card-10">
+                <div class="card-header">
+                    <span class="card-denom">₱10</span>
+                    <span class="card-stock" id="stock-10">200 pcs</span>
+                </div>
+                <div class="card-controls">
+                    <button class="ctrl-btn minus" onclick="adjust(10,-1)">−</button>
+                    <span class="ctrl-count" id="count-10">0</span>
+                    <button class="ctrl-btn plus" onclick="adjust(10,1)">+</button>
+                </div>
+                <div class="card-sub" id="sub-10">₱0</div>
+            </div>
+
+            <div class="coin-card" data-denom="20" id="card-20">
+                <div class="card-header">
+                    <span class="card-denom">₱20</span>
+                    <span class="card-stock" id="stock-20">200 pcs</span>
+                </div>
+                <div class="card-controls">
+                    <button class="ctrl-btn minus" onclick="adjust(20,-1)">−</button>
+                    <span class="ctrl-count" id="count-20">0</span>
+                    <button class="ctrl-btn plus" onclick="adjust(20,1)">+</button>
+                </div>
+                <div class="card-sub" id="sub-20">₱0</div>
+            </div>
+        </div>
+
+        <div class="picker-actions">
+            <button class="action-btn cancel" onclick="cancelTransaction()">Cancel</button>
+            <button class="action-btn confirm disabled" id="btn-confirm" onclick="confirmDispense()">Confirm</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: DISPENSING — coins being dispensed                         -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="screen-dispensing" class="screen">
+        <div class="disp-container">
+            <div class="disp-coins">
+                <span class="disp-coin c1">●</span>
+                <span class="disp-coin c2">●</span>
+                <span class="disp-coin c3">●</span>
+            </div>
+            <h2>Nagbabayad ng barya...</h2>
+            <p>Dispensing your coins — please wait</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: DONE — collect coins                                      -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="screen-done" class="screen">
+        <div class="done-container">
+            <div class="done-check">✓</div>
+            <h2>Tapos na!</h2>
+            <p>Kunin ang iyong barya sa ibaba</p>
+            <p class="done-english">Collect your coins below</p>
+            <p class="done-summary" id="done-summary"></p>
+            <div class="done-timer">
+                <span id="done-countdown">5</span>s
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ERROR TOAST                                                        -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="toast" class="toast hidden">
+        <span id="toast-msg">Error</span>
+    </div>
+
+    <script src="/static/js/kiosk.js"></script>
+</body>
+</html>
