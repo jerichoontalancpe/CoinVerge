@@ -83,13 +83,16 @@ void setup() {
         int pin = HOPPER_MAP[i][1];
         pinMode(pin, OUTPUT);
         digitalWrite(pin, !HOP_ACTIVE);    // OFF at boot
+
+        // Sensor pins (input-only GPIOs, use INPUT)
+        int sensorPin = HOPPER_MAP[i][2];
+        if (sensorPin >= 0) {
+            pinMode(sensorPin, INPUT_PULLUP);
+        }
     }
     closeAllHoppers();
 
-    // ── Hopper opto-sensor ───────────────────────────────────
-    if (HOP_SENSOR_PIN >= 0) {
-        pinMode(HOP_SENSOR_PIN, INPUT_PULLUP);
-    }
+    // ── Hopper opto-sensor (legacy single pin — no longer used) ─
 
     // ── Bill acceptor pulse pin ──────────────────────────────
     pinMode(BILL_PIN, INPUT_PULLUP);       // GPIO32 — open-collector: pull-up, idles HIGH, pulses LOW
@@ -395,12 +398,47 @@ bool executeDispense(String args) {
         closehop(i);
 
 #else
-        // Continuous motor dispensing — runs for (coins × HOP_MS_PER_COIN)
+        // Sensor-counted dispensing — count clicks until we reach 'need' coins
+        int sensorPin = HOPPER_MAP[i][2];
         openhop(i);
-        delay(need * HOP_MS_PER_COIN);
+
+        int coined = 0;
+        bool lastSensorState = digitalRead(sensorPin);
+        unsigned long timeout = millis() + (unsigned long)need * HOP_MS_PER_COIN * 2;  // generous timeout
+
+        while (coined < need) {
+            bool currentState = digitalRead(sensorPin);
+
+            // Detect edge transition = coin passed sensor
+            // ₱1 hopper is NC (idle=LOW, coin=HIGH → detect LOW→HIGH rising edge)
+            // ₱5,₱10,₱20 hoppers are NO (idle=HIGH, coin=LOW → detect HIGH→LOW falling edge)
+            bool coinDetected = false;
+            if (i == 0) {
+                // ₱1: Normally Closed — detect rising edge (LOW → HIGH)
+                coinDetected = (lastSensorState == LOW && currentState == HIGH);
+            } else {
+                // ₱5,₱10,₱20: Normally Open — detect falling edge (HIGH → LOW)
+                coinDetected = (lastSensorState == HIGH && currentState == LOW);
+            }
+
+            if (coinDetected) {
+                coined++;
+                g_coinStock[i]--;
+                Serial.printf("[HOP] Coin %d/%d (P%d)\n", coined, need, denom);
+                delay(30);  // debounce
+            }
+            lastSensorState = currentState;
+
+            // Timeout protection
+            if (millis() > timeout) {
+                Serial.printf("[HOP] TIMEOUT: got %d/%d coins (P%d)\n", coined, need, denom);
+                break;
+            }
+
+            delay(2);  // fast polling
+        }
+
         closehop(i);
-        g_coinStock[i] -= need;
-        Serial.printf("[HOP] Done: %d x P%d (%d ms)\n", need, denom, need * HOP_MS_PER_COIN);
 #endif
     }
 

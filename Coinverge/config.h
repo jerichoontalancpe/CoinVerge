@@ -33,15 +33,15 @@
 
 // -----------------------------------------------------------------------------
 //  COIN DENOMINATIONS
-//  { coin value in pesos, hopper GPIO pin }
+//  { coin value in pesos, hopper GPIO pin, sensor GPIO pin }
 // -----------------------------------------------------------------------------
 #define DENOM_COUNT  4
 
-const int HOPPER_MAP[DENOM_COUNT][2] = {
-    {  1,  HOP_PIN_1  },    // ₱1  → GPIO5
-    {  5,  HOP_PIN_5  },    // ₱5  → GPIO18
-    { 10,  HOP_PIN_10 },    // ₱10 → GPIO19
-    { 20,  HOP_PIN_20 },    // ₱20 → GPIO17
+const int HOPPER_MAP[DENOM_COUNT][3] = {
+    {  1,  HOP_PIN_1,  HOP_SENSOR_PIN_1  },    // ₱1  → motor GPIO5,  sensor GPIO39
+    {  5,  HOP_PIN_5,  HOP_SENSOR_PIN_5  },    // ₱5  → motor GPIO18, sensor GPIO34
+    { 10,  HOP_PIN_10, HOP_SENSOR_PIN_10 },    // ₱10 → motor GPIO19, sensor GPIO35
+    { 20,  HOP_PIN_20, HOP_SENSOR_PIN_20 },    // ₱20 → motor GPIO17, sensor GPIO36
 };
 
 // Maximum coins per hopper (0 = disable stock tracking)
@@ -53,6 +53,13 @@ const int HOPPER_MAP[DENOM_COUNT][2] = {
 
 // Hopper opto-sensor pin (-1 = not connected)
 #define HOP_SENSOR_PIN        -1
+
+// Hopper sensor pins — one per hopper (counts coins as they drop)
+// Confirmed from wire tracing 2026-07-24:
+#define HOP_SENSOR_PIN_1      39      // ₱1  sensor — GPIO39 (VN), blue wire
+#define HOP_SENSOR_PIN_5      34      // ₱5  sensor — GPIO34, white wire
+#define HOP_SENSOR_PIN_10     35      // ₱10 sensor — GPIO35, yellow wire
+#define HOP_SENSOR_PIN_20     36      // ₱20 sensor — GPIO36 (VP), green wire
 
 // Timeout waiting for one coin from opto-sensor (ms)
 #define HOP_COIN_TIMEOUT_MS   800
