@@ -3,88 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CoinVerge — Mobile Payment</title>
+    <title>CoinVerge Pay</title>
     <link rel="stylesheet" href="/static/css/phone.css">
 </head>
 <body>
-    <div class="phone-frame">
-        <!-- Status bar mockup -->
+    <div class="phone-app">
+        <!-- Status Bar -->
         <div class="status-bar">
             <span class="status-time" id="status-time">12:00</span>
-            <span class="status-icons">📶 🔋</span>
-        </div>
-
-        <!-- App header -->
-        <div class="app-header" id="app-header">
-            <div class="app-logo">💰</div>
-            <h1 class="app-title">Pay to CoinVerge</h1>
-        </div>
-
-        <!-- State: No pending payment -->
-        <div class="phone-state" id="state-waiting">
-            <div class="waiting-icon">📱</div>
-            <h2>Waiting for Payment Request</h2>
-            <p class="waiting-sub">Select an e-payment method on the kiosk to start.</p>
-            <div class="waiting-dots">
-                <span class="dot"></span>
-                <span class="dot"></span>
-                <span class="dot"></span>
+            <div class="status-right">
+                <svg class="status-icon" width="16" height="12" viewBox="0 0 16 12"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z" fill="currentColor"/></svg>
+                <svg class="status-icon" width="20" height="12" viewBox="0 0 20 12"><rect x="0" y="1" width="17" height="10" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/><rect x="18" y="4" width="2" height="4" rx="1" fill="currentColor"/><rect x="2" y="3" width="11" height="6" rx="1" fill="currentColor"/></svg>
             </div>
         </div>
 
-        <!-- State: Payment ready -->
-        <div class="phone-state hidden" id="state-payment">
-            <div class="payment-card" id="payment-card">
-                <div class="payment-method" id="payment-method-badge">GCash</div>
-                <div class="payment-amount-section">
-                    <span class="payment-label">Amount to Pay</span>
-                    <span class="payment-amount" id="payment-amount">₱100</span>
-                </div>
-                <div class="payment-details">
-                    <div class="detail-row">
-                        <span class="detail-label">Merchant</span>
-                        <span class="detail-value">CoinVerge Kiosk</span>
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- SCREEN: HOME / LOGIN                                           -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="app-screen active" id="screen-home">
+            <div class="app-header" id="home-header">
+                <div class="header-top">
+                    <div class="app-brand" id="home-brand">
+                        <div class="brand-icon" id="brand-icon">₱</div>
+                        <span class="brand-name" id="brand-name">CoinVerge Pay</span>
                     </div>
-                    <div class="detail-row">
+                    <div class="header-bell">🔔</div>
+                </div>
+            </div>
+
+            <div class="home-content">
+                <!-- User greeting card -->
+                <div class="user-card">
+                    <div class="user-avatar" id="user-avatar">JD</div>
+                    <div class="user-info">
+                        <span class="user-greeting">Welcome back!</span>
+                        <span class="user-name">Juan Dela Cruz</span>
+                        <span class="user-number">0917****123</span>
+                    </div>
+                </div>
+
+                <!-- Balance card -->
+                <div class="balance-card" id="balance-card">
+                    <div class="balance-label">Available Balance</div>
+                    <div class="balance-amount">
+                        <span class="peso-sign">₱</span>
+                        <span class="balance-value">2,547.83</span>
+                    </div>
+                    <div class="balance-actions">
+                        <div class="bal-action">
+                            <div class="bal-action-icon">↗</div>
+                            <span>Send</span>
+                        </div>
+                        <div class="bal-action">
+                            <div class="bal-action-icon">↙</div>
+                            <span>Receive</span>
+                        </div>
+                        <div class="bal-action">
+                            <div class="bal-action-icon">📱</div>
+                            <span>Scan</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending payment notification -->
+                <div class="pending-notification hidden" id="pending-notification">
+                    <div class="pending-icon">💳</div>
+                    <div class="pending-info">
+                        <span class="pending-title">Payment Request</span>
+                        <span class="pending-merchant">CoinVerge Kiosk</span>
+                    </div>
+                    <div class="pending-amount" id="pending-amount-badge">₱100</div>
+                </div>
+
+                <!-- Pay button -->
+                <button class="home-pay-btn hidden" id="home-pay-btn" onclick="goToPayment()">
+                    <span class="pay-btn-icon">💰</span>
+                    <span class="pay-btn-text">Pay Now</span>
+                    <span class="pay-btn-arrow">→</span>
+                </button>
+
+                <!-- Waiting state -->
+                <div class="waiting-state" id="waiting-state">
+                    <div class="waiting-dots">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                    <p class="waiting-text">Waiting for payment request from kiosk...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- SCREEN: PAYMENT CONFIRMATION                                   -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="app-screen" id="screen-payment">
+            <div class="app-header payment-header" id="payment-header">
+                <button class="back-btn" onclick="goHome()">←</button>
+                <span class="header-title">Confirm Payment</span>
+                <span class="header-spacer"></span>
+            </div>
+
+            <div class="payment-content">
+                <div class="merchant-section">
+                    <div class="merchant-avatar">
+                        <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#f0f0f0"/><text x="16" y="21" text-anchor="middle" font-size="14" fill="#333">C</text></svg>
+                    </div>
+                    <div class="merchant-name">CoinVerge Kiosk</div>
+                    <div class="merchant-type">Merchant Payment</div>
+                </div>
+
+                <div class="amount-display">
+                    <span class="amount-peso">₱</span>
+                    <span class="amount-value" id="pay-amount">100</span>
+                    <span class="amount-decimal">.00</span>
+                </div>
+
+                <div class="payment-details-card">
+                    <div class="detail-item">
                         <span class="detail-label">Reference No.</span>
-                        <span class="detail-value" id="payment-ref">000000000000</span>
+                        <span class="detail-value" id="pay-ref">000000000000</span>
                     </div>
-                    <div class="detail-row">
-                        <span class="detail-label">Method</span>
-                        <span class="detail-value" id="payment-method-text">GCash</span>
+                    <div class="detail-divider"></div>
+                    <div class="detail-item">
+                        <span class="detail-label">Payment Method</span>
+                        <span class="detail-value" id="pay-method-name">GCash</span>
+                    </div>
+                    <div class="detail-divider"></div>
+                    <div class="detail-item source-item">
+                        <span class="detail-label">Source</span>
+                        <div class="source-info">
+                            <span class="source-name" id="pay-source-name">GCash Balance</span>
+                            <span class="source-balance">₱2,547.83</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <button class="pay-btn" id="pay-btn" onclick="confirmPayment()">
-                PAY NOW
-            </button>
-            <p class="pay-disclaimer">By tapping PAY NOW, you confirm this transaction.</p>
-        </div>
 
-        <!-- State: Payment successful -->
-        <div class="phone-state hidden" id="state-success">
-            <div class="success-icon">✓</div>
-            <h2 class="success-title">Payment Successful</h2>
-            <p class="success-amount" id="success-amount">₱100</p>
-            <p class="success-sub">Your payment has been confirmed.<br>Coins will be dispensed at the kiosk.</p>
-            <div class="success-ref">
-                <span>Ref: </span><span id="success-ref">000000000000</span>
+                <button class="confirm-pay-btn" id="confirm-pay-btn" onclick="confirmPayment()">
+                    <span class="confirm-text">CONFIRM PAYMENT</span>
+                    <span class="confirm-loading hidden" id="confirm-loading">
+                        <span class="spinner"></span>
+                        Processing...
+                    </span>
+                </button>
+
+                <p class="security-notice">🔒 Secured by CoinVerge Pay encryption</p>
             </div>
         </div>
 
-        <!-- State: Error -->
-        <div class="phone-state hidden" id="state-error">
-            <div class="error-icon">✕</div>
-            <h2 class="error-title">Payment Failed</h2>
-            <p class="error-msg" id="error-msg">Something went wrong.</p>
-            <button class="retry-btn" onclick="resetPhone()">Try Again</button>
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- SCREEN: SUCCESS                                                -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="app-screen" id="screen-success">
+            <div class="success-content">
+                <div class="success-check-container">
+                    <div class="success-circle">
+                        <svg class="check-svg" width="60" height="60" viewBox="0 0 60 60">
+                            <circle class="check-circle" cx="30" cy="30" r="28" fill="none" stroke="#00c853" stroke-width="3"/>
+                            <path class="check-path" d="M18 30 L26 38 L42 22" fill="none" stroke="#00c853" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <h2 class="success-title">Payment Successful!</h2>
+                <p class="success-subtitle">Bayad na! 🎉</p>
+
+                <div class="success-amount-display">
+                    <span class="success-peso">₱</span>
+                    <span class="success-amount" id="success-amount">100</span>
+                    <span class="success-decimal">.00</span>
+                </div>
+
+                <div class="success-details">
+                    <div class="success-detail-row">
+                        <span>Reference</span>
+                        <span id="success-ref">000000000000</span>
+                    </div>
+                    <div class="success-detail-row">
+                        <span>Date & Time</span>
+                        <span id="success-datetime">Jul 25, 2026 • 4:53 PM</span>
+                    </div>
+                    <div class="success-detail-row">
+                        <span>Paid to</span>
+                        <span>CoinVerge Kiosk</span>
+                    </div>
+                </div>
+
+                <button class="done-btn" onclick="goHome()">Done</button>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- SCREEN: ERROR                                                  -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="app-screen" id="screen-error">
+            <div class="error-content">
+                <div class="error-circle">✕</div>
+                <h2 class="error-title">Payment Failed</h2>
+                <p class="error-msg" id="error-msg">Something went wrong. Please try again.</p>
+                <button class="retry-btn" onclick="goHome()">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav" id="bottom-nav">
+            <div class="nav-item active">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                <span>Home</span>
+            </div>
+            <div class="nav-item">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5zM19 13v1.5h-1.5V13H19z"/></svg>
+                <span>Scan</span>
+            </div>
+            <div class="nav-item">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                <span>Activity</span>
+            </div>
+            <div class="nav-item">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                <span>Profile</span>
+            </div>
         </div>
     </div>
 
     <script>
-        // ── Phone Mockup Logic ──────────────────────────────────────────────────
+        // ── Phone App Logic ─────────────────────────────────────────────────────
         let pollTimer = null;
         let currentPayment = null;
+        let currentMethod = 'gcash'; // default
 
         // Update status bar time
         function updateTime() {
@@ -96,10 +242,63 @@
         updateTime();
         setInterval(updateTime, 30000);
 
-        // Start polling for pending payments
+        // ── Theme Management ────────────────────────────────────────────────────
+
+        function setTheme(method) {
+            currentMethod = method;
+            const isGcash = method === 'gcash';
+            document.body.className = isGcash ? 'theme-gcash' : 'theme-maya';
+
+            // Update brand
+            document.getElementById('brand-name').textContent = isGcash ? 'GCash' : 'Maya';
+            document.getElementById('brand-icon').textContent = isGcash ? 'G' : 'M';
+
+            // Update payment screen
+            document.getElementById('pay-method-name').textContent = isGcash ? 'GCash' : 'Maya';
+            document.getElementById('pay-source-name').textContent = isGcash ? 'GCash Balance' : 'Maya Balance';
+        }
+
+        // ── Screen Navigation ───────────────────────────────────────────────────
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            // Show/hide bottom nav
+            const bottomNav = document.getElementById('bottom-nav');
+            if (screenId === 'screen-success' || screenId === 'screen-error') {
+                bottomNav.classList.add('hidden');
+            } else {
+                bottomNav.classList.remove('hidden');
+            }
+        }
+
+        function goHome() {
+            currentPayment = null;
+            showScreen('screen-home');
+            updateHomeState();
+        }
+
+        function goToPayment() {
+            if (!currentPayment) return;
+            showScreen('screen-payment');
+
+            // Populate payment details
+            document.getElementById('pay-amount').textContent = currentPayment.amount;
+            document.getElementById('pay-ref').textContent = currentPayment.reference_number;
+
+            // Reset confirm button
+            const btn = document.getElementById('confirm-pay-btn');
+            btn.disabled = false;
+            btn.querySelector('.confirm-text').classList.remove('hidden');
+            btn.querySelector('.confirm-loading').classList.add('hidden');
+        }
+
+        // ── Polling ─────────────────────────────────────────────────────────────
+
         function startPolling() {
             pollTimer = setInterval(checkPending, 1500);
-            checkPending(); // Check immediately
+            checkPending();
         }
 
         async function checkPending() {
@@ -108,64 +307,44 @@
                 const data = await res.json();
 
                 if (data && data.reference_number) {
-                    // There's a pending payment
                     if (!currentPayment || currentPayment.reference_number !== data.reference_number) {
                         currentPayment = data;
-                        showPaymentReady(data);
+                        setTheme(data.method);
+                        updateHomeState();
                     }
                 } else {
-                    // No pending payment
-                    if (currentPayment && document.getElementById('state-payment').classList.contains('hidden') === false) {
-                        // Payment was cleared (maybe cancelled from kiosk)
+                    if (currentPayment) {
                         currentPayment = null;
-                        showWaiting();
-                    } else if (!currentPayment) {
-                        // Still waiting
+                        updateHomeState();
                     }
                 }
-            } catch (e) {
-                // Silent — keep polling
+            } catch (e) { /* silent */ }
+        }
+
+        function updateHomeState() {
+            const notif = document.getElementById('pending-notification');
+            const payBtn = document.getElementById('home-pay-btn');
+            const waiting = document.getElementById('waiting-state');
+
+            if (currentPayment) {
+                notif.classList.remove('hidden');
+                payBtn.classList.remove('hidden');
+                waiting.classList.add('hidden');
+                document.getElementById('pending-amount-badge').textContent = `₱${currentPayment.amount}`;
+            } else {
+                notif.classList.add('hidden');
+                payBtn.classList.add('hidden');
+                waiting.classList.remove('hidden');
             }
         }
 
-        function showState(stateId) {
-            document.querySelectorAll('.phone-state').forEach(el => el.classList.add('hidden'));
-            document.getElementById(stateId).classList.remove('hidden');
-        }
-
-        function showWaiting() {
-            currentPayment = null;
-            showState('state-waiting');
-            document.getElementById('app-header').className = 'app-header';
-        }
-
-        function showPaymentReady(data) {
-            const method = data.method;
-            const amount = data.amount;
-            const ref = data.reference_number;
-
-            // Set colors based on method
-            const isGcash = method === 'gcash';
-            document.getElementById('app-header').className = 'app-header ' + (isGcash ? 'gcash' : 'maya');
-            document.getElementById('payment-card').className = 'payment-card ' + (isGcash ? 'gcash' : 'maya');
-            document.getElementById('payment-method-badge').textContent = isGcash ? 'GCash' : 'Maya';
-            document.getElementById('payment-method-badge').className = 'payment-method ' + (isGcash ? 'gcash' : 'maya');
-            document.getElementById('payment-amount').textContent = `₱${amount}`;
-            document.getElementById('payment-ref').textContent = ref;
-            document.getElementById('payment-method-text').textContent = isGcash ? 'GCash' : 'Maya';
-
-            const payBtn = document.getElementById('pay-btn');
-            payBtn.className = 'pay-btn ' + (isGcash ? 'gcash' : 'maya');
-            payBtn.disabled = false;
-            payBtn.textContent = 'PAY NOW';
-
-            showState('state-payment');
-        }
+        // ── Payment Confirmation ────────────────────────────────────────────────
 
         async function confirmPayment() {
-            const payBtn = document.getElementById('pay-btn');
-            payBtn.disabled = true;
-            payBtn.textContent = 'Processing...';
+            const btn = document.getElementById('confirm-pay-btn');
+            btn.disabled = true;
+            btn.querySelector('.confirm-text').classList.add('hidden');
+            btn.querySelector('.confirm-loading').classList.remove('hidden');
 
             try {
                 const res = await fetch('/api/epay/confirm', {
@@ -175,35 +354,42 @@
                 const data = await res.json();
 
                 if (res.ok) {
-                    // Payment success
-                    document.getElementById('success-amount').textContent = `₱${data.amount}`;
+                    // Show success
+                    document.getElementById('success-amount').textContent = data.amount;
                     document.getElementById('success-ref').textContent = currentPayment ? currentPayment.reference_number : '';
-                    currentPayment = null;
-                    showState('state-success');
 
-                    // Go back to waiting after 5 seconds
+                    // Format date/time
+                    const now = new Date();
+                    const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                    const dateStr = now.toLocaleDateString('en-PH', options);
+                    const timeStr = now.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    document.getElementById('success-datetime').textContent = `${dateStr} • ${timeStr}`;
+
+                    currentPayment = null;
+                    showScreen('screen-success');
+
+                    // Auto return to home after 6 seconds
                     setTimeout(() => {
-                        showWaiting();
-                    }, 5000);
+                        if (document.getElementById('screen-success').classList.contains('active')) {
+                            goHome();
+                        }
+                    }, 6000);
                 } else {
-                    // Payment error
-                    document.getElementById('error-msg').textContent = data.error || 'Payment failed';
-                    showState('state-error');
+                    document.getElementById('error-msg').textContent = data.error || 'Payment failed. Please try again.';
+                    showScreen('screen-error');
                 }
             } catch (e) {
-                document.getElementById('error-msg').textContent = 'Connection error. Please try again.';
-                showState('state-error');
+                document.getElementById('error-msg').textContent = 'Connection error. Please check your internet and try again.';
+                showScreen('screen-error');
             }
         }
 
-        function resetPhone() {
-            currentPayment = null;
-            showWaiting();
-        }
+        // ── Initialize ──────────────────────────────────────────────────────────
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            setTheme('gcash'); // default theme
             startPolling();
+            updateHomeState();
         });
     </script>
 </body>

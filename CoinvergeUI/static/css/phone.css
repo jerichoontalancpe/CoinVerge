@@ -1,7 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   CoinVerge — Phone Mockup Stylesheet
-   Simulates a GCash/Maya mobile payment app
-   Philippine-themed: GCash blue (#007bff) / Maya green (#00b900)
+   CoinVerge — Phone App Stylesheet
+   Realistic GCash/Maya mobile payment app for panel demo
    ═══════════════════════════════════════════════════════════════════════════ */
 
 * {
@@ -11,50 +10,74 @@
 }
 
 :root {
-    --gcash-blue: #007bff;
-    --gcash-blue-dark: #0056b3;
-    --gcash-blue-light: #e6f2ff;
-    --maya-green: #00b900;
-    --maya-green-dark: #008a00;
-    --maya-green-light: #e6ffe6;
-    --bg: #f5f5f5;
+    --primary: #007bff;
+    --primary-dark: #0056b3;
+    --primary-light: #e8f4ff;
+    --bg: #f4f6f9;
     --card-bg: #ffffff;
     --text: #1a1a2e;
-    --text-dim: #666;
-    --text-light: #999;
+    --text-dim: #6b7280;
+    --text-light: #9ca3af;
     --success: #00c853;
-    --danger: #e53935;
+    --success-dark: #00a844;
+    --danger: #ef4444;
     --radius: 16px;
+    --radius-sm: 12px;
+    --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Theme: GCash (Blue) ─────────────────────────────────────────────────── */
+body.theme-gcash {
+    --primary: #007bff;
+    --primary-dark: #0056b3;
+    --primary-light: #e8f4ff;
+}
+
+/* ── Theme: Maya (Green) ─────────────────────────────────────────────────── */
+body.theme-maya {
+    --primary: #00b900;
+    --primary-dark: #008a00;
+    --primary-light: #e6ffe6;
 }
 
 html, body {
     width: 100%;
     height: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    background: #1a1a2e;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
 }
 
-/* ── Phone Frame ─────────────────────────────────────────────────────────── */
+/* ── Phone App Container ─────────────────────────────────────────────────── */
 
-.phone-frame {
+.phone-app {
     width: 100%;
     max-width: 390px;
-    min-height: 680px;
+    height: 100vh;
     max-height: 844px;
-    height: 90vh;
+    min-height: 700px;
     background: var(--bg);
-    border-radius: 40px;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 
-        0 0 0 3px #333,
-        0 0 0 6px #1a1a1a,
-        0 20px 60px rgba(0, 0, 0, 0.5);
     position: relative;
+    overflow: hidden;
+}
+
+/* On desktop, simulate phone bezel */
+@media (min-width: 500px) {
+    body { padding: 20px; background: #1a1a2e; }
+    .phone-app {
+        height: 90vh;
+        border-radius: 44px;
+        box-shadow:
+            0 0 0 3px #2a2a2a,
+            0 0 0 7px #1a1a1a,
+            0 25px 60px rgba(0, 0, 0, 0.5);
+    }
 }
 
 /* ── Status Bar ──────────────────────────────────────────────────────────── */
@@ -63,153 +86,453 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 24px 8px;
-    font-size: 0.8rem;
+    padding: 14px 28px 6px;
+    font-size: 0.82rem;
     font-weight: 600;
-    color: #333;
-    background: var(--card-bg);
+    color: #fff;
+    background: var(--primary);
+    position: relative;
+    z-index: 10;
 }
 
-.status-icons {
-    font-size: 0.75rem;
-    letter-spacing: 4px;
+.status-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+}
+
+.status-icon {
+    opacity: 0.9;
+}
+
+/* ── Screens ─────────────────────────────────────────────────────────────── */
+
+.app-screen {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+.app-screen.active {
+    display: flex;
+    animation: screenFadeIn 0.25s ease;
+}
+
+@keyframes screenFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── App Header ──────────────────────────────────────────────────────────── */
 
 .app-header {
-    background: var(--gcash-blue);
-    padding: 20px 24px;
-    text-align: center;
+    background: var(--primary);
+    padding: 16px 24px 24px;
+    color: #fff;
     transition: background 0.3s;
 }
-.app-header.gcash { background: var(--gcash-blue); }
-.app-header.maya { background: var(--maya-green); }
 
-.app-logo {
-    font-size: 2rem;
-    margin-bottom: 4px;
-}
-
-.app-title {
-    color: #fff;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-/* ── Phone States ────────────────────────────────────────────────────────── */
-
-.phone-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    text-align: center;
-}
-.phone-state.hidden { display: none; }
-
-/* ── Waiting State ───────────────────────────────────────────────────────── */
-
-.waiting-icon {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-#state-waiting h2 {
-    font-size: 1.2rem;
-    color: var(--text);
-    margin-bottom: 0.5rem;
-}
-
-.waiting-sub {
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    line-height: 1.4;
-    max-width: 260px;
-}
-
-.waiting-dots {
-    display: flex;
-    gap: 6px;
-    margin-top: 1.5rem;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--gcash-blue);
-    animation: dotPulse 1.4s ease-in-out infinite;
-}
-.dot:nth-child(2) { animation-delay: 0.2s; }
-.dot:nth-child(3) { animation-delay: 0.4s; }
-
-/* ── Payment Ready State ─────────────────────────────────────────────────── */
-
-.payment-card {
-    width: 100%;
-    background: var(--card-bg);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    border-top: 4px solid var(--gcash-blue);
-    margin-bottom: 24px;
-}
-.payment-card.gcash { border-top-color: var(--gcash-blue); }
-.payment-card.maya { border-top-color: var(--maya-green); }
-
-.payment-method {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 16px;
-    color: #fff;
-    background: var(--gcash-blue);
-}
-.payment-method.gcash { background: var(--gcash-blue); }
-.payment-method.maya { background: var(--maya-green); }
-
-.payment-amount-section {
-    text-align: center;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px dashed #ddd;
-}
-
-.payment-label {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    margin-bottom: 4px;
-}
-
-.payment-amount {
-    font-size: 3rem;
-    font-weight: 800;
-    color: var(--text);
-}
-
-.payment-details {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.detail-row {
+.header-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.detail-label {
+.app-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.brand-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.header-bell {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+/* ── Payment Header (inner pages) ────────────────────────────────────────── */
+
+.payment-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px 16px;
+}
+
+.back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.back-btn:active { background: rgba(255, 255, 255, 0.25); }
+
+.header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.header-spacer { width: 36px; }
+
+/* ── Home Screen Content ─────────────────────────────────────────────────── */
+
+.home-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* User Card */
+.user-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-greeting {
     font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.user-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.user-number {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Balance Card */
+.balance-card {
+    background: var(--primary);
+    border-radius: var(--radius);
+    padding: 24px;
+    color: #fff;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.balance-card::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.balance-label {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-bottom: 6px;
+}
+
+.balance-amount {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 20px;
+}
+
+.peso-sign {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-right: 4px;
+    opacity: 0.9;
+}
+
+.balance-value {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.balance-actions {
+    display: flex;
+    gap: 0;
+    justify-content: space-around;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.bal-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.bal-action-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+/* Pending Notification */
+.pending-notification {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary);
+    animation: slideInNotif 0.4s ease;
+}
+.pending-notification.hidden { display: none; }
+
+@keyframes slideInNotif {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.pending-icon {
+    font-size: 1.5rem;
+}
+
+.pending-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pending-title {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.pending-merchant {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.pending-amount {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+/* Pay Button (Home) */
+.home-pay-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 18px 20px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.35);
+    transition: transform 0.1s, box-shadow 0.2s;
+    animation: pulseBtn 2s ease-in-out infinite;
+}
+.home-pay-btn.hidden { display: none; }
+.home-pay-btn:active {
+    transform: scale(0.97);
+    box-shadow: 0 3px 10px rgba(0, 123, 255, 0.25);
+}
+
+@keyframes pulseBtn {
+    0%, 100% { box-shadow: 0 6px 20px rgba(0, 123, 255, 0.35); }
+    50% { box-shadow: 0 6px 30px rgba(0, 123, 255, 0.5); }
+}
+
+.pay-btn-icon { font-size: 1.4rem; }
+.pay-btn-text { flex: 1; text-align: left; font-size: 1.1rem; font-weight: 700; }
+.pay-btn-arrow { font-size: 1.3rem; opacity: 0.8; }
+
+/* Waiting State */
+.waiting-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    gap: 16px;
+}
+.waiting-state.hidden { display: none; }
+
+.waiting-text {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.waiting-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: dotBounce 1.4s ease-in-out infinite;
+}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotBounce {
+    0%, 100% { transform: scale(0.7); opacity: 0.4; }
+    50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* ── Payment Screen ──────────────────────────────────────────────────────── */
+
+.payment-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+    overflow-y: auto;
+}
+
+.merchant-section {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.merchant-avatar {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--primary);
+}
+
+.merchant-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.merchant-type {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 2px;
+}
+
+.amount-display {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 28px;
+}
+
+.amount-peso {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-right: 2px;
+}
+
+.amount-value {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -1px;
+}
+
+.amount-decimal {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+/* Payment Details Card */
+.payment-details-card {
+    width: 100%;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 0;
+}
+
+.detail-label {
+    font-size: 0.85rem;
     color: var(--text-dim);
 }
 
@@ -217,86 +540,235 @@ html, body {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text);
+    text-align: right;
 }
 
-/* ── Pay Button ──────────────────────────────────────────────────────────── */
+.detail-divider {
+    height: 1px;
+    background: #f0f0f0;
+}
 
-.pay-btn {
+.source-item {
+    flex-direction: column;
+    gap: 6px;
+}
+
+.source-info {
+    display: flex;
+    justify-content: space-between;
     width: 100%;
-    padding: 16px;
-    border-radius: 12px;
+    align-items: center;
+}
+
+.source-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.source-balance {
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+/* Confirm Button */
+.confirm-pay-btn {
+    width: 100%;
+    padding: 18px;
+    border-radius: var(--radius-sm);
     border: none;
-    background: var(--gcash-blue);
+    background: var(--primary);
     color: #fff;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 800;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     cursor: pointer;
     transition: transform 0.1s, opacity 0.2s;
+    box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
+    position: relative;
 }
-.pay-btn.gcash { background: var(--gcash-blue); }
-.pay-btn.maya { background: var(--maya-green); }
-.pay-btn:active { transform: scale(0.97); }
-.pay-btn:disabled {
-    opacity: 0.6;
+.confirm-pay-btn:active { transform: scale(0.97); }
+.confirm-pay-btn:disabled {
+    opacity: 0.7;
     cursor: not-allowed;
     transform: none;
 }
 
-.pay-disclaimer {
-    font-size: 0.7rem;
-    color: var(--text-light);
-    margin-top: 12px;
+.confirm-text { display: inline; }
+.confirm-text.hidden { display: none; }
+
+.confirm-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.confirm-loading.hidden { display: none; }
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
 }
 
-/* ── Success State ───────────────────────────────────────────────────────── */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
 
-.success-icon {
-    width: 80px;
-    height: 80px;
+.security-notice {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 16px;
+    text-align: center;
+}
+
+/* ── Success Screen ──────────────────────────────────────────────────────── */
+
+.success-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    text-align: center;
+    background: #fff;
+}
+
+.success-check-container {
+    margin-bottom: 24px;
+    animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes successPop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.success-circle {
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
-    background: var(--success);
-    color: #fff;
-    font-size: 2.5rem;
-    font-weight: 800;
+    background: rgba(0, 200, 83, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
-    animation: popIn 0.4s ease;
+}
+
+.check-svg .check-circle {
+    stroke-dasharray: 180;
+    stroke-dashoffset: 180;
+    animation: drawCircle 0.6s ease forwards 0.2s;
+}
+
+.check-svg .check-path {
+    stroke-dasharray: 50;
+    stroke-dashoffset: 50;
+    animation: drawCheck 0.4s ease forwards 0.7s;
+}
+
+@keyframes drawCircle {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
 }
 
 .success-title {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+    font-weight: 800;
     color: var(--success);
-    margin-bottom: 0.5rem;
+    margin-bottom: 4px;
+}
+
+.success-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+}
+
+.success-amount-display {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    margin-bottom: 28px;
+}
+
+.success-peso {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text);
 }
 
 .success-amount {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 800;
     color: var(--text);
-    margin-bottom: 0.75rem;
 }
 
-.success-sub {
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    line-height: 1.5;
-}
-
-.success-ref {
-    margin-top: 1.5rem;
-    padding: 8px 16px;
-    background: #f0f0f0;
-    border-radius: 8px;
-    font-size: 0.8rem;
+.success-decimal {
+    font-size: 1.6rem;
+    font-weight: 600;
     color: var(--text-dim);
 }
 
-/* ── Error State ─────────────────────────────────────────────────────────── */
+.success-details {
+    width: 100%;
+    background: #f9fafb;
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    margin-bottom: 28px;
+}
 
-.error-icon {
+.success-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 0.85rem;
+}
+
+.success-detail-row span:first-child {
+    color: var(--text-dim);
+}
+
+.success-detail-row span:last-child {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.done-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--success);
+    background: var(--success);
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.done-btn:active { transform: scale(0.97); }
+
+/* ── Error Screen ────────────────────────────────────────────────────────── */
+
+.error-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    text-align: center;
+    background: #fff;
+}
+
+.error-circle {
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -307,70 +779,96 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 20px;
+    animation: successPop 0.4s ease;
 }
 
 .error-title {
     font-size: 1.4rem;
+    font-weight: 800;
     color: var(--danger);
-    margin-bottom: 0.5rem;
+    margin-bottom: 8px;
 }
 
 .error-msg {
     color: var(--text-dim);
     font-size: 0.9rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 28px;
+    line-height: 1.5;
 }
 
 .retry-btn {
-    padding: 12px 32px;
-    border-radius: 10px;
-    border: 2px solid var(--gcash-blue);
-    background: transparent;
-    color: var(--gcash-blue);
+    padding: 14px 40px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--primary);
+    background: var(--primary);
+    color: #fff;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
+    transition: transform 0.1s;
 }
-.retry-btn:active {
-    background: var(--gcash-blue-light);
+.retry-btn:active { transform: scale(0.97); }
+
+/* ── Bottom Navigation ───────────────────────────────────────────────────── */
+
+.bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0 14px;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    position: relative;
+    z-index: 10;
+}
+.bottom-nav.hidden { display: none; }
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    color: var(--text-light);
+    padding: 4px 12px;
 }
 
-/* ── Animations ──────────────────────────────────────────────────────────── */
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
+.nav-item.active {
+    color: var(--primary);
 }
 
-@keyframes dotPulse {
-    0%, 100% { transform: scale(1); opacity: 0.4; }
-    50% { transform: scale(1.4); opacity: 1; }
+.nav-item svg {
+    width: 22px;
+    height: 22px;
 }
 
-@keyframes popIn {
-    0% { transform: scale(0); }
-    80% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
+/* ── Utility ─────────────────────────────────────────────────────────────── */
 
-/* ── Responsive: small phones ────────────────────────────────────────────── */
+.hidden { display: none !important; }
 
-@media (max-height: 600px) {
-    .phone-frame {
+/* ── Responsive: actual phone (no bezel needed) ──────────────────────────── */
+
+@media (max-width: 420px) {
+    body {
+        background: var(--bg);
+        padding: 0;
+    }
+    .phone-app {
+        max-height: none;
         min-height: auto;
         height: 100vh;
+        height: 100dvh;
         border-radius: 0;
         box-shadow: none;
     }
-    .payment-amount { font-size: 2.2rem; }
-    .payment-card { padding: 16px; }
 }
 
-/* ── When viewed on desktop — add some breathing room ────────────────────── */
-
-@media (min-width: 500px) {
-    body {
-        padding: 20px;
-    }
+/* Small phone screens */
+@media (max-height: 680px) {
+    .balance-amount { margin-bottom: 14px; }
+    .balance-value { font-size: 2rem; }
+    .home-content { padding: 14px; gap: 12px; }
+    .amount-value { font-size: 2.8rem; }
+    .user-card { padding: 12px; }
 }

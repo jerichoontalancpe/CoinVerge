@@ -353,6 +353,8 @@ html, body {
     margin-bottom: 1.5rem;
 }
 
+/* ── Branded Method Buttons ──────────────────────────────────────────────── */
+
 .epay-methods {
     display: flex;
     gap: 20px;
@@ -361,29 +363,59 @@ html, body {
 }
 
 .epay-method-btn {
-    width: 140px;
+    width: 160px;
     height: 120px;
     border-radius: var(--radius);
-    border: 2px solid var(--ph-gold-dim);
-    background: var(--bg-card);
-    color: var(--text);
+    border: none;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: transform 0.1s, border-color 0.2s;
+    gap: 10px;
+    transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 .epay-method-btn:active {
     transform: scale(0.95);
-    border-color: var(--ph-gold);
 }
-.epay-method-btn.gcash { border-color: #007bff; }
-.epay-method-btn.maya { border-color: #00b300; }
 
-.epay-method-icon { font-size: 2.5rem; }
-.epay-method-name { font-size: 1.1rem; font-weight: 700; }
+.epay-method-btn.gcash-brand {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: #fff;
+}
+.epay-method-btn.gcash-brand:active {
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.5);
+}
+
+.epay-method-btn.maya-brand {
+    background: linear-gradient(135deg, #00b900, #008a00);
+    color: #fff;
+}
+.epay-method-btn.maya-brand:active {
+    box-shadow: 0 2px 8px rgba(0, 185, 0, 0.5);
+}
+
+.epay-method-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #fff;
+}
+
+.epay-method-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ── E-Payment Amounts ───────────────────────────────────────────────────── */
 
 .epay-amounts {
     display: flex;
@@ -467,47 +499,100 @@ html, body {
     background: rgba(0, 200, 83, 0.3);
 }
 
-.epay-amount-display {
-    color: var(--ph-gold);
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-top: 0.5rem;
+/* ── QR Code Display ─────────────────────────────────────────────────────── */
+
+.epay-qr-method-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
 }
+.epay-qr-method-label.gcash { color: #007bff; }
+.epay-qr-method-label.maya { color: #00b900; }
 
 .epay-qr-box {
-    margin: 1rem 0;
+    margin: 0.75rem 0;
     text-align: center;
 }
 
 .epay-qr-placeholder {
-    width: 160px;
-    height: 160px;
+    width: 180px;
+    height: 180px;
     margin: 0 auto;
     background: #fff;
-    border-radius: 8px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 10px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 3px solid rgba(255, 255, 255, 0.1);
 }
 
-.qr-fake {
-    font-family: monospace;
-    font-size: 1rem;
-    line-height: 1.2;
-    color: #000;
-    letter-spacing: 2px;
+.qr-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.epay-qr-info {
+    margin-top: 0.75rem;
+}
+
+.epay-amount-display {
+    color: var(--ph-gold);
+    font-size: 1.3rem;
+    font-weight: 800;
+    margin-bottom: 0.25rem;
 }
 
 .epay-ref {
     color: var(--text-dim);
     font-size: 0.85rem;
-    margin-top: 0.75rem;
 }
 
 .epay-processing {
     color: var(--ph-gold);
     font-size: 1.1rem;
     font-weight: 600;
-    margin-top: 1rem;
+    margin-top: 0.75rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ── Payment Confirmed Screen ────────────────────────────────────────────── */
+
+.epay-confirmed-content {
+    text-align: center;
+    animation: confirmedFadeIn 0.4s ease;
+}
+
+@keyframes confirmedFadeIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.epay-confirmed-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--success);
+    color: #fff;
+    font-size: 3.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 30px rgba(0, 200, 83, 0.4);
+}
+
+.epay-confirmed-title {
+    font-size: 1.8rem;
+    color: var(--success);
+    margin-bottom: 0.5rem;
+}
+
+.epay-confirmed-sub {
+    font-size: 1.1rem;
+    color: var(--text-dim);
 }

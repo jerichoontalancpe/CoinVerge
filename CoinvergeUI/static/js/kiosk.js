@@ -118,8 +118,13 @@ function handleEvent(ev) {
                     clearInterval(epayPollTimer);
                     epayPollTimer = null;
                 }
-                document.getElementById("epay-processing-msg").textContent = "✅ Payment received!";
-                setTimeout(() => showPicker(), 800);
+                // Show confirmed transition screen
+                document.getElementById("epay-step-qr").classList.add("hidden");
+                document.getElementById("epay-step-confirmed").classList.remove("hidden");
+                setTimeout(() => {
+                    document.getElementById("epay-step-confirmed").classList.add("hidden");
+                    showPicker();
+                }, 2000);
             }
             break;
         case "dispensed":
@@ -423,6 +428,7 @@ function showEpay() {
     document.getElementById("epay-step-method").classList.remove("hidden");
     document.getElementById("epay-step-amount").classList.add("hidden");
     document.getElementById("epay-step-qr").classList.add("hidden");
+    document.getElementById("epay-step-confirmed").classList.add("hidden");
     showScreen("epay");
 }
 
@@ -442,6 +448,8 @@ function cancelEpay() {
 function selectEpayMethod(method) {
     state.epayMethod = method;
     document.getElementById("epay-method-label").textContent = method === "gcash" ? "GCash" : "Maya";
+    document.getElementById("epay-qr-method-label").textContent = method === "gcash" ? "Pay with GCash" : "Pay with Maya";
+    document.getElementById("epay-qr-method-label").className = "epay-qr-method-label " + method;
     document.getElementById("epay-step-method").classList.add("hidden");
     document.getElementById("epay-step-amount").classList.remove("hidden");
 }
@@ -496,8 +504,13 @@ function startEpayPolling() {
             if (data === null && state.screen === "epay") {
                 clearInterval(epayPollTimer);
                 epayPollTimer = null;
-                document.getElementById("epay-processing-msg").textContent = "✅ Payment received!";
-                setTimeout(() => showPicker(), 800);
+                // Show confirmed transition screen
+                document.getElementById("epay-step-qr").classList.add("hidden");
+                document.getElementById("epay-step-confirmed").classList.remove("hidden");
+                setTimeout(() => {
+                    document.getElementById("epay-step-confirmed").classList.add("hidden");
+                    showPicker();
+                }, 2000);
             }
         } catch (e) { /* silent */ }
     }, 1500);
@@ -518,8 +531,13 @@ async function confirmEpayManual() {
                 epayPollTimer = null;
             }
             state.balance = data.balance;
-            document.getElementById("epay-processing-msg").textContent = "✅ Payment received!";
-            setTimeout(() => showPicker(), 800);
+            // Show confirmed transition screen
+            document.getElementById("epay-step-qr").classList.add("hidden");
+            document.getElementById("epay-step-confirmed").classList.remove("hidden");
+            setTimeout(() => {
+                document.getElementById("epay-step-confirmed").classList.add("hidden");
+                showPicker();
+            }, 2000);
         } else {
             toast(data.error || "Payment failed");
         }
