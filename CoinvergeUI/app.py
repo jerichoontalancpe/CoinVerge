@@ -95,6 +95,10 @@ class ESP32Connection:
         if line.startswith("BILL:"):
             try:
                 amount = int(line.split(":")[1])
+                # Ignore bills during maintenance mode
+                if get_maintenance_mode():
+                    print(f"[ESP32] Bill ignored (maintenance mode)")
+                    return
                 self.balance += amount
                 self._notify("bill", {"amount": amount, "balance": self.balance})
             except ValueError:
@@ -263,6 +267,9 @@ def api_dispense():
 def api_simulate_bill():
     if not esp32.simulate:
         return jsonify({"error": "Only available in simulation mode"}), 403
+
+    if get_maintenance_mode():
+        return jsonify({"error": "Machine is under maintenance"}), 503
 
     data = request.get_json()
     amount = data.get("amount", 0)
