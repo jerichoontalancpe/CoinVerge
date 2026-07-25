@@ -252,6 +252,11 @@ def api_dispense():
         "total_coins": sum(int_combo.values()),
     }
 
+    # Sync ESP32 balance before dispensing (needed for e-payment where no physical bill)
+    esp32.send_command(f"CREDIT:{bill_value}")
+    import time as _time
+    _time.sleep(0.1)  # give ESP32 a moment to process CREDIT
+
     esp32.send_command(cmd)
     esp32.balance = 0
 

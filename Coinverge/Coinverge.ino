@@ -268,6 +268,21 @@ void processCommand(String cmd) {
         Serial.println("RESET:OK");
         Serial.printf("Total Money: %d\n", g_totalMoney);
 
+    // ── CREDIT:<amount> — set balance from RPi (for e-payment) ──
+    } else if (upper.startsWith("CREDIT:")) {
+        int amount = upper.substring(7).toInt();
+        if (amount > 0 && amount <= MAX_BILL_VALUE) {
+            g_totalMoney = amount;
+            Serial.printf("CREDIT:OK:%d\n", amount);
+            Serial.printf("Total Money: %d\n", g_totalMoney);
+            // Disable bill acceptor since balance is set
+            if (BILL_INHIBIT_PIN >= 0) {
+                digitalWrite(BILL_INHIBIT_PIN, BILL_INHIBIT_ACTIVE);
+            }
+        } else {
+            Serial.printf("CREDIT:ERROR:INVALID_AMOUNT:%d\n", amount);
+        }
+
 #if DEBUG_MODE
     // ── DEBUG-ONLY COMMANDS ──────────────────────────────────
     } else if (upper.startsWith("BILL ")) {
