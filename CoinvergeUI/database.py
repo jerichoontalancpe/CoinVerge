@@ -46,7 +46,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS stock (
             denomination INTEGER PRIMARY KEY,
             current_count INTEGER NOT NULL DEFAULT 0,
-            max_capacity INTEGER NOT NULL DEFAULT 2000
+            max_capacity INTEGER NOT NULL DEFAULT 1000
         );
 
         CREATE TABLE IF NOT EXISTS settings (
@@ -68,10 +68,21 @@ def init_db():
             count_result INTEGER NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS stock_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+            denomination INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            new_total INTEGER NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_transactions_timestamp
             ON transactions(timestamp);
         CREATE INDEX IF NOT EXISTS idx_stock_counts_timestamp
             ON stock_counts(timestamp);
+        CREATE INDEX IF NOT EXISTS idx_stock_events_timestamp
+            ON stock_events(timestamp);
     """)
 
     # Add fee column if upgrading from old schema
@@ -90,14 +101,16 @@ def init_db():
     cursor = conn.execute("SELECT COUNT(*) FROM stock")
     if cursor.fetchone()[0] == 0:
         conn.executemany("INSERT INTO stock (denomination, current_count, max_capacity) VALUES (?, ?, ?)", [
-            (1, 2000, 2000),
-            (5, 2000, 2000),
-            (10, 2000, 2000),
-            (20, 2000, 2000),
+            (1, 1000, 1000),
+            (5, 1000, 1000),
+            (10, 1000, 1000),
+            (20, 1000, 1000),
         ])
     else:
-        # Update max_capacity to 2000 for existing databases
-        conn.execute("UPDATE stock SET max_capacity = 2000 WHERE max_capacity < 2000")
+        # Update max_capacity to 1000 for existing databases
+        conn.execute("UPDATE stock SET max_capacity = 1000")
+        # Cap current_count at max_capacity
+        conn.execute("UPDATE stock SET current_count = 1000 WHERE current_count > 1000")
 
     # Initialize fee tiers if empty
     cursor = conn.execute("SELECT COUNT(*) FROM fee_tiers")
@@ -439,6 +452,51 @@ def get_stock_counts_by_date(start_date=None, end_date=None):
     else:
         rows = conn.execute(
             "SELECT * FROM stock_counts ORDER BY timestamp DESC"
+        ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+# ── Stock Event Functions ────────────────────────────────────────────────────
+
+def log_stock_event(denomination, event_type, amount, new_total):
+    """Log a stock event (add or count)."""
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO stock_events (denomination, type, amount, new_total) VALUES (?, ?, ?, ?)",
+        (denomination, event_type, amount, new_total)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_stock_events(limit=20):
+    """Get recent stock events."""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM stock_events ORDER BY timestamp DESC LIMIT ?",
+        (limit,)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_stock_events_by_date(start_date=None, end_date=None):
+    """Get stock events within a date range."""
+    conn = get_db()
+    if start_date and end_date:
+        rows = conn.execute(
+            "SELECT * FROM stock_events WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC",
+            (start_date, end_date + " 23:59:59")
+        ).fetchall()
+    elif start_date:
+        rows = conn.execute(
+            "SELECT * FROM stock_events WHERE timestamp >= ? ORDER BY timestamp DESC",
+            (start_date,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM stock_events ORDER BY timestamp DESC"
         ).fetchall()
     conn.close()
     return [dict(r) for r in rows]

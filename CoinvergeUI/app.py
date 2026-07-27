@@ -23,6 +23,7 @@ from database import (
     set_setting, get_maintenance_mode, set_maintenance_mode,
     get_low_stock_denominations, get_fee, get_fee_tiers, set_fee_tiers,
     log_stock_count, get_stock_counts, get_stock_counts_by_date,
+    log_stock_event, get_stock_events, get_stock_events_by_date,
     REFILL_THRESHOLD
 )
 
@@ -135,7 +136,7 @@ class ESP32Connection:
                 stock = get_stock()
                 denom_stock = stock.get(amount, {})
                 current = denom_stock.get("current", 0)
-                max_cap = denom_stock.get("max", 2000)
+                max_cap = denom_stock.get("max", 1000)
                 new_count = min(current + 1, max_cap)
                 db_update_stock(amount, new_count)
                 print(f"[COIN] ₱{amount} deposited → stock {current} → {new_count}")
@@ -184,6 +185,7 @@ class ESP32Connection:
                 if denom > 0:
                     update_stock(denom, total)
                     log_stock_count(denom, total)
+                    log_stock_event(denom, "count", total, total)
                     print(f"[COUNT] Stock updated: ₱{denom} = {total} coins")
                 self._notify("count_done", {"denomination": denom, "total": total})
             except (ValueError, IndexError):
@@ -295,7 +297,7 @@ class ESP32Connection:
             stock = get_stock()
             denom_stock = stock.get(amount, {})
             current = denom_stock.get("current", 0)
-            max_cap = denom_stock.get("max", 2000)
+            max_cap = denom_stock.get("max", 1000)
             new_count = min(current + 1, max_cap)
             update_stock(amount, new_count)
             print(f"[SIM][COIN] ₱{amount} deposited → stock {current} → {new_count}")
@@ -711,7 +713,7 @@ def api_admin_machine():
 
 @app.route("/api/admin/set_stock", methods=["POST"])
 def api_admin_set_stock():
-    """Manually set stock count for a denomination."""
+    """Manually set stock count for a denomination (backward compatibility)."""
     if not require_admin():
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -726,6 +728,38 @@ def api_admin_set_stock():
 
     update_stock(denom, count)
     return jsonify({"status": "ok", "stock": get_stock()})
+
+
+@app.route("/api/admin/add_stock", methods=["POST"])
+def api_admin_add_stock():
+    """Add coins to a hopper (adds to current count, capped at 1000)."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    denom = int(data.get("denomination", 0))
+    amount = int(data.get("amount", 0))
+
+    if denom not in [1, 5, 10, 20]:
+        return jsonify({"error": "Invalid denomination"}), 400
+    if amount <= 0:
+        return jsonify({"error": "Amount must be positive"}), 400
+
+    stock = get_stock()
+    current = stock.get(denom, {}).get("current", 0)
+    max_capacity = 1000
+    new_total = min(current + amount, max_capacity)
+    actually_added = new_total - current
+
+    update_stock(denom, new_total)
+    log_stock_event(denom, "add", actually_added, new_total)
+
+    return jsonify({
+        "status": "ok",
+        "previous": current,
+        "added": actually_added,
+        "new_total": new_total
+    })
 
 
 @app.route("/api/admin/count_coins", methods=["POST"])
@@ -970,6 +1004,7 @@ def api_admin_export_csv():
 
     transactions = get_transactions_by_date(start_date, end_date)
     stock_count_records = get_stock_counts_by_date(start_date, end_date)
+    stock_event_records = get_stock_events_by_date(start_date, end_date)
 
     # Format period string
     if start_date and end_date:
@@ -1037,6 +1072,18 @@ def api_admin_export_csv():
         for sc in stock_count_records:
             output.write(f"{sc['timestamp']},₱{sc['denomination']},{sc['count_result']} coins\n")
 
+    # Inventory Activity section
+    if stock_event_records:
+        output.write("\n")
+        output.write("INVENTORY ACTIVITY\n")
+        output.write("Date/Time,Denomination,Type,Amount,New Total\n")
+        for ev in stock_event_records:
+            ev_type = ev['type'].capitalize()
+            if ev['type'] == 'add':
+                output.write(f"{ev['timestamp']},₱{ev['denomination']},Restocked,+{ev['amount']},{ev['new_total']} coins\n")
+            else:
+                output.write(f"{ev['timestamp']},₱{ev['denomination']},Counted,{ev['amount']},{ev['new_total']} coins\n")
+
     csv_data = output.getvalue()
     filename = f"coinverge_report_{start_date or 'all'}_{end_date or 'all'}.csv"
     return Response(
@@ -1069,6 +1116,7 @@ def api_admin_export_html():
 
     transactions = get_transactions_by_date(start_date, end_date)
     stock_count_records = get_stock_counts_by_date(start_date, end_date)
+    stock_event_records = get_stock_events_by_date(start_date, end_date)
 
     # Format period string
     if start_date and end_date:
@@ -1138,6 +1186,37 @@ def api_admin_export_html():
                     <tr><th>Date/Time</th><th>Denomination</th><th>Count</th><th>Value</th></tr>
                 </thead>
                 <tbody>{sc_rows}</tbody>
+            </table>
+        </div>
+        """
+
+    # Build inventory activity rows
+    inv_rows = ""
+    if stock_event_records:
+        for ev in stock_event_records:
+            if ev['type'] == 'add':
+                desc = f"+{ev['amount']} coins (total: {ev['new_total']})"
+                ev_label = "Restocked"
+            else:
+                desc = f"{ev['amount']} coins"
+                ev_label = "Counted"
+            inv_rows += f"""<tr>
+                <td>{ev['timestamp']}</td>
+                <td>₱{ev['denomination']}</td>
+                <td>{ev_label}</td>
+                <td>{desc}</td>
+            </tr>"""
+
+    inventory_section = ""
+    if stock_event_records:
+        inventory_section = f"""
+        <div class="section">
+            <h2>📦 Inventory Activity</h2>
+            <table>
+                <thead>
+                    <tr><th>Date/Time</th><th>Denomination</th><th>Type</th><th>Details</th></tr>
+                </thead>
+                <tbody>{inv_rows}</tbody>
             </table>
         </div>
         """
@@ -1286,6 +1365,8 @@ def api_admin_export_html():
 
     {stock_counts_section}
 
+    {inventory_section}
+
     <div class="footer">
         CoinVerge Coin Exchange Kiosk System • Report generated {generated_str}
     </div>
@@ -1303,6 +1384,16 @@ def api_admin_stock_counts():
     limit = int(request.args.get("limit", 20))
     counts = get_stock_counts(limit)
     return jsonify(counts)
+
+
+@app.route("/api/admin/stock_events")
+def api_admin_stock_events():
+    """Get recent stock events (add and count)."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    limit = int(request.args.get("limit", 20))
+    events = get_stock_events(limit)
+    return jsonify(events)
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────

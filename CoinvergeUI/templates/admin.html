@@ -72,11 +72,11 @@
                         </div>
                     </div>
                     <div class="hopper-stats">
-                        <div class="hopper-count"><span id="scount-1">0</span> / <span id="smax-1">2,000</span></div>
+                        <div class="hopper-count"><span id="scount-1">0</span> / <span id="smax-1">1,000</span></div>
                         <div class="hopper-value" id="svalue-1">₱0</div>
                     </div>
                     <div class="hopper-actions">
-                        <button class="set-btn" onclick="setStockManual(1)">Set</button>
+                        <button class="set-btn" onclick="addStock(1)">+ Add</button>
                         <button class="count-btn" onclick="startCount(1)">🔢 Count</button>
                     </div>
                 </div>
@@ -93,11 +93,11 @@
                         </div>
                     </div>
                     <div class="hopper-stats">
-                        <div class="hopper-count"><span id="scount-5">0</span> / <span id="smax-5">2,000</span></div>
+                        <div class="hopper-count"><span id="scount-5">0</span> / <span id="smax-5">1,000</span></div>
                         <div class="hopper-value" id="svalue-5">₱0</div>
                     </div>
                     <div class="hopper-actions">
-                        <button class="set-btn" onclick="setStockManual(5)">Set</button>
+                        <button class="set-btn" onclick="addStock(5)">+ Add</button>
                         <button class="count-btn" onclick="startCount(5)">🔢 Count</button>
                     </div>
                 </div>
@@ -114,11 +114,11 @@
                         </div>
                     </div>
                     <div class="hopper-stats">
-                        <div class="hopper-count"><span id="scount-10">0</span> / <span id="smax-10">2,000</span></div>
+                        <div class="hopper-count"><span id="scount-10">0</span> / <span id="smax-10">1,000</span></div>
                         <div class="hopper-value" id="svalue-10">₱0</div>
                     </div>
                     <div class="hopper-actions">
-                        <button class="set-btn" onclick="setStockManual(10)">Set</button>
+                        <button class="set-btn" onclick="addStock(10)">+ Add</button>
                         <button class="count-btn" onclick="startCount(10)">🔢 Count</button>
                     </div>
                 </div>
@@ -135,11 +135,11 @@
                         </div>
                     </div>
                     <div class="hopper-stats">
-                        <div class="hopper-count"><span id="scount-20">0</span> / <span id="smax-20">2,000</span></div>
+                        <div class="hopper-count"><span id="scount-20">0</span> / <span id="smax-20">1,000</span></div>
                         <div class="hopper-value" id="svalue-20">₱0</div>
                     </div>
                     <div class="hopper-actions">
-                        <button class="set-btn" onclick="setStockManual(20)">Set</button>
+                        <button class="set-btn" onclick="addStock(20)">+ Add</button>
                         <button class="count-btn" onclick="startCount(20)">🔢 Count</button>
                     </div>
                 </div>
@@ -219,6 +219,12 @@
                 <h3>📊 Recent Stock Counts</h3>
                 <div class="stock-counts-list" id="stock-counts-list">
                     <p class="no-data">No stock counts recorded yet</p>
+                </div>
+            </div>
+            <div class="report-inventory-activity" id="report-inventory-activity">
+                <h3>📦 Inventory Activity</h3>
+                <div class="inventory-activity-list" id="inventory-activity-list">
+                    <p class="no-data">No inventory activity recorded yet</p>
                 </div>
             </div>
         </div>

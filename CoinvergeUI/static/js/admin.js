@@ -164,19 +164,41 @@ async function loadStock() {
 }
 
 
-async function setStockManual(denom) {
-    const current = document.getElementById(`scount-${denom}`).textContent.replace(/,/g, '');
-    const input = prompt(`Set ₱${denom} coin count (current: ${current}):`, current);
+async function addStock(denom) {
+    const current = parseInt(document.getElementById(`scount-${denom}`).textContent.replace(/,/g, ''));
+    const maxCapacity = 1000;
+    const input = prompt(`How many coins are you adding to ₱${denom} hopper? (Current: ${current})`);
     if (input === null) return;
-    const count = parseInt(input);
-    if (isNaN(count) || count < 0) { alert("Invalid number"); return; }
+    const amount = parseInt(input);
+    if (isNaN(amount) || amount <= 0) { alert("Please enter a positive number"); return; }
 
-    await fetch("/api/admin/set_stock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ denomination: denom, count: count }),
-    });
-    loadStock();
+    const newCount = current + amount;
+    if (newCount > maxCapacity) {
+        const actualAdd = maxCapacity - current;
+        if (actualAdd <= 0) {
+            alert(`Hopper is already at max capacity (${maxCapacity}).`);
+            return;
+        }
+        const proceed = confirm(`Would exceed max capacity (${maxCapacity}). Adding only ${actualAdd} to reach max.`);
+        if (!proceed) return;
+    }
+
+    try {
+        const res = await fetch("/api/admin/add_stock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ denomination: denom, amount: amount }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`✅ Added ${data.added} coins to ₱${denom} hopper.\nPrevious: ${data.previous} → New: ${data.new_total}`);
+            loadStock();
+        } else {
+            alert(`❌ ${data.error}`);
+        }
+    } catch (e) {
+        alert("Connection error: " + e.message);
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -322,6 +344,8 @@ async function loadReport(period) {
 
     // Load stock counts
     loadStockCounts();
+    // Load inventory activity
+    loadInventoryActivity();
 }
 
 async function loadStockCounts() {
@@ -345,6 +369,45 @@ async function loadStockCounts() {
                     <span class="sc-result">${sc.count_result.toLocaleString()} coins (₱${(sc.count_result * sc.denomination).toLocaleString()})</span>
                 </div>
             `;
+        }
+        container.innerHTML = html;
+    } catch (e) { /* silent */ }
+}
+
+async function loadInventoryActivity() {
+    try {
+        const res = await fetch("/api/admin/stock_events?limit=20");
+        if (!res.ok) return;
+        const events = await res.json();
+
+        const container = document.getElementById("inventory-activity-list");
+        if (!container) return;
+
+        if (events.length === 0) {
+            container.innerHTML = '<p class="no-data">No inventory activity recorded yet</p>';
+            return;
+        }
+
+        let html = "";
+        for (const ev of events) {
+            const timeStr = formatDate(ev.timestamp);
+            if (ev.type === "add") {
+                html += `
+                    <div class="stock-count-entry">
+                        <span class="sc-time">${timeStr}</span>
+                        <span class="sc-denom">₱${ev.denomination}</span>
+                        <span class="sc-result">restocked: +${ev.amount} coins (total: ${ev.new_total})</span>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="stock-count-entry">
+                        <span class="sc-time">${timeStr}</span>
+                        <span class="sc-denom">₱${ev.denomination}</span>
+                        <span class="sc-result">counted: ${ev.amount} coins</span>
+                    </div>
+                `;
+            }
         }
         container.innerHTML = html;
     } catch (e) { /* silent */ }
