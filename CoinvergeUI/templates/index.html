@@ -17,11 +17,17 @@
             </div>
             <div class="idle-cta">
                 <div class="cta-arrow">▼</div>
-                <p class="cta-text">Magpasukli — Insert bill below</p>
+                <p class="cta-text">Magpasukli — Insert bills or coins below</p>
                 <div class="accepted-bills">
                     <span class="bill-chip">₱20</span>
                     <span class="bill-chip">₱50</span>
                     <span class="bill-chip">₱100</span>
+                </div>
+                <div class="accepted-coins">
+                    <span class="coin-chip">₱1</span>
+                    <span class="coin-chip">₱5</span>
+                    <span class="coin-chip">₱10</span>
+                    <span class="coin-chip">₱20</span>
                 </div>
                 <div class="epay-section">
                     <button class="epay-btn" onclick="showEpay()">📱 E-Payment</button>
@@ -55,10 +61,10 @@
     <div id="screen-fee" class="screen">
         <div class="fee-container">
             <div class="fee-icon">💰</div>
-            <div class="fee-message-fil">
+            <div class="fee-message-fil" id="fee-message-fil">
                 May service charge na <span class="fee-highlight" id="fee-amount-fil">₱0</span> ang makinang ito.
             </div>
-            <div class="fee-message-en">
+            <div class="fee-message-en" id="fee-message-en">
                 This machine will charge you <span class="fee-highlight" id="fee-amount-en">₱0</span> as a service fee.
             </div>
             <div class="fee-breakdown">

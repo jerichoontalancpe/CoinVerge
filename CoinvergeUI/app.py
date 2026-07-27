@@ -47,6 +47,8 @@ class ESP32Connection:
         self.connected = False
         self._listeners = []
         self.payment_method = "cash"  # Track current payment method
+        self.payment_source = "bill"  # Track payment source: "bill", "coin", or "epay"
+        self.servo_positions = {"A": 90, "B": 90, "A1": 45, "A5": 135, "B10": 45, "B20": 135}
 
         if simulate:
             self.connected = True
@@ -114,8 +116,41 @@ class ESP32Connection:
                     return
                 self.balance += amount
                 self.payment_method = "cash"
+                self.payment_source = "bill"
                 self._notify("bill", {"amount": amount, "balance": self.balance})
             except ValueError:
+                pass
+        elif line.startswith("COIN:"):
+            try:
+                amount = int(line.split(":")[1])
+                # Ignore coins during maintenance mode
+                if get_maintenance_mode():
+                    print(f"[ESP32] Coin ignored (maintenance mode)")
+                    return
+                self.balance += amount
+                self.payment_method = "coin"
+                self.payment_source = "coin"
+                # Increment stock in database (coin goes INTO the hopper)
+                from database import get_stock, update_stock as db_update_stock
+                stock = get_stock()
+                denom_stock = stock.get(amount, {})
+                current = denom_stock.get("current", 0)
+                max_cap = denom_stock.get("max", 2000)
+                new_count = min(current + 1, max_cap)
+                db_update_stock(amount, new_count)
+                print(f"[COIN] ₱{amount} deposited → stock {current} → {new_count}")
+                self._notify("coin", {"amount": amount, "balance": self.balance})
+            except ValueError:
+                pass
+        elif line.startswith("SERVO_POS:"):
+            try:
+                # FORMAT: SERVO_POS:A=90,B=90,A1=45,A5=135,B10=45,B20=135
+                parts = line.split(":")[1].split(",")
+                for part in parts:
+                    key, val = part.split("=")
+                    self.servo_positions[key] = int(val)
+                print(f"[SERVO] Positions: {self.servo_positions}")
+            except (ValueError, IndexError):
                 pass
         elif line == "DISPENSED:OK":
             self._notify("dispensed", {"status": "ok"})
@@ -181,6 +216,29 @@ class ESP32Connection:
             return True
         elif cmd_upper == "RESET":
             self.balance = 0
+            self.payment_source = "bill"
+            return True
+        elif cmd_upper.startswith("SERVO:") and not cmd_upper.startswith("SERVO_"):
+            # Simulate servo movement: SERVO:A:90
+            parts = cmd.split(":")
+            if len(parts) == 3:
+                servo_id = parts[1].upper()
+                try:
+                    angle = int(parts[2])
+                    angle = max(0, min(180, angle))
+                    if servo_id == "A":
+                        self.servo_positions["A"] = angle
+                        print(f"[SIM][SERVO] A → {angle}°")
+                    elif servo_id == "B":
+                        self.servo_positions["B"] = angle
+                        print(f"[SIM][SERVO] B → {angle}°")
+                    return True
+                except ValueError:
+                    pass
+            return False
+        elif cmd_upper == "SERVO_POS":
+            # Simulate servo position report
+            print(f"[SIM][SERVO] Positions: {self.servo_positions}")
             return True
         elif cmd_upper.startswith("COUNT:"):
             # Simulate coin counting
@@ -222,7 +280,26 @@ class ESP32Connection:
         if amount > 0:
             self.balance += amount
             self.payment_method = "cash"
+            self.payment_source = "bill"
             self._notify("bill", {"amount": amount, "balance": self.balance})
+            return True
+        return False
+
+    def simulate_coin(self, amount):
+        """Simulate a coin insertion (used in simulation mode)."""
+        if amount > 0:
+            self.balance += amount
+            self.payment_method = "coin"
+            self.payment_source = "coin"
+            # Increment stock in database (coin goes INTO the hopper)
+            stock = get_stock()
+            denom_stock = stock.get(amount, {})
+            current = denom_stock.get("current", 0)
+            max_cap = denom_stock.get("max", 2000)
+            new_count = min(current + 1, max_cap)
+            update_stock(amount, new_count)
+            print(f"[SIM][COIN] ₱{amount} deposited → stock {current} → {new_count}")
+            self._notify("coin", {"amount": amount, "balance": self.balance})
             return True
         return False
 
@@ -273,7 +350,14 @@ def api_status():
     low_stock = get_low_stock_denominations()
     maintenance = get_maintenance_mode()
     balance = esp32.balance
-    fee = get_fee(balance) if balance > 0 else 0
+    payment_source = esp32.payment_source
+
+    # Fee logic: coins = 0 fee, bills/epay = tiered fee
+    if payment_source == "coin":
+        fee = 0
+    else:
+        fee = get_fee(balance) if balance > 0 else 0
+
     return jsonify({
         "connected": esp32.connected,
         "simulate": esp32.simulate,
@@ -285,6 +369,7 @@ def api_status():
         "maintenance_mode": maintenance,
         "low_stock": low_stock,
         "refill_threshold": REFILL_THRESHOLD,
+        "payment_source": payment_source,
     })
 
 
@@ -316,7 +401,11 @@ def api_dispense():
             total += d * q
             int_combo[d] = q
 
-    fee = get_fee(esp32.balance)
+    # Fee depends on payment source (coins = free)
+    if esp32.payment_source == "coin":
+        fee = 0
+    else:
+        fee = get_fee(esp32.balance)
     available = esp32.balance - fee
 
     if total != available:
@@ -385,6 +474,28 @@ def api_simulate_bill():
     return jsonify({"status": "ok", "balance": esp32.balance})
 
 
+@app.route("/api/simulate_coin", methods=["POST"])
+def api_simulate_coin():
+    """Simulate coin insertion (simulation mode only)."""
+    if not esp32.simulate:
+        return jsonify({"error": "Only available in simulation mode"}), 403
+
+    if get_maintenance_mode():
+        return jsonify({"error": "Machine is under maintenance"}), 503
+
+    data = request.get_json()
+    amount = data.get("amount", 0)
+    if amount not in [1, 5, 10, 20]:
+        return jsonify({"error": "Invalid coin. Use 1, 5, 10, or 20"}), 400
+
+    # Reject if would exceed max balance
+    if esp32.balance + amount > 100:
+        return jsonify({"error": f"Cannot exceed ₱100 balance (current: ₱{esp32.balance})"}), 400
+
+    esp32.simulate_coin(amount)
+    return jsonify({"status": "ok", "balance": esp32.balance})
+
+
 @app.route("/api/epay", methods=["POST"])
 def api_epay():
     """E-Payment mockup — simulates GCash/Maya payment received (legacy endpoint)."""
@@ -407,6 +518,7 @@ def api_epay():
     # Credit the balance same as bill insertion
     esp32.balance += amount
     esp32.payment_method = method
+    esp32.payment_source = "epay"
     on_esp32_event("bill", {"amount": amount, "balance": esp32.balance})
 
     return jsonify({"status": "ok", "balance": esp32.balance, "method": method})
@@ -476,6 +588,7 @@ def api_epay_confirm():
     # Credit the balance same as bill insertion
     esp32.balance += amount
     esp32.payment_method = method
+    esp32.payment_source = "epay"
     on_esp32_event("bill", {"amount": amount, "balance": esp32.balance})
 
     # Also fire a specific epay_confirmed event so kiosk JS can react
@@ -500,6 +613,7 @@ def api_reset():
     esp32.send_command("RESET")
     esp32.balance = 0
     esp32.payment_method = "cash"
+    esp32.payment_source = "bill"
     return jsonify({"status": "ok"})
 
 
@@ -661,6 +775,79 @@ def api_admin_count_stop():
     esp32.send_command("COUNT_STOP")
     counting_state["active"] = False
     return jsonify({"status": "ok", "final_count": counting_state["count"]})
+
+
+@app.route("/api/admin/servo_calibrate", methods=["POST"])
+def api_admin_servo_calibrate():
+    """Move a servo to a specific angle for calibration. Sends SERVO:<A|B>:<angle> to ESP32."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    servo = data.get("servo", "").upper()
+    angle = int(data.get("angle", 90))
+
+    if servo not in ["A", "B"]:
+        return jsonify({"error": "Invalid servo. Use A or B"}), 400
+    if angle < 0 or angle > 180:
+        return jsonify({"error": "Angle must be 0-180"}), 400
+
+    cmd = f"SERVO:{servo}:{angle}"
+    print(f"[CMD] {cmd}")
+    esp32.send_command(cmd)
+
+    # Update local tracking
+    esp32.servo_positions[servo] = angle
+
+    return jsonify({"status": "ok", "servo": servo, "angle": angle})
+
+
+@app.route("/api/admin/servo_positions")
+def api_admin_servo_positions():
+    """Get current servo positions and saved calibration values."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Request fresh positions from ESP32
+    esp32.send_command("SERVO_POS")
+
+    # Load saved positions from database settings
+    saved = {
+        "A1": int(get_setting("servo_a_pos_1") or 45),
+        "A5": int(get_setting("servo_a_pos_5") or 135),
+        "B10": int(get_setting("servo_b_pos_10") or 45),
+        "B20": int(get_setting("servo_b_pos_20") or 135),
+    }
+
+    return jsonify({
+        "current": esp32.servo_positions,
+        "saved": saved,
+    })
+
+
+@app.route("/api/admin/servo_save_position", methods=["POST"])
+def api_admin_servo_save_position():
+    """Save a servo position for a specific denomination."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    position_key = data.get("key", "")  # e.g., "A1", "A5", "B10", "B20"
+    angle = int(data.get("angle", 90))
+
+    valid_keys = {"A1": "servo_a_pos_1", "A5": "servo_a_pos_5",
+                  "B10": "servo_b_pos_10", "B20": "servo_b_pos_20"}
+
+    if position_key not in valid_keys:
+        return jsonify({"error": "Invalid position key. Use A1, A5, B10, or B20"}), 400
+    if angle < 0 or angle > 180:
+        return jsonify({"error": "Angle must be 0-180"}), 400
+
+    set_setting(valid_keys[position_key], str(angle))
+    esp32.servo_positions[position_key] = angle
+    print(f"[SERVO] Saved {position_key} = {angle}°")
+
+    return jsonify({"status": "ok", "key": position_key, "angle": angle})
 
 
 @app.route("/api/admin/maintenance", methods=["POST"])

@@ -38,6 +38,7 @@
  */
 
 #include <Arduino.h>
+#include <ESP32Servo.h>
 #include "config.h"
 
 // ============================================================================
@@ -53,6 +54,18 @@ static bool          g_countActive  = false;  // true while counting is in progr
 static bool          g_countAbort   = false;  // set true by COUNT_STOP command
 static int           g_countIndex   = -1;     // hopper index being counted
 
+// ── Servo Motors (coin routing) ─────────────────────────────────────────────
+static Servo         servoA;                  // Routes ₱1 and ₱5 coins
+static Servo         servoB;                  // Routes ₱10 and ₱20 coins
+static int           g_servoAPos    = SERVO_NEUTRAL;  // Current position of Servo A
+static int           g_servoBPos    = SERVO_NEUTRAL;  // Current position of Servo B
+
+// Configurable servo positions (can be updated via admin calibration)
+static int           g_servoA_pos1  = SERVO_A_POS_1;
+static int           g_servoA_pos5  = SERVO_A_POS_5;
+static int           g_servoB_pos10 = SERVO_B_POS_10;
+static int           g_servoB_pos20 = SERVO_B_POS_20;
+
 // ============================================================================
 //  FORWARD DECLARATIONS
 // ============================================================================
@@ -66,6 +79,8 @@ void processCommand(String cmd);
 bool executeDispense(String args);
 void executeCount(int hopperIndex);
 int  lookupBillPulses(int pulses);
+void routeCoinToHopper(int coinValue);
+void sendServoPositions();
 
 // ============================================================================
 //  setup()
@@ -117,7 +132,18 @@ void setup() {
     // ── Coin acceptor pulse pin ──────────────────────────────
     if (COIN_PIN >= 0) {
         pinMode(COIN_PIN, INPUT_PULLUP);
+        Serial.printf("[COIN] Acceptor pin GPIO%d ready (idle=HIGH, pulses LOW)\n", COIN_PIN);
     }
+
+    // ── Servo motors (coin routing) ─────────────────────────
+    servoA.attach(SERVO_A_PIN);
+    servoB.attach(SERVO_B_PIN);
+    servoA.write(SERVO_NEUTRAL);
+    servoB.write(SERVO_NEUTRAL);
+    g_servoAPos = SERVO_NEUTRAL;
+    g_servoBPos = SERVO_NEUTRAL;
+    Serial.printf("[SERVO] A=GPIO%d B=GPIO%d (neutral=%d°)\n",
+                  SERVO_A_PIN, SERVO_B_PIN, SERVO_NEUTRAL);
 #endif
 
     // Init coin stock
@@ -209,35 +235,74 @@ void loop() {
         }
     }
 
-    // ── Poll coin acceptor ───────────────────────────────────
+    // ── Poll coin acceptor (GPIO27, pulse-type, Allan 1299 Pro Max) ─────
     if (COIN_PIN >= 0) {
         static unsigned long lastCoinPulseMs = 0;
         static unsigned int  coinPulseCount  = 0;
         static bool          coinInWindow    = false;
+        static bool          lastCoinState   = HIGH;  // idles HIGH with INPUT_PULLUP
 
-        if (digitalRead(COIN_PIN) == LOW) {
+        bool currentCoinState = (bool)digitalRead(COIN_PIN);
+
+        // Detect falling edge (HIGH → LOW = active pulse)
+        if (currentCoinState == LOW && lastCoinState == HIGH) {
             unsigned long now = millis();
             if (now - lastCoinPulseMs > COIN_DEBOUNCE_MS) {
                 coinPulseCount++;
                 lastCoinPulseMs = now;
                 coinInWindow    = true;
+                Serial.printf("[COIN] Pulse %u detected on GPIO%d\n",
+                              coinPulseCount, COIN_PIN);
             }
         }
+        lastCoinState = currentCoinState;
 
+        // Window expired — decode coin denomination
         if (coinInWindow && (millis() - lastCoinPulseMs > COIN_WINDOW_MS)) {
             coinInWindow = false;
             int value = 0;
-            for (int i = 0; i < COIN_PULSE_TABLE_SIZE; i++) {
-                if (COIN_PULSE_TABLE[i][0] == (int)coinPulseCount) {
-                    value = COIN_PULSE_TABLE[i][1];
+            for (int i = 0; i < COIN_ACCEPT_TABLE_SIZE; i++) {
+                if (COIN_ACCEPT_TABLE[i][0] == (int)coinPulseCount) {
+                    value = COIN_ACCEPT_TABLE[i][1];
                     break;
                 }
             }
             coinPulseCount = 0;
+
             if (value > 0) {
-                g_totalMoney += value;
-                Serial.printf("BILL:%d\n", value);  // reuse same event format for RPi
-                Serial.printf("Total Money: %d\n", g_totalMoney);
+                // Check balance cap (₱100 max)
+                if (g_totalMoney + value > MAX_BILL_VALUE) {
+                    Serial.printf("[COIN] REJECTED P%d (balance would exceed P%d)\n",
+                                  value, MAX_BILL_VALUE);
+                } else {
+                    // Route coin to correct hopper via servo
+                    routeCoinToHopper(value);
+
+                    // Credit balance
+                    g_totalMoney += value;
+                    Serial.printf("COIN:%d\n", value);   // ← RPi reads this
+                    Serial.printf("Total Money: %d\n", g_totalMoney);
+
+                    // Increment stock for this denomination (coin goes INTO hopper)
+                    for (int i = 0; i < DENOM_COUNT; i++) {
+                        if (HOPPER_MAP[i][0] == value) {
+                            if (g_coinStock[i] < MAX_COINS_PER_HOPPER) {
+                                g_coinStock[i]++;
+                            }
+                            break;
+                        }
+                    }
+                    // Send updated stock
+                    sendStockReport();
+
+                    // Disable bill acceptor if balance reached max
+                    if (BILL_INHIBIT_PIN >= 0 && g_totalMoney >= MAX_BILL_VALUE) {
+                        digitalWrite(BILL_INHIBIT_PIN, BILL_INHIBIT_ACTIVE);
+                        Serial.println("[COIN] Acceptor DISABLED (max balance reached)");
+                    }
+                }
+            } else {
+                Serial.println("[COIN] Unknown pulse count — check DIP switch settings");
             }
         }
     }
@@ -288,6 +353,42 @@ void processCommand(String cmd) {
         } else {
             Serial.printf("CREDIT:ERROR:INVALID_AMOUNT:%d\n", amount);
         }
+
+    // ── SERVO:<A|B>:<angle> — admin servo calibration ───────
+    } else if (upper.startsWith("SERVO:") && !upper.startsWith("SERVO_")) {
+        // Parse SERVO:A:90 or SERVO:B:45
+        int firstColon = cmd.indexOf(':');
+        int secondColon = cmd.indexOf(':', firstColon + 1);
+        if (secondColon > firstColon) {
+            String servoId = cmd.substring(firstColon + 1, secondColon);
+            int angle = cmd.substring(secondColon + 1).toInt();
+            servoId.toUpperCase();
+
+            if (angle < 0) angle = 0;
+            if (angle > 180) angle = 180;
+
+            if (servoId == "A") {
+#if !DEBUG_MODE
+                servoA.write(angle);
+#endif
+                g_servoAPos = angle;
+                Serial.printf("SERVO:A:OK:%d\n", angle);
+            } else if (servoId == "B") {
+#if !DEBUG_MODE
+                servoB.write(angle);
+#endif
+                g_servoBPos = angle;
+                Serial.printf("SERVO:B:OK:%d\n", angle);
+            } else {
+                Serial.println("SERVO:ERROR:INVALID_ID");
+            }
+        } else {
+            Serial.println("SERVO:ERROR:BAD_FORMAT");
+        }
+
+    // ── SERVO_POS — report current servo positions ──────────
+    } else if (upper == "SERVO_POS") {
+        sendServoPositions();
 
     // ── COUNT:<hopper_index> — count all coins in a hopper ──
     } else if (upper.startsWith("COUNT:")) {
@@ -663,6 +764,75 @@ void executeCount(int hopperIndex) {
     g_countActive = false;
     g_countAbort  = false;
     g_countIndex  = -1;
+}
+
+// ============================================================================
+//  routeCoinToHopper() — move servo to route coin into correct hopper
+// ============================================================================
+
+void routeCoinToHopper(int coinValue) {
+    int targetAngle = SERVO_NEUTRAL;
+    bool useServoA = false;
+
+    switch (coinValue) {
+        case 1:
+            targetAngle = g_servoA_pos1;
+            useServoA = true;
+            break;
+        case 5:
+            targetAngle = g_servoA_pos5;
+            useServoA = true;
+            break;
+        case 10:
+            targetAngle = g_servoB_pos10;
+            useServoA = false;
+            break;
+        case 20:
+            targetAngle = g_servoB_pos20;
+            useServoA = false;
+            break;
+        default:
+            Serial.printf("[SERVO] Unknown denomination P%d\n", coinValue);
+            return;
+    }
+
+    Serial.printf("[SERVO] Routing P%d → Servo %s → %d°\n",
+                  coinValue, useServoA ? "A" : "B", targetAngle);
+
+#if !DEBUG_MODE
+    if (useServoA) {
+        servoA.write(targetAngle);
+        g_servoAPos = targetAngle;
+    } else {
+        servoB.write(targetAngle);
+        g_servoBPos = targetAngle;
+    }
+#endif
+
+    // Hold position for coin to drop through
+    delay(SERVO_HOLD_MS);
+
+    // Return to neutral
+#if !DEBUG_MODE
+    if (useServoA) {
+        servoA.write(SERVO_NEUTRAL);
+        g_servoAPos = SERVO_NEUTRAL;
+    } else {
+        servoB.write(SERVO_NEUTRAL);
+        g_servoBPos = SERVO_NEUTRAL;
+    }
+#endif
+}
+
+// ============================================================================
+//  sendServoPositions() — report current servo positions and calibration
+// ============================================================================
+
+void sendServoPositions() {
+    Serial.printf("SERVO_POS:A=%d,B=%d,A1=%d,A5=%d,B10=%d,B20=%d\n",
+                  g_servoAPos, g_servoBPos,
+                  g_servoA_pos1, g_servoA_pos5,
+                  g_servoB_pos10, g_servoB_pos20);
 }
 
 // ============================================================================

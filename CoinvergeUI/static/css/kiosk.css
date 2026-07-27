@@ -584,3 +584,26 @@ html, body {
     font-size: 1.1rem;
     color: var(--text-dim);
 }
+
+/* ── Coin Chips (idle screen) ──────────────────────────────────────────── */
+.accepted-coins {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 8px;
+}
+.coin-chip {
+    background: linear-gradient(135deg, #fcd116, #e6b800);
+    color: #1a1a2e;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85em;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* ── Fee Free Highlight ────────────────────────────────────────────────── */
+.fee-free {
+    color: #00c853 !important;
+    font-weight: 800;
+}

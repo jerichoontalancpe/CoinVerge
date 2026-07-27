@@ -20,6 +20,7 @@ const state = {
     lastDispense: null,
     maintenanceMode: false,
     lowStock: [],
+    paymentSource: "bill",  // "bill", "coin", or "epay"
 };
 
 // ── Init ────────────────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ async function fetchStatus() {
         state.available = data.available || 0;
         state.maintenanceMode = data.maintenance_mode || false;
         state.lowStock = data.low_stock || [];
+        state.paymentSource = data.payment_source || "bill";
         state.stock = {};
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
@@ -67,6 +69,7 @@ async function refreshStock() {
         state.available = data.available || 0;
         state.maintenanceMode = data.maintenance_mode || false;
         state.lowStock = data.low_stock || [];
+        state.paymentSource = data.payment_source || "bill";
     } catch (e) { /* use cached */ }
 }
 
@@ -95,6 +98,7 @@ function handleEvent(ev) {
                 break;
             }
             state.balance = ev.data.balance;
+            state.paymentSource = "bill";
             // After bill detected, show fee screen first (not picker directly)
             if (state.screen === "idle" || state.screen === "empty") {
                 showFeeScreen();
@@ -103,6 +107,26 @@ function handleEvent(ev) {
                 updateFeeScreen();
             } else if (state.screen === "picker") {
                 // Another bill inserted — show fee screen again
+                showFeeScreen();
+            }
+            break;
+        case "coin":
+            if (state.maintenanceMode) {
+                toast("Machine under maintenance");
+                break;
+            }
+            if (ev.data.balance > 100) {
+                toast("Maximum ₱100 reached");
+                break;
+            }
+            state.balance = ev.data.balance;
+            state.paymentSource = "coin";
+            // After coin detected, show fee screen (which shows FREE for coins)
+            if (state.screen === "idle" || state.screen === "empty") {
+                showFeeScreen();
+            } else if (state.screen === "fee") {
+                updateFeeScreen();
+            } else if (state.screen === "picker") {
                 showFeeScreen();
             }
             break;
@@ -165,8 +189,24 @@ function updateFeeScreen() {
     const fee = state.fee;
     const receive = state.available;
 
-    document.getElementById("fee-amount-fil").textContent = `₱${fee}`;
-    document.getElementById("fee-amount-en").textContent = `₱${fee}`;
+    const feeAmountFil = document.getElementById("fee-amount-fil");
+    const feeAmountEn = document.getElementById("fee-amount-en");
+    const feeMessageFil = document.getElementById("fee-message-fil");
+    const feeMessageEn = document.getElementById("fee-message-en");
+
+    if (state.paymentSource === "coin") {
+        // Coin exchange — no fee!
+        feeAmountFil.textContent = "₱0";
+        feeAmountEn.textContent = "₱0";
+        if (feeMessageFil) feeMessageFil.innerHTML = 'Coin Exchange — <span class="fee-highlight fee-free">Walang Service Fee!</span>';
+        if (feeMessageEn) feeMessageEn.innerHTML = 'Free Coin Redistribution — <span class="fee-highlight fee-free">No charge!</span>';
+    } else {
+        feeAmountFil.textContent = `₱${fee}`;
+        feeAmountEn.textContent = `₱${fee}`;
+        if (feeMessageFil) feeMessageFil.innerHTML = `May service charge na <span class="fee-highlight">₱${fee}</span> ang makinang ito.`;
+        if (feeMessageEn) feeMessageEn.innerHTML = `This machine will charge you <span class="fee-highlight">₱${fee}</span> as a service fee.`;
+    }
+
     document.getElementById("fee-inserted").textContent = `₱${balance}`;
     document.getElementById("fee-charge").textContent = `−₱${fee}`;
     document.getElementById("fee-receive").textContent = `₱${receive}`;
@@ -214,6 +254,7 @@ function showDone() {
             state.fee = 0;
             state.available = 0;
             state.lastDispense = null;
+            state.paymentSource = "bill";
             fetchStatus();
             showScreen("idle");
         }
@@ -368,6 +409,7 @@ async function cancelTransaction() {
     state.balance = 0;
     state.fee = 0;
     state.available = 0;
+    state.paymentSource = "bill";
     resetSelection();
     showScreen("idle");
 }

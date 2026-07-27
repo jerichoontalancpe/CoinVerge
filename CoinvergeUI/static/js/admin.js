@@ -78,7 +78,7 @@ function switchTab(tab) {
     if (tab === "stock") loadStock();
     else if (tab === "history") loadHistory();
     else if (tab === "reports") loadReport(currentPeriod);
-    else if (tab === "settings") loadFeeTiers();
+    else if (tab === "settings") { loadFeeTiers(); loadServoPositions(); }
 }
 
 async function logout() {
@@ -579,6 +579,106 @@ async function testBill(amount) {
             alert(`❌ ${data.error}`);
         }
     } catch (e) { alert("Error: " + e.message); }
+}
+
+// ── Test Coin (Simulation) ──────────────────────────────────────────────────
+
+async function testCoin(amount) {
+    try {
+        const res = await fetch("/api/simulate_coin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`✅ Simulated ₱${amount} coin inserted. Stock +1, fee = FREE. Check kiosk screen.`);
+            loadStock();
+        } else {
+            alert(`❌ ${data.error}`);
+        }
+    } catch (e) { alert("Error: " + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// SERVO CALIBRATION
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function moveServo(servoId) {
+    const sliderId = servoId === "A" ? "servo-a-slider" : "servo-b-slider";
+    const angle = parseInt(document.getElementById(sliderId).value);
+
+    try {
+        const res = await fetch("/api/admin/servo_calibrate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ servo: servoId, angle: angle }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            console.log(`[SERVO] ${servoId} moved to ${angle}°`);
+        } else {
+            alert(`❌ ${data.error}`);
+        }
+    } catch (e) { alert("Error: " + e.message); }
+}
+
+async function saveServoPos(posKey) {
+    // posKey: "A1", "A5", "B10", "B20"
+    const servoId = posKey.startsWith("A") ? "A" : "B";
+    const sliderId = servoId === "A" ? "servo-a-slider" : "servo-b-slider";
+    const angle = parseInt(document.getElementById(sliderId).value);
+
+    const denomMap = {"A1": "₱1", "A5": "₱5", "B10": "₱10", "B20": "₱20"};
+    const denomLabel = denomMap[posKey] || posKey;
+
+    try {
+        const res = await fetch("/api/admin/servo_save_position", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: posKey, angle: angle }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`✅ Saved Servo ${servoId} position for ${denomLabel} = ${angle}°`);
+            loadServoPositions();
+        } else {
+            alert(`❌ ${data.error}`);
+        }
+    } catch (e) { alert("Error: " + e.message); }
+}
+
+async function loadServoPositions() {
+    try {
+        const res = await fetch("/api/admin/servo_positions");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const display = document.getElementById("servo-positions-display");
+        if (display) {
+            display.innerHTML = `
+                <p class="settings-info">
+                    <strong>Saved:</strong>
+                    ₱1=${data.saved.A1}° | ₱5=${data.saved.A5}° |
+                    ₱10=${data.saved.B10}° | ₱20=${data.saved.B20}°
+                </p>
+            `;
+        }
+    } catch (e) { /* silent */ }
+}
+
+// ── Coin Exchange Fee Toggle ────────────────────────────────────────────────
+
+async function toggleCoinFee() {
+    // This is a placeholder — coin fee is always disabled by default (free)
+    // Toggle would store a setting to enable/disable fee for coin exchange
+    const statusEl = document.getElementById("coin-fee-status");
+    const current = statusEl.textContent.includes("Disabled");
+    const newState = current ? "Enabled" : "Disabled (Free)";
+    statusEl.textContent = newState;
+    alert(current
+        ? "⚠️ Coin exchange fee ENABLED — coins will now incur service fee."
+        : "✅ Coin exchange fee DISABLED — coin exchange is free!");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

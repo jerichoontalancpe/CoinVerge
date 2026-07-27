@@ -723,3 +723,72 @@ html, body {
         top: 50%; transform: translateY(-50%);
     }
 }
+
+/* ── Servo Calibration ─────────────────────────────────────────────────── */
+.servo-calibration {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 12px;
+}
+.servo-group {
+    background: var(--surface, #1a1a2e);
+    border: 1px solid var(--border, #2a2a4e);
+    border-radius: 10px;
+    padding: 14px;
+}
+.servo-group h4 {
+    margin: 0 0 10px 0;
+    color: var(--accent, #fcd116);
+    font-size: 0.95em;
+}
+.servo-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.servo-control label {
+    font-size: 0.85em;
+    min-width: 80px;
+    color: var(--text-dim, #aaa);
+}
+.servo-control input[type="range"] {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--border, #2a2a4e);
+    border-radius: 3px;
+    outline: none;
+}
+.servo-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent, #fcd116);
+    cursor: pointer;
+}
+.servo-save-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.servo-save-btns .settings-btn {
+    font-size: 0.8em;
+    padding: 6px 10px;
+}
+.servo-current-positions {
+    padding: 8px 0;
+}
+
+/* ── Coin Simulation Buttons ───────────────────────────────────────────── */
+.coin-btn {
+    background: linear-gradient(135deg, #fcd116, #e6b800) !important;
+    color: #1a1a2e !important;
+    font-weight: 700 !important;
+}
+.coin-btn:hover {
+    background: linear-gradient(135deg, #e6b800, #cc9f00) !important;
+}

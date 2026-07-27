@@ -303,6 +303,17 @@ def deduct_stock(coins_dispensed):
     conn.close()
 
 
+def increment_stock(denomination, qty=1):
+    """Increment stock for a denomination (e.g., when coin deposited into hopper)."""
+    conn = get_db()
+    conn.execute(
+        "UPDATE stock SET current_count = MIN(max_capacity, current_count + ?) WHERE denomination = ?",
+        (qty, denomination)
+    )
+    conn.commit()
+    conn.close()
+
+
 def refill_stock(denomination, amount=None):
     """Refill a hopper. If amount is None, refill to max."""
     conn = get_db()

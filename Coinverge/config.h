@@ -97,23 +97,47 @@ const int BILL_PULSE_TABLE[BILL_PULSE_TABLE_SIZE][2] = {
 };
 
 // -----------------------------------------------------------------------------
-//  COIN ACCEPTOR — PULSE TYPE
-//  TODO: find the coin acceptor signal pin using CoinvergeProbe option 2.
-//  Set COIN_PIN to the confirmed GPIO once found.
+//  COIN ACCEPTOR — Allan 1299 Pro Max Universal
+//  Signal: Normally Open (idles HIGH with INPUT_PULLUP, pulses LOW)
+//  Pulse speed: configurable via DIP switch (Fast=25ms, Med=45ms, Slow=65ms)
 // -----------------------------------------------------------------------------
-#define COIN_PIN            -1      // TODO: find with probe option 2
-#define COIN_DEBOUNCE_MS    50
-#define COIN_WINDOW_MS      400
+#define COIN_PIN            27      // Coin acceptor signal wire (GPIO27)
+#define COIN_ACCEPT_PIN     27      // Alias for clarity
+#define COIN_DEBOUNCE_MS    30      // Debounce between pulses
+#define COIN_WINDOW_MS      150     // Wait after last pulse to decode (must be > pulse gap)
 
-// Pulse count → coin value (pesos)
-// TODO: verify pulse counts with actual coin acceptor
-#define COIN_PULSE_TABLE_SIZE  4
-const int COIN_PULSE_TABLE[COIN_PULSE_TABLE_SIZE][2] = {
-    { 1,   1 },
-    { 2,   5 },
-    { 3,  10 },
-    { 4,  20 },
+// Pulse count → coin value table (configure to match DIP switch settings)
+#define COIN_ACCEPT_TABLE_SIZE  4
+const int COIN_ACCEPT_TABLE[][2] = {
+    { 1,   1 },    // 1 pulse  = ₱1
+    { 2,   5 },    // 2 pulses = ₱5
+    { 3,  10 },    // 3 pulses = ₱10
+    { 4,  20 },    // 4 pulses = ₱20
 };
+
+// Legacy alias for backward compatibility
+#define COIN_PULSE_TABLE_SIZE  COIN_ACCEPT_TABLE_SIZE
+#define COIN_PULSE_TABLE       COIN_ACCEPT_TABLE
+
+// -----------------------------------------------------------------------------
+//  SERVO MOTORS — Route coins to correct hopper
+//  Servo A: routes ₱1 and ₱5 coins
+//  Servo B: routes ₱10 and ₱20 coins
+// -----------------------------------------------------------------------------
+#define SERVO_A_PIN         13      // Servo A PWM pin (₱1/₱5 routing)
+#define SERVO_B_PIN         14      // Servo B PWM pin (₱10/₱20 routing)
+
+// Default servo positions (degrees) — calibrate via admin panel
+#define SERVO_A_POS_1       45      // Servo A position for ₱1 hopper
+#define SERVO_A_POS_5       135     // Servo A position for ₱5 hopper
+#define SERVO_B_POS_10      45      // Servo B position for ₱10 hopper
+#define SERVO_B_POS_20      135     // Servo B position for ₱20 hopper
+
+// Neutral (center) servo position
+#define SERVO_NEUTRAL       90
+
+// Time to hold servo in position (ms) — ensures coin drops through
+#define SERVO_HOLD_MS       500
 
 // -----------------------------------------------------------------------------
 //  ACCEPTED BILL RANGE

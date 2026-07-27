@@ -240,6 +240,55 @@
                     <button class="settings-btn" onclick="testBill(50)">Insert ₱50</button>
                     <button class="settings-btn" onclick="testBill(100)">Insert ₱100</button>
                 </div>
+                <p class="settings-info" style="margin-top:12px">Simulate coin insertion (coins add to hopper stock)</p>
+                <div class="test-bill-btns">
+                    <button class="settings-btn coin-btn" onclick="testCoin(1)">🪙 Insert ₱1</button>
+                    <button class="settings-btn coin-btn" onclick="testCoin(5)">🪙 Insert ₱5</button>
+                    <button class="settings-btn coin-btn" onclick="testCoin(10)">🪙 Insert ₱10</button>
+                    <button class="settings-btn coin-btn" onclick="testCoin(20)">🪙 Insert ₱20</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>⚙️ Servo Calibration</h3>
+                <p class="settings-info">Calibrate servo motors for coin routing (₱1/₱5 → Servo A, ₱10/₱20 → Servo B)</p>
+                <div class="servo-calibration">
+                    <div class="servo-group">
+                        <h4>Servo A (₱1 / ₱5)</h4>
+                        <div class="servo-control">
+                            <label>Angle: <span id="servo-a-angle-display">90</span>°</label>
+                            <input type="range" id="servo-a-slider" min="0" max="180" value="90"
+                                   oninput="document.getElementById('servo-a-angle-display').textContent=this.value">
+                            <button class="settings-btn" onclick="moveServo('A')">Move</button>
+                        </div>
+                        <div class="servo-save-btns">
+                            <button class="settings-btn" onclick="saveServoPos('A1')">💾 Save as ₱1 position</button>
+                            <button class="settings-btn" onclick="saveServoPos('A5')">💾 Save as ₱5 position</button>
+                        </div>
+                    </div>
+                    <div class="servo-group">
+                        <h4>Servo B (₱10 / ₱20)</h4>
+                        <div class="servo-control">
+                            <label>Angle: <span id="servo-b-angle-display">90</span>°</label>
+                            <input type="range" id="servo-b-slider" min="0" max="180" value="90"
+                                   oninput="document.getElementById('servo-b-angle-display').textContent=this.value">
+                            <button class="settings-btn" onclick="moveServo('B')">Move</button>
+                        </div>
+                        <div class="servo-save-btns">
+                            <button class="settings-btn" onclick="saveServoPos('B10')">💾 Save as ₱10 position</button>
+                            <button class="settings-btn" onclick="saveServoPos('B20')">💾 Save as ₱20 position</button>
+                        </div>
+                    </div>
+                    <div class="servo-current-positions" id="servo-positions-display">
+                        <p class="settings-info">Saved positions: loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>🪙 Coin Exchange Fee</h3>
+                <p class="settings-info">When disabled, coin-to-coin exchange is free (no service fee)</p>
+                <button class="settings-btn" id="coin-fee-toggle" onclick="toggleCoinFee()">
+                    Coin Exchange Fee: <span id="coin-fee-status">Disabled (Free)</span>
+                </button>
             </div>
             <div class="settings-section">
                 <h3>💰 Fee Configuration</h3>
