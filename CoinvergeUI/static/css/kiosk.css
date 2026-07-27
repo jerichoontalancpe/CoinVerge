@@ -80,10 +80,15 @@ body::before {
 }
 
 .brand-logo {
+    width: 180px;
+    height: 180px;
     max-height: 200px;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 16px rgba(0, 56, 168, 0.3));
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid rgba(252, 209, 22, 0.7);
+    box-shadow: 0 0 20px rgba(252, 209, 22, 0.15), 0 8px 32px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px;
 }
 
 .idle-cta {
@@ -802,7 +807,7 @@ body::before {
 }
 
 @media (max-height: 480px) {
-    .brand-logo { max-height: 160px; }
+    .brand-logo { max-height: 140px; width: 140px; height: 140px; }
     .idle-cta { margin-top: 0; }
     .cta-text { font-size: 1.1rem; }
 }
