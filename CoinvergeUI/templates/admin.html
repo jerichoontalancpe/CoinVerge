@@ -7,13 +7,11 @@
     <link rel="stylesheet" href="/static/css/admin.css">
 </head>
 <body>
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- ADMIN LOGIN                                                        -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ADMIN LOGIN -->
     <div id="admin-login" class="admin-screen active">
         <div class="login-box">
             <div class="login-brand">
-                <span class="coin-sym">₱</span>
+                <span class="coin-sym">P</span>
                 <h2>CoinVerge Admin</h2>
             </div>
             <p class="login-prompt">Enter PIN</p>
@@ -35,16 +33,14 @@
                 <button class="pad-btn" onclick="pinPress('9')">9</button>
                 <button class="pad-btn clear" onclick="pinClear()">C</button>
                 <button class="pad-btn" onclick="pinPress('0')">0</button>
-                <button class="pad-btn enter" onclick="pinSubmit()">→</button>
+                <button class="pad-btn enter" onclick="pinSubmit()">GO</button>
             </div>
             <p id="login-error" class="login-error hidden">Invalid PIN</p>
-            <button class="back-link" onclick="window.location='/'">← Back to Kiosk</button>
+            <button class="back-link" onclick="window.location='/'">Back to Kiosk</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- ADMIN DASHBOARD                                                    -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ADMIN DASHBOARD -->
     <div id="admin-dashboard" class="admin-screen">
         <div class="admin-header">
             <h1>CoinVerge Admin</h1>
@@ -53,16 +49,16 @@
                 <button class="tab-btn" onclick="switchTab('history')">History</button>
                 <button class="tab-btn" onclick="switchTab('reports')">Reports</button>
                 <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
-                <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
-        <!-- TAB: Stock Management — 4 Hopper Frames -->
+        <!-- TAB: Stock Management -->
         <div id="tab-stock" class="tab-content active">
             <div class="hopper-grid">
                 <div class="hopper-frame" id="hopper-1" data-status="ok">
                     <div class="hopper-header">
-                        <div class="hopper-denom">₱1</div>
+                        <div class="hopper-denom">P1</div>
                         <div class="hopper-badge" id="badge-1">OK</div>
                     </div>
                     <div class="hopper-tank">
@@ -73,17 +69,17 @@
                     </div>
                     <div class="hopper-stats">
                         <div class="hopper-count"><span id="scount-1">0</span> / <span id="smax-1">1,000</span></div>
-                        <div class="hopper-value" id="svalue-1">₱0</div>
+                        <div class="hopper-value" id="svalue-1">P0</div>
                     </div>
                     <div class="hopper-actions">
                         <button class="set-btn" onclick="addStock(1)">+ Add</button>
-                        <button class="count-btn" onclick="startCount(1)">🔢 Count</button>
+                        <button class="count-btn" onclick="startCount(1)">Count</button>
                     </div>
                 </div>
 
                 <div class="hopper-frame" id="hopper-5" data-status="ok">
                     <div class="hopper-header">
-                        <div class="hopper-denom">₱5</div>
+                        <div class="hopper-denom">P5</div>
                         <div class="hopper-badge" id="badge-5">OK</div>
                     </div>
                     <div class="hopper-tank">
@@ -94,17 +90,17 @@
                     </div>
                     <div class="hopper-stats">
                         <div class="hopper-count"><span id="scount-5">0</span> / <span id="smax-5">1,000</span></div>
-                        <div class="hopper-value" id="svalue-5">₱0</div>
+                        <div class="hopper-value" id="svalue-5">P0</div>
                     </div>
                     <div class="hopper-actions">
                         <button class="set-btn" onclick="addStock(5)">+ Add</button>
-                        <button class="count-btn" onclick="startCount(5)">🔢 Count</button>
+                        <button class="count-btn" onclick="startCount(5)">Count</button>
                     </div>
                 </div>
 
                 <div class="hopper-frame" id="hopper-10" data-status="ok">
                     <div class="hopper-header">
-                        <div class="hopper-denom">₱10</div>
+                        <div class="hopper-denom">P10</div>
                         <div class="hopper-badge" id="badge-10">OK</div>
                     </div>
                     <div class="hopper-tank">
@@ -115,17 +111,17 @@
                     </div>
                     <div class="hopper-stats">
                         <div class="hopper-count"><span id="scount-10">0</span> / <span id="smax-10">1,000</span></div>
-                        <div class="hopper-value" id="svalue-10">₱0</div>
+                        <div class="hopper-value" id="svalue-10">P0</div>
                     </div>
                     <div class="hopper-actions">
                         <button class="set-btn" onclick="addStock(10)">+ Add</button>
-                        <button class="count-btn" onclick="startCount(10)">🔢 Count</button>
+                        <button class="count-btn" onclick="startCount(10)">Count</button>
                     </div>
                 </div>
 
                 <div class="hopper-frame" id="hopper-20" data-status="ok">
                     <div class="hopper-header">
-                        <div class="hopper-denom">₱20</div>
+                        <div class="hopper-denom">P20</div>
                         <div class="hopper-badge" id="badge-20">OK</div>
                     </div>
                     <div class="hopper-tank">
@@ -136,11 +132,11 @@
                     </div>
                     <div class="hopper-stats">
                         <div class="hopper-count"><span id="scount-20">0</span> / <span id="smax-20">1,000</span></div>
-                        <div class="hopper-value" id="svalue-20">₱0</div>
+                        <div class="hopper-value" id="svalue-20">P0</div>
                     </div>
                     <div class="hopper-actions">
                         <button class="set-btn" onclick="addStock(20)">+ Add</button>
-                        <button class="count-btn" onclick="startCount(20)">🔢 Count</button>
+                        <button class="count-btn" onclick="startCount(20)">Count</button>
                     </div>
                 </div>
             </div>
@@ -152,9 +148,9 @@
         <!-- TAB: Transaction History -->
         <div id="tab-history" class="tab-content">
             <div class="history-controls">
-                <button class="page-btn" id="prev-btn" onclick="prevPage()">← Prev</button>
+                <button class="page-btn" id="prev-btn" onclick="prevPage()">Prev</button>
                 <span id="page-info">Page 1</span>
-                <button class="page-btn" id="next-btn" onclick="nextPage()">Next →</button>
+                <button class="page-btn" id="next-btn" onclick="nextPage()">Next</button>
                 <div class="export-group">
                     <select id="export-preset" class="export-select">
                         <option value="today">Today</option>
@@ -164,8 +160,8 @@
                     </select>
                     <input type="date" id="export-start" class="export-date hidden">
                     <input type="date" id="export-end" class="export-date hidden">
-                    <button class="export-btn" onclick="exportCSV()">📥 CSV</button>
-                    <button class="export-btn print-btn" onclick="exportHTMLReport()">🖨️ Report</button>
+                    <button class="export-btn" onclick="exportCSV()">CSV</button>
+                    <button class="export-btn print-btn" onclick="exportHTMLReport()">Report</button>
                 </div>
             </div>
             <div class="history-table-wrap">
@@ -199,11 +195,11 @@
                     <div class="rpt-label">Transactions</div>
                 </div>
                 <div class="rpt-card">
-                    <div class="rpt-value" id="rpt-bills">₱0</div>
+                    <div class="rpt-value" id="rpt-bills">P0</div>
                     <div class="rpt-label">Total Bills</div>
                 </div>
                 <div class="rpt-card">
-                    <div class="rpt-value" id="rpt-fees">₱0</div>
+                    <div class="rpt-value" id="rpt-fees">P0</div>
                     <div class="rpt-label">Fees Collected</div>
                 </div>
                 <div class="rpt-card">
@@ -216,13 +212,13 @@
                 <div class="breakdown-grid" id="breakdown-grid"></div>
             </div>
             <div class="report-stock-counts" id="report-stock-counts">
-                <h3>📊 Recent Stock Counts</h3>
+                <h3>Recent Stock Counts</h3>
                 <div class="stock-counts-list" id="stock-counts-list">
                     <p class="no-data">No stock counts recorded yet</p>
                 </div>
             </div>
             <div class="report-inventory-activity" id="report-inventory-activity">
-                <h3>📦 Inventory Activity</h3>
+                <h3>Inventory Activity</h3>
                 <div class="inventory-activity-list" id="inventory-activity-list">
                     <p class="no-data">No inventory activity recorded yet</p>
                 </div>
@@ -234,54 +230,54 @@
             <div class="settings-section">
                 <h3>Machine Control</h3>
                 <button class="settings-btn maintenance-btn" id="maintenance-toggle" onclick="toggleMaintenance()">
-                    🔧 Maintenance Mode: <span id="maintenance-status">OFF</span>
+                    Maintenance Mode: <span id="maintenance-status">OFF</span>
                 </button>
-                <button class="settings-btn" onclick="syncStock()">🔄 Sync Stock (Manual Count)</button>
+                <button class="settings-btn" onclick="syncStock()">Sync Stock (Manual Count)</button>
             </div>
             <div class="settings-section">
-                <h3>🧪 Test Mode (Simulation)</h3>
+                <h3>Test Mode (Simulation)</h3>
                 <p class="settings-info">Simulate bill insertion for testing without hardware</p>
                 <div class="test-bill-btns">
-                    <button class="settings-btn" onclick="testBill(20)">Insert ₱20</button>
-                    <button class="settings-btn" onclick="testBill(50)">Insert ₱50</button>
-                    <button class="settings-btn" onclick="testBill(100)">Insert ₱100</button>
+                    <button class="settings-btn" onclick="testBill(20)">Insert P20</button>
+                    <button class="settings-btn" onclick="testBill(50)">Insert P50</button>
+                    <button class="settings-btn" onclick="testBill(100)">Insert P100</button>
                 </div>
                 <p class="settings-info" style="margin-top:12px">Simulate coin insertion (coins add to hopper stock)</p>
                 <div class="test-bill-btns">
-                    <button class="settings-btn coin-btn" onclick="testCoin(1)">🪙 Insert ₱1</button>
-                    <button class="settings-btn coin-btn" onclick="testCoin(5)">🪙 Insert ₱5</button>
-                    <button class="settings-btn coin-btn" onclick="testCoin(10)">🪙 Insert ₱10</button>
-                    <button class="settings-btn coin-btn" onclick="testCoin(20)">🪙 Insert ₱20</button>
+                    <button class="settings-btn coin-btn" onclick="testCoin(1)">Insert P1</button>
+                    <button class="settings-btn coin-btn" onclick="testCoin(5)">Insert P5</button>
+                    <button class="settings-btn coin-btn" onclick="testCoin(10)">Insert P10</button>
+                    <button class="settings-btn coin-btn" onclick="testCoin(20)">Insert P20</button>
                 </div>
             </div>
             <div class="settings-section">
-                <h3>⚙️ Servo Calibration</h3>
-                <p class="settings-info">Calibrate servo motors for coin routing (₱1/₱5 → Servo A, ₱10/₱20 → Servo B)</p>
+                <h3>Servo Calibration</h3>
+                <p class="settings-info">Calibrate servo motors for coin routing (P1/P5 to Servo A, P10/P20 to Servo B)</p>
                 <div class="servo-calibration">
                     <div class="servo-group">
-                        <h4>Servo A (₱1 / ₱5)</h4>
+                        <h4>Servo A (P1 / P5)</h4>
                         <div class="servo-control">
-                            <label>Angle: <span id="servo-a-angle-display">90</span>°</label>
+                            <label>Angle: <span id="servo-a-angle-display">90</span> deg</label>
                             <input type="range" id="servo-a-slider" min="0" max="180" value="90"
                                    oninput="document.getElementById('servo-a-angle-display').textContent=this.value">
                             <button class="settings-btn" onclick="moveServo('A')">Move</button>
                         </div>
                         <div class="servo-save-btns">
-                            <button class="settings-btn" onclick="saveServoPos('A1')">💾 Save as ₱1 position</button>
-                            <button class="settings-btn" onclick="saveServoPos('A5')">💾 Save as ₱5 position</button>
+                            <button class="settings-btn" onclick="saveServoPos('A1')">Save as P1 position</button>
+                            <button class="settings-btn" onclick="saveServoPos('A5')">Save as P5 position</button>
                         </div>
                     </div>
                     <div class="servo-group">
-                        <h4>Servo B (₱10 / ₱20)</h4>
+                        <h4>Servo B (P10 / P20)</h4>
                         <div class="servo-control">
-                            <label>Angle: <span id="servo-b-angle-display">90</span>°</label>
+                            <label>Angle: <span id="servo-b-angle-display">90</span> deg</label>
                             <input type="range" id="servo-b-slider" min="0" max="180" value="90"
                                    oninput="document.getElementById('servo-b-angle-display').textContent=this.value">
                             <button class="settings-btn" onclick="moveServo('B')">Move</button>
                         </div>
                         <div class="servo-save-btns">
-                            <button class="settings-btn" onclick="saveServoPos('B10')">💾 Save as ₱10 position</button>
-                            <button class="settings-btn" onclick="saveServoPos('B20')">💾 Save as ₱20 position</button>
+                            <button class="settings-btn" onclick="saveServoPos('B10')">Save as P10 position</button>
+                            <button class="settings-btn" onclick="saveServoPos('B20')">Save as P20 position</button>
                         </div>
                     </div>
                     <div class="servo-current-positions" id="servo-positions-display">
@@ -290,47 +286,44 @@
                 </div>
             </div>
             <div class="settings-section">
-                <h3>🪙 Coin Exchange Fee</h3>
+                <h3>Coin Exchange Fee</h3>
                 <p class="settings-info">When disabled, coin-to-coin exchange is free (no service fee)</p>
                 <button class="settings-btn" id="coin-fee-toggle" onclick="toggleCoinFee()">
                     Coin Exchange Fee: <span id="coin-fee-status">Disabled (Free)</span>
                 </button>
             </div>
             <div class="settings-section">
-                <h3>💰 Fee Configuration</h3>
+                <h3>Fee Configuration</h3>
                 <p class="settings-info">Set transaction fee tiers based on bill amount</p>
                 <div id="fee-tiers-container" class="fee-tiers-container">
-                    <!-- Populated by JS -->
                 </div>
-                <button class="settings-btn save-fees-btn" onclick="saveFeeTiers()">💾 Save Fee Tiers</button>
+                <button class="settings-btn save-fees-btn" onclick="saveFeeTiers()">Save Fee Tiers</button>
             </div>
             <div class="settings-section">
                 <h3>Security</h3>
-                <button class="settings-btn" onclick="changePin()">🔒 Change Admin PIN</button>
+                <button class="settings-btn" onclick="changePin()">Change Admin PIN</button>
             </div>
             <div class="settings-section">
                 <h3>About</h3>
                 <p class="settings-info">CoinVerge v1.2</p>
                 <p class="settings-info">Coin Exchange Kiosk System</p>
-                <p class="settings-info">Screen: 7" Touchscreen (800×480)</p>
+                <p class="settings-info">Screen: 7" Touchscreen (800x480)</p>
             </div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- COIN COUNTING MODAL                                                -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- COIN COUNTING MODAL -->
     <div id="count-modal" class="count-modal hidden">
         <div class="count-modal-content">
-            <div class="count-modal-icon" id="count-modal-icon">🔢</div>
-            <div class="count-modal-title" id="count-modal-title">Counting ₱10 coins...</div>
+            <div class="count-modal-icon" id="count-modal-icon">#</div>
+            <div class="count-modal-title" id="count-modal-title">Counting P10 coins...</div>
             <div class="count-modal-counter" id="count-modal-counter">0</div>
-            <div class="count-modal-value" id="count-modal-value">₱0</div>
+            <div class="count-modal-value" id="count-modal-value">P0</div>
             <div class="count-modal-progress">
                 <div class="count-modal-bar" id="count-modal-bar"></div>
             </div>
             <div class="count-modal-status" id="count-modal-status">Dispensing and counting...</div>
-            <button class="count-stop-btn" id="count-stop-btn" onclick="stopCount()">⏹ Stop</button>
+            <button class="count-stop-btn" id="count-stop-btn" onclick="stopCount()">Stop</button>
             <button class="count-ok-btn hidden" id="count-ok-btn" onclick="closeCountModal()">OK</button>
         </div>
     </div>

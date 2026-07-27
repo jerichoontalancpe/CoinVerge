@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   CoinVerge — Kiosk UI Stylesheet
-   Philippine-themed | 7" touchscreen (800×480) | 16:9
-   Colors: Philippine flag blue (#0038a8) + gold (#fcd116) + red (#ce1126)
+   CoinVerge — Kiosk UI Stylesheet (Redesigned)
+   Philippine-themed | 7" touchscreen (800x480)
+   Glass-morphism | Navy + Royal Blue + Gold + White
    ═══════════════════════════════════════════════════════════════════════════ */
 
 * {
@@ -12,30 +12,44 @@
 }
 
 :root {
-    --ph-blue: #0038a8;
-    --ph-blue-dark: #002060;
-    --ph-blue-light: #1a5cbd;
-    --ph-gold: #fcd116;
-    --ph-gold-dim: #b8960a;
-    --ph-red: #ce1126;
-    --ph-white: #ffffff;
-    --bg: #001a4d;
-    --bg-card: #002a6b;
-    --bg-surface: #003380;
+    --navy: #0a1628;
+    --navy-mid: #0d2137;
+    --royal: #0038a8;
+    --royal-light: #1a5cbd;
+    --gold: #fcd116;
+    --gold-dim: #b8960a;
+    --white: #ffffff;
     --text: #ffffff;
     --text-dim: #8eaacc;
     --success: #00c853;
     --danger: #ff3d3d;
-    --radius: 12px;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --radius: 16px;
 }
 
 html, body {
     width: 800px; height: 480px;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-    background: var(--bg);
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-mid) 100%);
     color: var(--text);
     font-size: 14px;
+}
+
+/* Circuit board pattern overlay */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px, 20px 20px;
+    background-position: 0 0, 10px 10px;
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* ── Screens ─────────────────────────────────────────────────────────────── */
@@ -45,6 +59,7 @@ html, body {
     display: flex; align-items: center; justify-content: center;
     opacity: 0; pointer-events: none;
     transition: opacity 0.35s ease;
+    z-index: 1;
 }
 .screen.active { opacity: 1; pointer-events: auto; }
 
@@ -55,32 +70,53 @@ html, body {
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     height: 100%; width: 100%;
-    background: linear-gradient(160deg, var(--ph-blue-dark) 0%, var(--bg) 50%, #001030 100%);
     padding: 2rem;
+    position: relative;
 }
 
 .idle-brand {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     text-align: center;
 }
 
 .brand-logo {
-    max-height: 220px;
+    max-height: 200px;
     width: auto;
     object-fit: contain;
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+    filter: drop-shadow(0 4px 16px rgba(0, 56, 168, 0.3));
 }
 
-.idle-cta { text-align: center; }
+.idle-cta {
+    text-align: center;
+    animation: idlePulseGlow 3s ease-in-out infinite;
+}
+
+@keyframes idlePulseGlow {
+    0%, 100% { filter: drop-shadow(0 0 0px transparent); }
+    50% { filter: drop-shadow(0 0 12px rgba(252, 209, 22, 0.15)); }
+}
 
 .cta-arrow {
-    font-size: 1.5rem; color: var(--ph-gold);
+    font-size: 1.5rem; color: var(--gold);
     animation: bounce 1.2s ease-in-out infinite;
+    display: inline-block;
+}
+
+/* CSS arrow icon replacing emoji */
+.cta-arrow::before {
+    content: '';
+    display: inline-block;
+    width: 16px; height: 16px;
+    border-right: 3px solid var(--gold);
+    border-bottom: 3px solid var(--gold);
+    transform: rotate(45deg);
+    margin-bottom: 4px;
 }
 
 .cta-text {
     font-size: 1.3rem; font-weight: 500;
     margin: 0.5rem 0;
+    letter-spacing: 0.2px;
 }
 
 .accepted-bills {
@@ -89,11 +125,62 @@ html, body {
 }
 
 .bill-chip {
-    background: var(--bg-card);
-    border: 2px solid var(--ph-gold-dim);
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 2px solid var(--gold-dim);
     padding: 0.4rem 1rem; border-radius: 20px;
-    font-weight: 700; color: var(--ph-gold);
+    font-weight: 700; color: var(--gold);
     font-size: 1rem;
+}
+
+.accepted-coins {
+    display: flex; gap: 8px; justify-content: center;
+    margin-top: 8px;
+}
+
+.coin-chip {
+    background: linear-gradient(135deg, rgba(252, 209, 22, 0.15), rgba(252, 209, 22, 0.05));
+    border: 1px solid var(--gold-dim);
+    color: var(--gold);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85em;
+}
+
+.epay-section {
+    margin-top: 1rem;
+}
+
+.epay-btn {
+    padding: 12px 28px;
+    border-radius: var(--radius);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--gold);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.epay-btn:active {
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.1);
+}
+/* Arrow icon for epay button */
+.epay-btn::after {
+    content: '';
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-right: 2px solid var(--gold);
+    border-top: 2px solid var(--gold);
+    transform: rotate(45deg);
 }
 
 .admin-trigger {
@@ -101,35 +188,64 @@ html, body {
     width: 60px; height: 60px; z-index: 10;
 }
 
-/* ── SIM BAR ─────────────────────────────────────────────────────────────── */
+/* ── LOW STOCK BANNER ────────────────────────────────────────────────────── */
 
-.sim-bar {
-    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.5); border: 1px dashed rgba(255,255,255,0.2);
-    border-radius: 8px; padding: 6px 12px;
-    display: flex; align-items: center; gap: 8px;
-    font-size: 0.75rem;
+.low-stock-banner {
+    position: absolute;
+    bottom: 50px;
+    left: 50%; transform: translateX(-50%);
+    background: rgba(252, 209, 22, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(252, 209, 22, 0.3);
+    color: var(--gold);
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    animation: pulse 2s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.sim-bar.hidden { display: none; }
-.sim-bar button {
-    padding: 4px 10px; border-radius: 6px; border: 1px solid var(--ph-gold-dim);
-    background: var(--bg-card); color: var(--ph-gold);
-    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+/* CSS warning triangle icon */
+.low-stock-banner::before {
+    content: '!';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 2px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    background: var(--gold);
+    color: var(--navy);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    padding-top: 4px;
 }
+.low-stock-banner.hidden { display: none; }
 
 /* ── EMPTY SCREEN ────────────────────────────────────────────────────────── */
 
 .empty-container {
     text-align: center; padding: 2rem;
 }
-.empty-icon { font-size: 4rem; margin-bottom: 1rem; }
+.empty-icon {
+    font-size: 3.5rem; margin-bottom: 1rem;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 61, 61, 0.1);
+    border: 2px solid var(--danger);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem;
+    color: var(--danger);
+    font-weight: 800;
+}
 .empty-container h2 { font-size: 2rem; color: var(--danger); margin-bottom: 0.5rem; }
 .empty-container p { font-size: 1.1rem; color: var(--text-dim); }
 .empty-sub { margin-top: 1rem; font-size: 0.9rem; }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   FEE NOTIFICATION SCREEN
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ── FEE NOTIFICATION SCREEN ────────────────────────────────────────────── */
 
 .fee-container {
     text-align: center;
@@ -140,7 +256,14 @@ html, body {
 }
 
 .fee-icon {
-    font-size: 3rem;
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(252, 209, 22, 0.2), rgba(252, 209, 22, 0.05));
+    border: 2px solid var(--gold-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--gold);
     margin-bottom: 0.75rem;
     animation: popIn 0.4s ease;
 }
@@ -161,19 +284,27 @@ html, body {
 }
 
 .fee-highlight {
-    color: var(--ph-gold);
+    color: var(--gold);
     font-weight: 800;
     font-size: 1.3em;
 }
 
+.fee-free {
+    color: var(--success) !important;
+    font-weight: 800;
+}
+
 .fee-breakdown {
-    background: var(--bg-card);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-radius: var(--radius);
     padding: 16px 28px;
     width: 100%;
     max-width: 320px;
     margin-bottom: 1.25rem;
-    border: 1px solid rgba(252, 209, 22, 0.2);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
 }
 
 .fee-breakdown-row {
@@ -215,30 +346,34 @@ html, body {
 }
 
 .fee-proceed-btn {
-    padding: 14px 32px;
+    padding: 14px 36px;
     border-radius: var(--radius);
     border: none;
-    background: var(--success);
-    color: #000;
+    background: linear-gradient(135deg, var(--gold), #e6b800);
+    color: var(--navy);
     font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: all 0.3s ease;
     margin-bottom: 0.75rem;
+    box-shadow: 0 4px 16px rgba(252, 209, 22, 0.3);
+    min-height: 48px;
 }
 .fee-proceed-btn:active {
     transform: scale(0.95);
 }
 
 .fee-cancel-btn {
-    padding: 8px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--danger);
+    padding: 10px 24px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 61, 61, 0.4);
     background: transparent;
     color: var(--danger);
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
+    min-height: 44px;
+    transition: all 0.3s ease;
 }
 .fee-cancel-btn:active {
     background: rgba(206, 17, 38, 0.15);
@@ -258,23 +393,31 @@ html, body {
 }
 
 .picker-balance, .picker-remaining {
-    background: var(--bg-card); border-radius: 8px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
     padding: 8px 14px;
 }
 .picker-fee-info {
-    background: var(--bg-card); border-radius: 8px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
     padding: 8px 12px;
 }
 .fee-info-label {
     font-size: 0.8rem;
-    color: var(--ph-gold);
+    color: var(--gold);
     font-weight: 600;
 }
 .bal-label, .rem-label { font-size: 0.75rem; color: var(--text-dim); }
-.bal-value { font-size: 1.5rem; font-weight: 800; color: var(--ph-gold); margin-left: 6px; }
+.bal-value { font-size: 1.5rem; font-weight: 800; color: var(--gold); margin-left: 6px; }
 .rem-value { font-size: 1.5rem; font-weight: 800; margin-left: 6px; }
 .rem-value.zero { color: var(--success); }
-.rem-value.nonzero { color: var(--ph-red); }
+.rem-value.nonzero { color: var(--danger); }
 
 .picker-grid {
     display: grid; grid-template-columns: repeat(4, 1fr);
@@ -283,16 +426,40 @@ html, body {
 }
 
 .coin-card {
-    background: var(--bg-card); border-radius: var(--radius);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--radius);
     padding: 10px 6px; text-align: center;
-    border: 2px solid transparent;
-    transition: border-color 0.2s, opacity 0.3s;
+    border: 2px solid var(--glass-border);
+    transition: all 0.3s ease;
 }
-.coin-card.active { border-color: var(--ph-gold); }
+.coin-card.active {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
 .coin-card.disabled { opacity: 0.3; pointer-events: none; }
 
+/* Denomination-specific border colors when active */
+.coin-card[data-denom="1"].active {
+    border-color: #cd7f32;
+    box-shadow: 0 0 16px rgba(205, 127, 50, 0.3);
+}
+.coin-card[data-denom="5"].active {
+    border-color: #c0c0c0;
+    box-shadow: 0 0 16px rgba(192, 192, 192, 0.3);
+}
+.coin-card[data-denom="10"].active {
+    border-color: #7ec8e3;
+    box-shadow: 0 0 16px rgba(126, 200, 227, 0.3);
+}
+.coin-card[data-denom="20"].active {
+    border-color: var(--gold);
+    box-shadow: 0 0 16px rgba(252, 209, 22, 0.3);
+}
+
 .card-header { margin-bottom: 6px; }
-.card-denom { font-size: 1.4rem; font-weight: 800; color: var(--ph-gold); }
+.card-denom { font-size: 1.4rem; font-weight: 800; color: var(--gold); }
 .card-stock { display: block; font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; }
 
 .card-controls {
@@ -300,14 +467,23 @@ html, body {
 }
 
 .ctrl-btn {
-    width: 38px; height: 38px; border-radius: 50%; border: none;
+    width: 40px; height: 40px; border-radius: 50%; border: none;
     font-size: 1.4rem; font-weight: 700; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: transform 0.1s;
+    transition: transform 0.15s ease;
+    min-width: 44px; min-height: 44px;
 }
 .ctrl-btn:active { transform: scale(0.85); }
-.ctrl-btn.minus { background: #3d1020; color: var(--danger); }
-.ctrl-btn.plus { background: #103d20; color: var(--success); }
+.ctrl-btn.minus {
+    background: rgba(255, 61, 61, 0.15);
+    border: 1px solid rgba(255, 61, 61, 0.3);
+    color: var(--danger);
+}
+.ctrl-btn.plus {
+    background: rgba(0, 200, 83, 0.15);
+    border: 1px solid rgba(0, 200, 83, 0.3);
+    color: var(--success);
+}
 
 .ctrl-count { font-size: 1.4rem; font-weight: 800; min-width: 2rem; text-align: center; }
 
@@ -321,23 +497,53 @@ html, body {
 .action-btn {
     padding: 10px 12px; border-radius: var(--radius);
     border: none; font-size: 0.9rem; font-weight: 700; cursor: pointer;
-    transition: transform 0.1s, opacity 0.3s;
+    transition: all 0.3s ease;
+    min-height: 44px;
 }
 .action-btn:active { transform: scale(0.95); }
 .action-btn.quick {
-    background: var(--bg-card); color: var(--ph-gold);
-    border: 1px solid var(--ph-gold-dim); font-size: 0.8rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--gold);
+    border: 1px solid var(--glass-border);
+    font-size: 0.8rem;
 }
-.action-btn.confirm { background: var(--success); color: #000; padding: 10px 24px; }
+.action-btn.confirm {
+    background: linear-gradient(135deg, var(--gold), #e6b800);
+    color: var(--navy);
+    padding: 10px 28px;
+    box-shadow: 0 4px 16px rgba(252, 209, 22, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+/* Subtle shine animation on confirm */
+.action-btn.confirm::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%);
+    animation: shine 3s ease-in-out infinite;
+}
+@keyframes shine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
 .action-btn.confirm.disabled { opacity: 0.25; pointer-events: none; }
+.action-btn.confirm.disabled::after { display: none; }
 
 /* ── DISPENSING SCREEN ───────────────────────────────────────────────────── */
 
 .disp-container { text-align: center; }
-.disp-coins { margin-bottom: 1.5rem; }
+.disp-coins { margin-bottom: 1.5rem; display: flex; justify-content: center; gap: 12px; }
 .disp-coin {
-    font-size: 2.5rem; color: var(--ph-gold); margin: 0 6px;
-    display: inline-block; animation: coinDrop 0.8s ease-in-out infinite;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), #e6b800);
+    box-shadow: 0 0 12px rgba(252, 209, 22, 0.4);
+    display: inline-block;
+    animation: coinDrop 0.8s ease-in-out infinite;
 }
 .disp-coin.c2 { animation-delay: 0.2s; }
 .disp-coin.c3 { animation-delay: 0.4s; }
@@ -349,106 +555,27 @@ html, body {
 .done-container { text-align: center; }
 .done-check {
     width: 80px; height: 80px; border-radius: 50%;
-    background: var(--success); color: #000;
-    font-size: 3rem; font-weight: 800;
+    background: var(--success);
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 1rem;
     animation: popIn 0.4s ease;
+    box-shadow: 0 0 30px rgba(0, 200, 83, 0.4);
+    position: relative;
+}
+/* CSS checkmark */
+.done-check::after {
+    content: '';
+    display: block;
+    width: 22px; height: 36px;
+    border-right: 5px solid var(--navy);
+    border-bottom: 5px solid var(--navy);
+    transform: rotate(45deg) translate(-2px, -4px);
 }
 .done-container h2 { font-size: 2rem; color: var(--success); margin-bottom: 0.5rem; }
 .done-container p { font-size: 1.2rem; }
 .done-english { color: var(--text-dim); font-size: 1rem; margin-top: 0.25rem; }
-.done-summary { color: var(--ph-gold); font-size: 1rem; font-weight: 600; margin-top: 0.75rem; }
+.done-summary { color: var(--gold); font-size: 1rem; font-weight: 600; margin-top: 0.75rem; }
 .done-timer { margin-top: 1rem; color: var(--text-dim); font-size: 0.9rem; }
-
-/* ── TOAST ───────────────────────────────────────────────────────────────── */
-
-.toast {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: var(--danger); color: #fff; padding: 10px 20px;
-    border-radius: 8px; font-weight: 600; font-size: 0.9rem;
-    transition: opacity 0.3s; z-index: 999;
-}
-.toast.hidden { opacity: 0; pointer-events: none; }
-
-/* ── ANIMATIONS ──────────────────────────────────────────────────────────── */
-
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-}
-@keyframes coinDrop {
-    0%, 100% { transform: translateY(0); opacity: 1; }
-    50% { transform: translateY(10px); opacity: 0.5; }
-}
-@keyframes popIn {
-    0% { transform: scale(0); }
-    80% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-/* ── RESPONSIVE: actual browser testing on laptop ────────────────────────── */
-@media (min-width: 801px) {
-    html, body {
-        width: 100vw; height: 100vh;
-        max-width: 800px; max-height: 480px;
-        margin: auto;
-        border: 2px solid #333;
-        border-radius: 8px;
-        position: relative;
-        top: 50%; transform: translateY(-50%);
-    }
-}
-
-@media (max-height: 480px) {
-    .brand-logo { max-height: 160px; }
-    .idle-cta { margin-top: 0; }
-    .cta-text { font-size: 1.1rem; }
-}
-
-/* ── LOW STOCK BANNER ────────────────────────────────────────────────────── */
-
-.low-stock-banner {
-    position: absolute;
-    bottom: 50px;
-    left: 50%; transform: translateX(-50%);
-    background: rgba(252, 209, 22, 0.15);
-    border: 1px solid var(--ph-gold-dim);
-    color: var(--ph-gold);
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    animation: pulse 2s ease-in-out infinite;
-}
-.low-stock-banner.hidden { display: none; }
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-}
-
-/* ── E-PAYMENT BUTTON (IDLE SCREEN) ─────────────────────────────────────── */
-
-.epay-section {
-    margin-top: 1rem;
-}
-
-.epay-btn {
-    padding: 10px 24px;
-    border-radius: 25px;
-    border: 2px solid var(--ph-gold-dim);
-    background: var(--bg-card);
-    color: var(--ph-gold);
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
-}
-.epay-btn:active {
-    transform: scale(0.95);
-    background: var(--bg-surface);
-}
 
 /* ── E-PAYMENT SCREEN ────────────────────────────────────────────────────── */
 
@@ -470,8 +597,9 @@ html, body {
 
 .epay-title {
     font-size: 1.6rem;
-    color: var(--ph-gold);
+    color: var(--gold);
     margin-bottom: 0.5rem;
+    font-weight: 800;
 }
 .epay-subtitle {
     color: var(--text-dim);
@@ -496,8 +624,7 @@ html, body {
     align-items: center;
     justify-content: center;
     padding: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    border: 3px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.1);
 }
 
 .qr-svg {
@@ -515,11 +642,26 @@ html, body {
 }
 
 .epay-processing {
-    color: var(--ph-gold);
+    color: var(--gold);
     font-size: 1.1rem;
     font-weight: 600;
     margin-top: 0.75rem;
-    animation: pulse 2s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+/* Animated dots */
+.epay-processing::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+@keyframes dots {
+    0% { content: ''; }
+    25% { content: '.'; }
+    50% { content: '..'; }
+    75% { content: '...'; }
+    100% { content: ''; }
 }
 
 .epay-qr-actions {
@@ -531,22 +673,25 @@ html, body {
 }
 
 .epay-cancel-btn {
-    padding: 10px 24px;
-    border-radius: 8px;
-    border: 2px solid var(--danger);
-    background: rgba(206, 17, 38, 0.1);
+    padding: 12px 28px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(255, 61, 61, 0.4);
+    background: rgba(255, 61, 61, 0.05);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     color: var(--danger);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
+    transition: all 0.3s ease;
+    min-height: 44px;
 }
 .epay-cancel-btn:active {
     transform: scale(0.95);
-    background: rgba(206, 17, 38, 0.25);
+    background: rgba(206, 17, 38, 0.2);
 }
 
-/* ── Payment Confirmed Screen ────────────────────────────────────────────── */
+/* ── Payment Confirmed ───────────────────────────────────────────────────── */
 
 .epay-confirmed-content {
     text-align: center;
@@ -563,15 +708,22 @@ html, body {
     height: 100px;
     border-radius: 50%;
     background: var(--success);
-    color: #fff;
-    font-size: 3.5rem;
-    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 1.25rem;
     animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 8px 30px rgba(0, 200, 83, 0.4);
+    position: relative;
+}
+/* CSS checkmark for confirmed */
+.epay-confirmed-icon::after {
+    content: '';
+    display: block;
+    width: 26px; height: 42px;
+    border-right: 5px solid #fff;
+    border-bottom: 5px solid #fff;
+    transform: rotate(45deg) translate(-2px, -4px);
 }
 
 .epay-confirmed-title {
@@ -585,25 +737,72 @@ html, body {
     color: var(--text-dim);
 }
 
-/* ── Coin Chips (idle screen) ──────────────────────────────────────────── */
-.accepted-coins {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    margin-top: 8px;
+/* ── TOAST ───────────────────────────────────────────────────────────────── */
+
+.toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(255, 61, 61, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #fff; padding: 12px 24px;
+    border-radius: var(--radius); font-weight: 600; font-size: 0.9rem;
+    transition: opacity 0.3s; z-index: 999;
+    border: 1px solid rgba(255, 61, 61, 0.5);
+    box-shadow: 0 4px 20px rgba(255, 61, 61, 0.3);
 }
-.coin-chip {
-    background: linear-gradient(135deg, #fcd116, #e6b800);
-    color: #1a1a2e;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 0.85em;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+.toast.hidden { opacity: 0; pointer-events: none; }
+
+/* ── ANIMATIONS ──────────────────────────────────────────────────────────── */
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+@keyframes coinDrop {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(10px); opacity: 0.5; }
+}
+@keyframes popIn {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
-/* ── Fee Free Highlight ────────────────────────────────────────────────── */
-.fee-free {
-    color: #00c853 !important;
-    font-weight: 800;
+/* ── SIM BAR ─────────────────────────────────────────────────────────────── */
+
+.sim-bar {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.5); border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 6px 12px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.75rem;
+}
+.sim-bar.hidden { display: none; }
+.sim-bar button {
+    padding: 4px 10px; border-radius: 6px; border: 1px solid var(--gold-dim);
+    background: var(--glass-bg); color: var(--gold);
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+@media (min-width: 801px) {
+    html, body {
+        width: 100vw; height: 100vh;
+        max-width: 800px; max-height: 480px;
+        margin: auto;
+        border: 2px solid #333;
+        border-radius: 8px;
+        position: relative;
+        top: 50%; transform: translateY(-50%);
+    }
+}
+
+@media (max-height: 480px) {
+    .brand-logo { max-height: 160px; }
+    .idle-cta { margin-top: 0; }
+    .cta-text { font-size: 1.1rem; }
 }

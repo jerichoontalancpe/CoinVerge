@@ -461,12 +461,12 @@ function showUnavailable(isMaintenance, isNoStock) {
     const sub = document.getElementById("empty-sub");
 
     if (isMaintenance) {
-        icon.textContent = "🔧";
+        icon.textContent = "M";
         title.textContent = "Under Maintenance";
         msg.textContent = "Pakibalik mamaya";
         sub.textContent = "The machine is temporarily unavailable.";
     } else if (isNoStock) {
-        icon.textContent = "🚫";
+        icon.textContent = "X";
         title.textContent = "Walang Barya";
         msg.textContent = "Out of coins — please try again later.";
         sub.textContent = "Pakitawagan ang operator para sa refill.";
@@ -506,7 +506,7 @@ async function showEpay() {
 
         // Show QR screen with reference
         document.getElementById("epay-ref-num").textContent = data.reference_number;
-        document.getElementById("epay-processing-msg").textContent = "⏳ Waiting for payment...";
+        document.getElementById("epay-processing-msg").textContent = "Waiting for payment";
         document.getElementById("epay-step-qr").classList.remove("hidden");
         document.getElementById("epay-step-confirmed").classList.add("hidden");
 

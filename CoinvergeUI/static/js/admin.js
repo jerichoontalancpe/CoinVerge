@@ -149,7 +149,7 @@ async function loadStock() {
             if (statusEl) {
                 statusEl.innerHTML =
                     `<strong>${machine.machine_name}</strong> | ` +
-                    `ESP32: ${machine.esp32_connected ? "✅" : "❌"} | ` +
+                    `ESP32: ${machine.esp32_connected ? "OK" : "OFF"} | ` +
                     `Mode: ${machine.simulate_mode ? "Sim" : "HW"}`;
             }
         }
@@ -191,10 +191,10 @@ async function addStock(denom) {
         });
         const data = await res.json();
         if (res.ok) {
-            alert(`✅ Added ${data.added} coins to ₱${denom} hopper.\nPrevious: ${data.previous} → New: ${data.new_total}`);
+            alert(`Added ${data.added} coins to ₱${denom} hopper.\nPrevious: ${data.previous} → New: ${data.new_total}`);
             loadStock();
         } else {
-            alert(`❌ ${data.error}`);
+            alert(`Error: ${data.error}`);
         }
     } catch (e) {
         alert("Connection error: " + e.message);
@@ -637,9 +637,9 @@ async function testBill(amount) {
         });
         const data = await res.json();
         if (res.ok) {
-            alert(`✅ Simulated ₱${amount} bill inserted. Check kiosk screen.`);
+            alert(`Simulated ₱${amount} bill inserted. Check kiosk screen.`);
         } else {
-            alert(`❌ ${data.error}`);
+            alert(`Error: ${data.error}`);
         }
     } catch (e) { alert("Error: " + e.message); }
 }
@@ -655,10 +655,10 @@ async function testCoin(amount) {
         });
         const data = await res.json();
         if (res.ok) {
-            alert(`✅ Simulated ₱${amount} coin inserted. Stock +1, fee = FREE. Check kiosk screen.`);
+            alert(`Simulated ₱${amount} coin inserted. Stock +1, fee = FREE. Check kiosk screen.`);
             loadStock();
         } else {
-            alert(`❌ ${data.error}`);
+            alert(`Error: ${data.error}`);
         }
     } catch (e) { alert("Error: " + e.message); }
 }
@@ -681,7 +681,7 @@ async function moveServo(servoId) {
         if (res.ok) {
             console.log(`[SERVO] ${servoId} moved to ${angle}°`);
         } else {
-            alert(`❌ ${data.error}`);
+            alert(`Error: ${data.error}`);
         }
     } catch (e) { alert("Error: " + e.message); }
 }
@@ -703,10 +703,10 @@ async function saveServoPos(posKey) {
         });
         const data = await res.json();
         if (res.ok) {
-            alert(`✅ Saved Servo ${servoId} position for ${denomLabel} = ${angle}°`);
+            alert(`Saved Servo ${servoId} position for ${denomLabel} = ${angle}°`);
             loadServoPositions();
         } else {
-            alert(`❌ ${data.error}`);
+            alert(`Error: ${data.error}`);
         }
     } catch (e) { alert("Error: " + e.message); }
 }
@@ -740,8 +740,8 @@ async function toggleCoinFee() {
     const newState = current ? "Enabled" : "Disabled (Free)";
     statusEl.textContent = newState;
     alert(current
-        ? "⚠️ Coin exchange fee ENABLED — coins will now incur service fee."
-        : "✅ Coin exchange fee DISABLED — coin exchange is free!");
+        ? "Coin exchange fee ENABLED — coins will now incur service fee."
+        : "Coin exchange fee DISABLED — coin exchange is free!");
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -753,7 +753,7 @@ let countingDenom = 0;
 
 async function startCount(denom) {
     const confirmed = confirm(
-        `⚠️ Place a container below the ₱${denom} hopper.\n\n` +
+        `Place a container below the ₱${denom} hopper.\n\n` +
         `All coins will be dispensed and counted.\n` +
         `After counting, put coins back into the hopper.\n\n` +
         `Continue?`
@@ -771,7 +771,7 @@ async function startCount(denom) {
         const data = await res.json();
 
         if (!res.ok) {
-            alert(`❌ ${data.error}`);
+            alert(`Error: ${data.error}`);
             return;
         }
 
@@ -820,7 +820,7 @@ let countAutoCloseTimer = null;
 
 function showCountComplete(denom, total) {
     const totalValue = total * denom;
-    document.getElementById("count-modal-icon").textContent = "✅";
+    document.getElementById("count-modal-icon").textContent = "OK";
     document.getElementById("count-modal-title").textContent = "Count Complete!";
     document.getElementById("count-modal-counter").textContent = total.toLocaleString();
     document.getElementById("count-modal-value").textContent = `₱${totalValue.toLocaleString()}`;
@@ -858,7 +858,7 @@ async function stopCount() {
             const res = await fetch("/api/admin/count_status");
             if (res.ok) {
                 const state = await res.json();
-                document.getElementById("count-modal-icon").textContent = "⏹";
+                document.getElementById("count-modal-icon").textContent = "||";
                 document.getElementById("count-modal-title").textContent = "Counting Stopped";
                 document.getElementById("count-modal-counter").textContent = state.count.toLocaleString();
                 document.getElementById("count-modal-value").textContent =
@@ -880,7 +880,7 @@ function closeCountModal() {
         countAutoCloseTimer = null;
     }
     document.getElementById("count-modal").classList.add("hidden");
-    document.getElementById("count-modal-icon").textContent = "🔢";
+    document.getElementById("count-modal-icon").textContent = "#";
     document.getElementById("count-ok-btn").textContent = "OK";
     loadStock();
 }

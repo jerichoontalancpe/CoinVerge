@@ -7,99 +7,85 @@
     <link rel="stylesheet" href="/static/css/kiosk.css">
 </head>
 <body>
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCREEN: IDLE — Waiting for bill                                    -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: IDLE -->
     <div id="screen-idle" class="screen active">
         <div class="idle-container">
             <div class="idle-brand">
                 <img src="/static/img/logo.png" alt="CoinVerge" class="brand-logo">
             </div>
             <div class="idle-cta">
-                <div class="cta-arrow">▼</div>
-                <p class="cta-text">Magpasukli — Insert bills or coins below</p>
+                <div class="cta-arrow"></div>
+                <p class="cta-text">Insert bill or coins below</p>
                 <div class="accepted-bills">
-                    <span class="bill-chip">₱20</span>
-                    <span class="bill-chip">₱50</span>
-                    <span class="bill-chip">₱100</span>
+                    <span class="bill-chip">P20</span>
+                    <span class="bill-chip">P50</span>
+                    <span class="bill-chip">P100</span>
                 </div>
                 <div class="accepted-coins">
-                    <span class="coin-chip">₱1</span>
-                    <span class="coin-chip">₱5</span>
-                    <span class="coin-chip">₱10</span>
-                    <span class="coin-chip">₱20</span>
+                    <span class="coin-chip">P1</span>
+                    <span class="coin-chip">P5</span>
+                    <span class="coin-chip">P10</span>
+                    <span class="coin-chip">P20</span>
                 </div>
                 <div class="epay-section">
-                    <button class="epay-btn" onclick="showEpay()">📱 E-Payment</button>
+                    <button class="epay-btn" onclick="showEpay()">E-Payment</button>
                 </div>
             </div>
-            <!-- Low stock warning banner -->
             <div id="low-stock-banner" class="low-stock-banner hidden">
-                ⚠️ Limited stock available
+                Limited stock available
             </div>
         </div>
-        <!-- Admin access: tap 5 times on brand icon -->
         <div class="admin-trigger" onclick="adminTap()"></div>
-        <!-- Sim controls -->
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCREEN: UNAVAILABLE — Out of stock or maintenance                 -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: UNAVAILABLE -->
     <div id="screen-empty" class="screen">
         <div class="empty-container">
-            <div class="empty-icon" id="empty-icon">🚫</div>
+            <div class="empty-icon" id="empty-icon">X</div>
             <h2 id="empty-title">Walang Barya</h2>
             <p id="empty-message">Out of coins — please try again later.</p>
             <p class="empty-sub" id="empty-sub">Pakitawagan ang operator para sa refill.</p>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCREEN: FEE NOTIFICATION — Between bill insertion and picker       -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: FEE NOTIFICATION -->
     <div id="screen-fee" class="screen">
         <div class="fee-container">
-            <div class="fee-icon">💰</div>
+            <div class="fee-icon">P</div>
             <div class="fee-message-fil" id="fee-message-fil">
-                May service charge na <span class="fee-highlight" id="fee-amount-fil">₱0</span> ang makinang ito.
+                May service charge na <span class="fee-highlight" id="fee-amount-fil">P0</span> ang makinang ito.
             </div>
             <div class="fee-message-en" id="fee-message-en">
-                This machine will charge you <span class="fee-highlight" id="fee-amount-en">₱0</span> as a service fee.
+                This machine will charge you <span class="fee-highlight" id="fee-amount-en">P0</span> as a service fee.
             </div>
             <div class="fee-breakdown">
                 <div class="fee-breakdown-row">
                     <span class="fee-label">Inserted:</span>
-                    <span class="fee-value" id="fee-inserted">₱0</span>
+                    <span class="fee-value" id="fee-inserted">P0</span>
                 </div>
                 <div class="fee-breakdown-row">
                     <span class="fee-label">Fee:</span>
-                    <span class="fee-value fee-deduct" id="fee-charge">−₱0</span>
+                    <span class="fee-value fee-deduct" id="fee-charge">-P0</span>
                 </div>
                 <div class="fee-breakdown-divider"></div>
                 <div class="fee-breakdown-row total">
                     <span class="fee-label">You receive:</span>
-                    <span class="fee-value fee-receive" id="fee-receive">₱0</span>
+                    <span class="fee-value fee-receive" id="fee-receive">P0</span>
                 </div>
             </div>
             <button class="fee-proceed-btn" onclick="proceedFromFee()">Proceed — Pumili ng barya</button>
-            <button class="fee-cancel-btn" onclick="cancelTransaction()">✕ Cancel</button>
+            <button class="fee-cancel-btn" onclick="cancelTransaction()">Cancel</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCREEN: E-PAYMENT — QR Code display (simplified)                  -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: E-PAYMENT -->
     <div id="screen-epay" class="screen">
-        <!-- Single step: Show QR and wait -->
         <div id="epay-step-qr" class="epay-container">
             <h2 class="epay-title">E-Payment</h2>
-            <p class="epay-subtitle">Open GCash/Maya on your phone and scan the QR code below</p>
+            <p class="epay-subtitle">Open GCash or Maya on your phone and scan the QR code below</p>
             <div class="epay-qr-box">
                 <div class="epay-qr-placeholder">
-                    <!-- Realistic QR code SVG -->
                     <svg viewBox="0 0 29 29" class="qr-svg" shape-rendering="crispEdges">
-                        <!-- Position detection patterns (corners) -->
                         <rect x="0" y="0" width="7" height="1" fill="#000"/><rect x="0" y="6" width="7" height="1" fill="#000"/>
                         <rect x="0" y="0" width="1" height="7" fill="#000"/><rect x="6" y="0" width="1" height="7" fill="#000"/>
                         <rect x="2" y="2" width="3" height="3" fill="#000"/>
@@ -109,12 +95,10 @@
                         <rect x="0" y="22" width="7" height="1" fill="#000"/><rect x="0" y="28" width="7" height="1" fill="#000"/>
                         <rect x="0" y="22" width="1" height="7" fill="#000"/><rect x="6" y="22" width="1" height="7" fill="#000"/>
                         <rect x="2" y="24" width="3" height="3" fill="#000"/>
-                        <!-- Timing patterns -->
                         <rect x="8" y="6" width="1" height="1" fill="#000"/><rect x="10" y="6" width="1" height="1" fill="#000"/>
                         <rect x="12" y="6" width="1" height="1" fill="#000"/><rect x="14" y="6" width="1" height="1" fill="#000"/>
                         <rect x="6" y="8" width="1" height="1" fill="#000"/><rect x="6" y="10" width="1" height="1" fill="#000"/>
                         <rect x="6" y="12" width="1" height="1" fill="#000"/><rect x="6" y="14" width="1" height="1" fill="#000"/>
-                        <!-- Data modules -->
                         <rect x="8" y="1" width="1" height="1" fill="#000"/><rect x="10" y="0" width="1" height="1" fill="#000"/>
                         <rect x="11" y="1" width="1" height="1" fill="#000"/><rect x="12" y="0" width="1" height="1" fill="#000"/>
                         <rect x="14" y="1" width="1" height="1" fill="#000"/><rect x="15" y="0" width="1" height="1" fill="#000"/>
@@ -166,7 +150,6 @@
                         <rect x="18" y="25" width="1" height="1" fill="#000"/><rect x="20" y="24" width="1" height="1" fill="#000"/>
                         <rect x="15" y="26" width="1" height="1" fill="#000"/><rect x="17" y="27" width="1" height="1" fill="#000"/>
                         <rect x="19" y="28" width="1" height="1" fill="#000"/><rect x="21" y="27" width="1" height="1" fill="#000"/>
-                        <!-- Alignment pattern -->
                         <rect x="20" y="20" width="5" height="1" fill="#000"/><rect x="20" y="24" width="5" height="1" fill="#000"/>
                         <rect x="20" y="20" width="1" height="5" fill="#000"/><rect x="24" y="20" width="1" height="5" fill="#000"/>
                         <rect x="22" y="22" width="1" height="1" fill="#000"/>
@@ -176,124 +159,117 @@
                     <p class="epay-ref">Ref: <span id="epay-ref-num">000000000000</span></p>
                 </div>
             </div>
-            <p class="epay-processing" id="epay-processing-msg">⏳ Waiting for payment...</p>
+            <p class="epay-processing" id="epay-processing-msg">Waiting for payment</p>
             <div class="epay-qr-actions">
-                <button class="epay-cancel-btn" onclick="cancelEpay()">✕ Cancel</button>
+                <button class="epay-cancel-btn" onclick="cancelEpay()">Cancel</button>
             </div>
         </div>
 
-        <!-- Payment Confirmed transition -->
         <div id="epay-step-confirmed" class="epay-container hidden">
             <div class="epay-confirmed-content">
-                <div class="epay-confirmed-icon">✓</div>
+                <div class="epay-confirmed-icon"></div>
                 <h2 class="epay-confirmed-title">Payment Received!</h2>
                 <p class="epay-confirmed-sub">Nakatanggap na ng bayad</p>
             </div>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCREEN: PICKER — Select coin denominations                        -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: PICKER -->
     <div id="screen-picker" class="screen">
         <div class="picker-top">
             <div class="picker-balance">
                 <span class="bal-label">Inserted:</span>
-                <span id="bal-amount" class="bal-value">₱100</span>
+                <span id="bal-amount" class="bal-value">P100</span>
             </div>
             <div class="picker-fee-info">
-                <span class="fee-info-label">Fee: <span id="picker-fee-amount">₱0</span></span>
+                <span class="fee-info-label">Fee: <span id="picker-fee-amount">P0</span></span>
             </div>
             <div class="picker-remaining">
                 <span class="rem-label">Remaining:</span>
-                <span id="rem-amount" class="rem-value zero">₱0</span>
+                <span id="rem-amount" class="rem-value zero">P0</span>
             </div>
         </div>
 
         <div class="picker-grid">
             <div class="coin-card" data-denom="1" id="card-1">
                 <div class="card-header">
-                    <span class="card-denom">₱1</span>
+                    <span class="card-denom">P1</span>
                     <span class="card-stock" id="stock-1">200 pcs</span>
                 </div>
                 <div class="card-controls">
-                    <button class="ctrl-btn minus" onclick="adjust(1,-1)">−</button>
+                    <button class="ctrl-btn minus" onclick="adjust(1,-1)">-</button>
                     <span class="ctrl-count" id="count-1">0</span>
                     <button class="ctrl-btn plus" onclick="adjust(1,1)">+</button>
                 </div>
-                <div class="card-sub" id="sub-1">₱0</div>
+                <div class="card-sub" id="sub-1">P0</div>
             </div>
 
             <div class="coin-card" data-denom="5" id="card-5">
                 <div class="card-header">
-                    <span class="card-denom">₱5</span>
+                    <span class="card-denom">P5</span>
                     <span class="card-stock" id="stock-5">200 pcs</span>
                 </div>
                 <div class="card-controls">
-                    <button class="ctrl-btn minus" onclick="adjust(5,-1)">−</button>
+                    <button class="ctrl-btn minus" onclick="adjust(5,-1)">-</button>
                     <span class="ctrl-count" id="count-5">0</span>
                     <button class="ctrl-btn plus" onclick="adjust(5,1)">+</button>
                 </div>
-                <div class="card-sub" id="sub-5">₱0</div>
+                <div class="card-sub" id="sub-5">P0</div>
             </div>
 
             <div class="coin-card" data-denom="10" id="card-10">
                 <div class="card-header">
-                    <span class="card-denom">₱10</span>
+                    <span class="card-denom">P10</span>
                     <span class="card-stock" id="stock-10">200 pcs</span>
                 </div>
                 <div class="card-controls">
-                    <button class="ctrl-btn minus" onclick="adjust(10,-1)">−</button>
+                    <button class="ctrl-btn minus" onclick="adjust(10,-1)">-</button>
                     <span class="ctrl-count" id="count-10">0</span>
                     <button class="ctrl-btn plus" onclick="adjust(10,1)">+</button>
                 </div>
-                <div class="card-sub" id="sub-10">₱0</div>
+                <div class="card-sub" id="sub-10">P0</div>
             </div>
 
             <div class="coin-card" data-denom="20" id="card-20">
                 <div class="card-header">
-                    <span class="card-denom">₱20</span>
+                    <span class="card-denom">P20</span>
                     <span class="card-stock" id="stock-20">200 pcs</span>
                 </div>
                 <div class="card-controls">
-                    <button class="ctrl-btn minus" onclick="adjust(20,-1)">−</button>
+                    <button class="ctrl-btn minus" onclick="adjust(20,-1)">-</button>
                     <span class="ctrl-count" id="count-20">0</span>
                     <button class="ctrl-btn plus" onclick="adjust(20,1)">+</button>
                 </div>
-                <div class="card-sub" id="sub-20">₱0</div>
+                <div class="card-sub" id="sub-20">P0</div>
             </div>
         </div>
 
         <div class="picker-actions">
-            <button class="action-btn quick" onclick="quickSelect(1)">All ₱1</button>
-            <button class="action-btn quick" onclick="quickSelect(5)">All ₱5</button>
-            <button class="action-btn quick" onclick="quickSelect(10)">All ₱10</button>
-            <button class="action-btn quick" onclick="quickSelect(20)">All ₱20</button>
+            <button class="action-btn quick" onclick="quickSelect(1)">All P1</button>
+            <button class="action-btn quick" onclick="quickSelect(5)">All P5</button>
+            <button class="action-btn quick" onclick="quickSelect(10)">All P10</button>
+            <button class="action-btn quick" onclick="quickSelect(20)">All P20</button>
             <button class="action-btn confirm disabled" id="btn-confirm" onclick="confirmDispense()">Confirm</button>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCREEN: DISPENSING — coins being dispensed                         -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: DISPENSING -->
     <div id="screen-dispensing" class="screen">
         <div class="disp-container">
             <div class="disp-coins">
-                <span class="disp-coin c1">●</span>
-                <span class="disp-coin c2">●</span>
-                <span class="disp-coin c3">●</span>
+                <span class="disp-coin c1"></span>
+                <span class="disp-coin c2"></span>
+                <span class="disp-coin c3"></span>
             </div>
             <h2>Nagbabayad ng barya...</h2>
             <p>Dispensing your coins — please wait</p>
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- SCREEN: DONE — collect coins                                      -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- SCREEN: DONE -->
     <div id="screen-done" class="screen">
         <div class="done-container">
-            <div class="done-check">✓</div>
+            <div class="done-check"></div>
             <h2>Tapos na!</h2>
             <p>Kunin ang iyong barya sa ibaba</p>
             <p class="done-english">Collect your coins below</p>
@@ -304,9 +280,7 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- ERROR TOAST                                                        -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ERROR TOAST -->
     <div id="toast" class="toast hidden">
         <span id="toast-msg">Error</span>
     </div>
