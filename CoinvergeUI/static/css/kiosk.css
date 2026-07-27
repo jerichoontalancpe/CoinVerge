@@ -127,6 +127,123 @@ html, body {
 .empty-container p { font-size: 1.1rem; color: var(--text-dim); }
 .empty-sub { margin-top: 1rem; font-size: 0.9rem; }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   FEE NOTIFICATION SCREEN
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.fee-container {
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 1.5rem 2rem;
+    max-width: 500px;
+}
+
+.fee-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    animation: popIn 0.4s ease;
+}
+
+.fee-message-fil {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+    line-height: 1.4;
+}
+
+.fee-message-en {
+    font-size: 1rem;
+    color: var(--text-dim);
+    margin-bottom: 1.25rem;
+    line-height: 1.4;
+}
+
+.fee-highlight {
+    color: var(--ph-gold);
+    font-weight: 800;
+    font-size: 1.3em;
+}
+
+.fee-breakdown {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 16px 28px;
+    width: 100%;
+    max-width: 320px;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(252, 209, 22, 0.2);
+}
+
+.fee-breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.fee-breakdown-row.total {
+    padding-top: 10px;
+}
+
+.fee-label {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+}
+
+.fee-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.fee-deduct {
+    color: var(--danger);
+}
+
+.fee-receive {
+    color: var(--success);
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.fee-breakdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 6px 0;
+}
+
+.fee-proceed-btn {
+    padding: 14px 32px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--success);
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s;
+    margin-bottom: 0.75rem;
+}
+.fee-proceed-btn:active {
+    transform: scale(0.95);
+}
+
+.fee-cancel-btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--danger);
+    background: transparent;
+    color: var(--danger);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.fee-cancel-btn:active {
+    background: rgba(206, 17, 38, 0.15);
+}
+
 /* ── PICKER SCREEN ───────────────────────────────────────────────────────── */
 
 #screen-picker {
@@ -143,6 +260,15 @@ html, body {
 .picker-balance, .picker-remaining {
     background: var(--bg-card); border-radius: 8px;
     padding: 8px 14px;
+}
+.picker-fee-info {
+    background: var(--bg-card); border-radius: 8px;
+    padding: 8px 12px;
+}
+.fee-info-label {
+    font-size: 0.8rem;
+    color: var(--ph-gold);
+    font-weight: 600;
 }
 .bal-label, .rem-label { font-size: 0.75rem; color: var(--text-dim); }
 .bal-value { font-size: 1.5rem; font-weight: 800; color: var(--ph-gold); margin-left: 6px; }
@@ -350,165 +476,10 @@ html, body {
 .epay-subtitle {
     color: var(--text-dim);
     font-size: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    max-width: 400px;
+    line-height: 1.4;
 }
-
-/* ── Branded Method Buttons ──────────────────────────────────────────────── */
-
-.epay-methods {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-}
-
-.epay-method-btn {
-    width: 160px;
-    height: 120px;
-    border-radius: var(--radius);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: transform 0.1s, box-shadow 0.2s;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-.epay-method-btn:active {
-    transform: scale(0.95);
-}
-
-.epay-method-btn.gcash-brand {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: #fff;
-}
-.epay-method-btn.gcash-brand:active {
-    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.5);
-}
-
-.epay-method-btn.maya-brand {
-    background: linear-gradient(135deg, #00b900, #008a00);
-    color: #fff;
-}
-.epay-method-btn.maya-brand:active {
-    box-shadow: 0 2px 8px rgba(0, 185, 0, 0.5);
-}
-
-.epay-method-logo {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    font-weight: 900;
-    color: #fff;
-}
-
-.epay-method-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #fff;
-}
-
-/* ── E-Payment Amounts ───────────────────────────────────────────────────── */
-
-.epay-amounts {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-bottom: 1.5rem;
-}
-
-.epay-amount-btn {
-    width: 100px;
-    height: 70px;
-    border-radius: var(--radius);
-    border: 2px solid var(--ph-gold-dim);
-    background: var(--bg-card);
-    color: var(--ph-gold);
-    font-size: 1.4rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: transform 0.1s;
-}
-.epay-amount-btn:active {
-    transform: scale(0.95);
-    background: var(--bg-surface);
-}
-
-.epay-back-btn {
-    padding: 8px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--text-dim);
-    background: transparent;
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-.epay-back-btn:active { background: var(--bg-surface); }
-
-.epay-cancel-btn {
-    padding: 10px 24px;
-    border-radius: 8px;
-    border: 2px solid var(--danger);
-    background: rgba(206, 17, 38, 0.1);
-    color: var(--danger);
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
-}
-.epay-cancel-btn:active {
-    transform: scale(0.95);
-    background: rgba(206, 17, 38, 0.25);
-}
-
-.epay-nav-buttons {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    justify-content: center;
-}
-
-.epay-qr-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
-    margin-top: 1rem;
-}
-
-.epay-paid-btn {
-    padding: 12px 28px;
-    border-radius: 10px;
-    border: 2px solid var(--success);
-    background: rgba(0, 200, 83, 0.15);
-    color: var(--success);
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
-}
-.epay-paid-btn:active {
-    transform: scale(0.95);
-    background: rgba(0, 200, 83, 0.3);
-}
-
-/* ── QR Code Display ─────────────────────────────────────────────────────── */
-
-.epay-qr-method-label {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-dim);
-    margin-bottom: 0.75rem;
-}
-.epay-qr-method-label.gcash { color: #007bff; }
-.epay-qr-method-label.maya { color: #00b900; }
 
 .epay-qr-box {
     margin: 0.75rem 0;
@@ -538,13 +509,6 @@ html, body {
     margin-top: 0.75rem;
 }
 
-.epay-amount-display {
-    color: var(--ph-gold);
-    font-size: 1.3rem;
-    font-weight: 800;
-    margin-bottom: 0.25rem;
-}
-
 .epay-ref {
     color: var(--text-dim);
     font-size: 0.85rem;
@@ -556,6 +520,30 @@ html, body {
     font-weight: 600;
     margin-top: 0.75rem;
     animation: pulse 2s ease-in-out infinite;
+}
+
+.epay-qr-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.epay-cancel-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 2px solid var(--danger);
+    background: rgba(206, 17, 38, 0.1);
+    color: var(--danger);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+}
+.epay-cancel-btn:active {
+    transform: scale(0.95);
+    background: rgba(206, 17, 38, 0.25);
 }
 
 /* ── Payment Confirmed Screen ────────────────────────────────────────────── */

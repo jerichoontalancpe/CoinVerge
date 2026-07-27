@@ -18,7 +18,7 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- SCREEN: HOME / LOGIN                                           -->
+        <!-- SCREEN: HOME                                                   -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <div class="app-screen active" id="screen-home">
             <div class="app-header" id="home-header">
@@ -65,42 +65,55 @@
                     </div>
                 </div>
 
-                <!-- Pending payment notification -->
-                <div class="pending-notification hidden" id="pending-notification">
-                    <div class="pending-icon">💳</div>
-                    <div class="pending-info">
-                        <span class="pending-title">Payment Request</span>
-                        <span class="pending-merchant">CoinVerge Kiosk</span>
+                <!-- Quick services -->
+                <div class="home-services">
+                    <p class="services-label">Recent</p>
+                    <div class="service-item">
+                        <div class="service-icon">🪙</div>
+                        <div class="service-info">
+                            <span class="service-name">CoinVerge Kiosk</span>
+                            <span class="service-sub">Last used: Today</span>
+                        </div>
                     </div>
-                    <div class="pending-amount" id="pending-amount-badge">₱100</div>
-                </div>
-
-                <!-- Pay button -->
-                <button class="home-pay-btn hidden" id="home-pay-btn" onclick="goToPayment()">
-                    <span class="pay-btn-icon">💰</span>
-                    <span class="pay-btn-text">Pay Now</span>
-                    <span class="pay-btn-arrow">→</span>
-                </button>
-
-                <!-- Waiting state -->
-                <div class="waiting-state" id="waiting-state">
-                    <div class="waiting-dots">
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
-                    </div>
-                    <p class="waiting-text">Waiting for payment request from kiosk...</p>
                 </div>
             </div>
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- SCREEN: PAYMENT CONFIRMATION                                   -->
+        <!-- SCREEN: SCANNER (simulated camera view)                        -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <div class="app-screen" id="screen-scanner">
+            <div class="scanner-container">
+                <div class="scanner-header">
+                    <button class="scanner-close-btn" onclick="goHome()">✕</button>
+                    <span class="scanner-title">Scan QR Code</span>
+                    <span class="scanner-spacer"></span>
+                </div>
+                <div class="scanner-viewfinder">
+                    <div class="scanner-bg">
+                        <!-- Simulated camera with dark overlay -->
+                        <div class="scanner-noise"></div>
+                    </div>
+                    <div class="scanner-frame">
+                        <div class="frame-corner tl"></div>
+                        <div class="frame-corner tr"></div>
+                        <div class="frame-corner bl"></div>
+                        <div class="frame-corner br"></div>
+                        <div class="scanner-line"></div>
+                    </div>
+                </div>
+                <p class="scanner-hint">Point your camera at the QR code on the kiosk</p>
+                <p class="scanner-status" id="scanner-status">Scanning...</p>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- SCREEN: PAYMENT — Amount selection + confirmation              -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <div class="app-screen" id="screen-payment">
             <div class="app-header payment-header" id="payment-header">
                 <button class="back-btn" onclick="goHome()">←</button>
-                <span class="header-title">Confirm Payment</span>
+                <span class="header-title">Pay CoinVerge Kiosk</span>
                 <span class="header-spacer"></span>
             </div>
 
@@ -110,16 +123,35 @@
                         <svg width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#f0f0f0"/><text x="16" y="21" text-anchor="middle" font-size="14" fill="#333">C</text></svg>
                     </div>
                     <div class="merchant-name">CoinVerge Kiosk</div>
-                    <div class="merchant-type">Merchant Payment</div>
+                    <div class="merchant-type">Coin Exchange</div>
                 </div>
 
-                <div class="amount-display">
-                    <span class="amount-peso">₱</span>
-                    <span class="amount-value" id="pay-amount">100</span>
-                    <span class="amount-decimal">.00</span>
+                <!-- Method selection -->
+                <div class="method-select" id="method-select">
+                    <p class="method-label">Payment Method</p>
+                    <div class="method-btns">
+                        <button class="method-btn active" id="method-gcash" onclick="selectMethod('gcash')">GCash</button>
+                        <button class="method-btn" id="method-maya" onclick="selectMethod('maya')">Maya</button>
+                    </div>
                 </div>
 
-                <div class="payment-details-card">
+                <!-- Amount selection -->
+                <div class="amount-select">
+                    <p class="amount-label">Select Amount</p>
+                    <div class="amount-btns">
+                        <button class="amount-btn" onclick="selectAmount(20)">₱20</button>
+                        <button class="amount-btn" onclick="selectAmount(50)">₱50</button>
+                        <button class="amount-btn" onclick="selectAmount(100)">₱100</button>
+                    </div>
+                </div>
+
+                <!-- Payment details (shown after amount selected) -->
+                <div class="payment-details-card hidden" id="payment-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Amount</span>
+                        <span class="detail-value" id="pay-amount-display">₱0</span>
+                    </div>
+                    <div class="detail-divider"></div>
                     <div class="detail-item">
                         <span class="detail-label">Reference No.</span>
                         <span class="detail-value" id="pay-ref">000000000000</span>
@@ -139,7 +171,7 @@
                     </div>
                 </div>
 
-                <button class="confirm-pay-btn" id="confirm-pay-btn" onclick="confirmPayment()">
+                <button class="confirm-pay-btn disabled" id="confirm-pay-btn" onclick="confirmPayment()">
                     <span class="confirm-text">CONFIRM PAYMENT</span>
                     <span class="confirm-loading hidden" id="confirm-loading">
                         <span class="spinner"></span>
@@ -207,11 +239,11 @@
 
         <!-- Bottom Navigation -->
         <div class="bottom-nav" id="bottom-nav">
-            <div class="nav-item active">
+            <div class="nav-item active" onclick="goHome()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
                 <span>Home</span>
             </div>
-            <div class="nav-item">
+            <div class="nav-item" onclick="openScanner()">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 6.5v3h-3v-3h3M11 5H5v6h6V5zm-1.5 9.5v3h-3v-3h3M11 13H5v6h6v-6zm6.5-6.5v3h-3v-3h3M19 5h-6v6h6V5zm-6 8h1.5v1.5H13V13zm1.5 1.5H16V16h-1.5v-1.5zM16 13h1.5v1.5H16V13zm-3 3h1.5v1.5H13V16zm1.5 1.5H16V19h-1.5v-1.5zM16 16h1.5v1.5H16V16zm1.5-1.5H19V16h-1.5v-1.5zm0 3H19V19h-1.5v-1.5zM19 13v1.5h-1.5V13H19z"/></svg>
                 <span>Scan</span>
             </div>
@@ -227,10 +259,11 @@
     </div>
 
     <script>
-        // ── Phone App Logic ─────────────────────────────────────────────────────
-        let pollTimer = null;
+        // ── Phone App Logic ─────────────────────────────────────────────────
         let currentPayment = null;
-        let currentMethod = 'gcash'; // default
+        let selectedMethod = 'gcash';
+        let selectedAmount = 0;
+        let scanTimeout = null;
 
         // Update status bar time
         function updateTime() {
@@ -242,29 +275,12 @@
         updateTime();
         setInterval(updateTime, 30000);
 
-        // ── Theme Management ────────────────────────────────────────────────────
-
-        function setTheme(method) {
-            currentMethod = method;
-            const isGcash = method === 'gcash';
-            document.body.className = isGcash ? 'theme-gcash' : 'theme-maya';
-
-            // Update brand
-            document.getElementById('brand-name').textContent = isGcash ? 'GCash' : 'Maya';
-            document.getElementById('brand-icon').textContent = isGcash ? 'G' : 'M';
-
-            // Update payment screen
-            document.getElementById('pay-method-name').textContent = isGcash ? 'GCash' : 'Maya';
-            document.getElementById('pay-source-name').textContent = isGcash ? 'GCash Balance' : 'Maya Balance';
-        }
-
-        // ── Screen Navigation ───────────────────────────────────────────────────
+        // ── Screen Navigation ───────────────────────────────────────────────
 
         function showScreen(screenId) {
             document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
 
-            // Show/hide bottom nav
             const bottomNav = document.getElementById('bottom-nav');
             if (screenId === 'screen-success' || screenId === 'screen-error') {
                 bottomNav.classList.add('hidden');
@@ -275,74 +291,103 @@
 
         function goHome() {
             currentPayment = null;
+            selectedAmount = 0;
+            if (scanTimeout) clearTimeout(scanTimeout);
             showScreen('screen-home');
-            updateHomeState();
         }
 
-        function goToPayment() {
-            if (!currentPayment) return;
-            showScreen('screen-payment');
+        // ── Scanner Flow ────────────────────────────────────────────────────
 
-            // Populate payment details
-            document.getElementById('pay-amount').textContent = currentPayment.amount;
-            document.getElementById('pay-ref').textContent = currentPayment.reference_number;
-
-            // Reset confirm button
-            const btn = document.getElementById('confirm-pay-btn');
-            btn.disabled = false;
-            btn.querySelector('.confirm-text').classList.remove('hidden');
-            btn.querySelector('.confirm-loading').classList.add('hidden');
-        }
-
-        // ── Polling ─────────────────────────────────────────────────────────────
-
-        function startPolling() {
-            pollTimer = setInterval(checkPending, 1500);
-            checkPending();
-        }
-
-        async function checkPending() {
+        async function openScanner() {
+            // Check if there's a pending payment at the kiosk
             try {
                 const res = await fetch('/api/epay/pending');
                 const data = await res.json();
 
-                if (data && data.reference_number) {
-                    if (!currentPayment || currentPayment.reference_number !== data.reference_number) {
+                showScreen('screen-scanner');
+                document.getElementById('scanner-status').textContent = 'Scanning...';
+
+                // Simulate scanning delay (2 seconds)
+                scanTimeout = setTimeout(() => {
+                    if (data && data.reference_number) {
+                        // Found the kiosk payment — show payment screen
                         currentPayment = data;
-                        setTheme(data.method);
-                        updateHomeState();
-                    }
-                } else {
-                    if (currentPayment) {
-                        currentPayment = null;
-                        updateHomeState();
-                    }
-                }
-            } catch (e) { /* silent */ }
-        }
+                        document.getElementById('pay-ref').textContent = data.reference_number;
+                        document.getElementById('scanner-status').textContent = '✓ QR Code detected!';
 
-        function updateHomeState() {
-            const notif = document.getElementById('pending-notification');
-            const payBtn = document.getElementById('home-pay-btn');
-            const waiting = document.getElementById('waiting-state');
-
-            if (currentPayment) {
-                notif.classList.remove('hidden');
-                payBtn.classList.remove('hidden');
-                waiting.classList.add('hidden');
-                document.getElementById('pending-amount-badge').textContent = `₱${currentPayment.amount}`;
-            } else {
-                notif.classList.add('hidden');
-                payBtn.classList.add('hidden');
-                waiting.classList.remove('hidden');
+                        setTimeout(() => {
+                            showPaymentScreen();
+                        }, 500);
+                    } else {
+                        document.getElementById('scanner-status').textContent = 'No QR code found. Try again.';
+                        setTimeout(() => {
+                            goHome();
+                        }, 2000);
+                    }
+                }, 2000);
+            } catch (e) {
+                document.getElementById('scanner-status').textContent = 'Connection error';
+                setTimeout(goHome, 2000);
             }
         }
 
-        // ── Payment Confirmation ────────────────────────────────────────────────
+        // ── Payment Screen ──────────────────────────────────────────────────
+
+        function showPaymentScreen() {
+            selectedAmount = 0;
+            document.getElementById('payment-details').classList.add('hidden');
+            document.getElementById('confirm-pay-btn').classList.add('disabled');
+
+            // Reset amount buttons
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+
+            // Reset confirm button state
+            const btn = document.getElementById('confirm-pay-btn');
+            btn.disabled = false;
+            btn.querySelector('.confirm-text').classList.remove('hidden');
+            btn.querySelector('.confirm-loading').classList.add('hidden');
+
+            updateMethodUI();
+            showScreen('screen-payment');
+        }
+
+        function selectMethod(method) {
+            selectedMethod = method;
+            updateMethodUI();
+            if (selectedAmount > 0) updatePaymentDetails();
+        }
+
+        function updateMethodUI() {
+            document.getElementById('method-gcash').classList.toggle('active', selectedMethod === 'gcash');
+            document.getElementById('method-maya').classList.toggle('active', selectedMethod === 'maya');
+            document.getElementById('pay-method-name').textContent = selectedMethod === 'gcash' ? 'GCash' : 'Maya';
+            document.getElementById('pay-source-name').textContent = selectedMethod === 'gcash' ? 'GCash Balance' : 'Maya Balance';
+        }
+
+        function selectAmount(amount) {
+            selectedAmount = amount;
+
+            // Highlight selected amount
+            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            updatePaymentDetails();
+        }
+
+        function updatePaymentDetails() {
+            document.getElementById('pay-amount-display').textContent = `₱${selectedAmount}`;
+            document.getElementById('payment-details').classList.remove('hidden');
+            document.getElementById('confirm-pay-btn').classList.remove('disabled');
+        }
+
+        // ── Payment Confirmation ────────────────────────────────────────────
 
         async function confirmPayment() {
+            if (selectedAmount === 0) return;
+
             const btn = document.getElementById('confirm-pay-btn');
             btn.disabled = true;
+            btn.classList.add('disabled');
             btn.querySelector('.confirm-text').classList.add('hidden');
             btn.querySelector('.confirm-loading').classList.remove('hidden');
 
@@ -350,6 +395,10 @@
                 const res = await fetch('/api/epay/confirm', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        method: selectedMethod,
+                        amount: selectedAmount
+                    }),
                 });
                 const data = await res.json();
 
@@ -358,7 +407,6 @@
                     document.getElementById('success-amount').textContent = data.amount;
                     document.getElementById('success-ref').textContent = currentPayment ? currentPayment.reference_number : '';
 
-                    // Format date/time
                     const now = new Date();
                     const options = { month: 'short', day: 'numeric', year: 'numeric' };
                     const dateStr = now.toLocaleDateString('en-PH', options);
@@ -366,9 +414,9 @@
                     document.getElementById('success-datetime').textContent = `${dateStr} • ${timeStr}`;
 
                     currentPayment = null;
+                    selectedAmount = 0;
                     showScreen('screen-success');
 
-                    // Auto return to home after 6 seconds
                     setTimeout(() => {
                         if (document.getElementById('screen-success').classList.contains('active')) {
                             goHome();
@@ -384,12 +432,10 @@
             }
         }
 
-        // ── Initialize ──────────────────────────────────────────────────────────
+        // ── Initialize ──────────────────────────────────────────────────────
 
         document.addEventListener('DOMContentLoaded', () => {
-            setTheme('gcash'); // default theme
-            startPolling();
-            updateHomeState();
+            updateTime();
         });
     </script>
 </body>

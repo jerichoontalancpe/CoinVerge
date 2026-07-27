@@ -8,6 +8,8 @@ const TIMEOUT_MS = 60000; // 60 seconds inactivity timeout on picker
 const state = {
     screen: "idle",
     balance: 0,
+    fee: 0,
+    available: 0, // balance - fee (what user actually gets in coins)
     simulate: false,
     stock: { 1: 200, 5: 200, 10: 200, 20: 200 },
     selection: { 1: 0, 5: 0, 10: 0, 20: 0 },
@@ -15,11 +17,9 @@ const state = {
     adminTaps: 0,
     adminTimer: null,
     inactivityTimer: null,
-    lastDispense: null, // stores what was dispensed for Done screen
+    lastDispense: null,
     maintenanceMode: false,
     lowStock: [],
-    epayMethod: null,
-    epayAmount: null,
 };
 
 // ── Init ────────────────────────────────────────────────────────────────────
@@ -35,6 +35,8 @@ async function fetchStatus() {
         const data = await res.json();
         state.simulate = data.simulate;
         state.balance = data.balance;
+        state.fee = data.fee || 0;
+        state.available = data.available || 0;
         state.maintenanceMode = data.maintenance_mode || false;
         state.lowStock = data.low_stock || [];
         state.stock = {};
@@ -50,9 +52,8 @@ async function fetchStatus() {
         if (!data.any_stock || data.maintenance_mode) {
             showUnavailable(data.maintenance_mode, !data.any_stock);
         } else if (state.balance > 0) {
-            showPicker();
+            showFeeScreen();
         } else {
-            // Update low stock banner on idle
             updateLowStockBanner();
         }
     } catch (e) { /* retry on next poll */ }
@@ -66,6 +67,8 @@ async function refreshStock() {
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
         }
+        state.fee = data.fee || 0;
+        state.available = data.available || 0;
         state.maintenanceMode = data.maintenance_mode || false;
         state.lowStock = data.low_stock || [];
     } catch (e) { /* use cached */ }
@@ -87,31 +90,27 @@ async function pollEvents() {
 function handleEvent(ev) {
     switch (ev.type) {
         case "bill":
-            // Ignore bills during maintenance mode
             if (state.maintenanceMode) {
                 toast("Machine under maintenance");
                 break;
             }
-            // Cap balance at ₱100 on UI side (ESP32 also enforces this)
             if (ev.data.balance > 100) {
                 toast("Maximum ₱100 reached");
                 break;
             }
             state.balance = ev.data.balance;
+            // After bill detected, show fee screen first (not picker directly)
             if (state.screen === "idle" || state.screen === "empty") {
-                showPicker();
+                showFeeScreen();
+            } else if (state.screen === "fee") {
+                // Another bill inserted while on fee screen — update it
+                updateFeeScreen();
             } else if (state.screen === "picker") {
-                // Another bill inserted — reset selection since balance changed
-                resetSelection();
-                updateBalanceDisplay();
-                updateStockDisplay();
-                updateRemaining();
-                updateConfirm();
-                resetInactivityTimer();
+                // Another bill inserted — show fee screen again
+                showFeeScreen();
             }
             break;
         case "epay_confirmed":
-            // Payment confirmed from phone page or external source
             state.balance = ev.data.balance;
             if (state.screen === "epay") {
                 if (epayPollTimer) {
@@ -123,7 +122,8 @@ function handleEvent(ev) {
                 document.getElementById("epay-step-confirmed").classList.remove("hidden");
                 setTimeout(() => {
                     document.getElementById("epay-step-confirmed").classList.add("hidden");
-                    showPicker();
+                    document.getElementById("epay-step-qr").classList.remove("hidden");
+                    showFeeScreen();
                 }, 2000);
             }
             break;
@@ -137,6 +137,8 @@ function handleEvent(ev) {
             break;
         case "reset":
             state.balance = 0;
+            state.fee = 0;
+            state.available = 0;
             showScreen("idle");
             break;
     }
@@ -149,11 +151,36 @@ function showScreen(name) {
     document.getElementById(`screen-${name}`).classList.add("active");
     state.screen = name;
 
-    // Clear inactivity timer when leaving picker
     if (name !== "picker") {
         clearTimeout(state.inactivityTimer);
     }
 }
+
+// ── Fee Screen ──────────────────────────────────────────────────────────────
+
+async function showFeeScreen() {
+    await refreshStock();
+    updateFeeScreen();
+    showScreen("fee");
+}
+
+function updateFeeScreen() {
+    const balance = state.balance;
+    const fee = state.fee;
+    const receive = state.available;
+
+    document.getElementById("fee-amount-fil").textContent = `₱${fee}`;
+    document.getElementById("fee-amount-en").textContent = `₱${fee}`;
+    document.getElementById("fee-inserted").textContent = `₱${balance}`;
+    document.getElementById("fee-charge").textContent = `−₱${fee}`;
+    document.getElementById("fee-receive").textContent = `₱${receive}`;
+}
+
+function proceedFromFee() {
+    showPicker();
+}
+
+// ── Picker ──────────────────────────────────────────────────────────────────
 
 async function showPicker() {
     await refreshStock();
@@ -169,7 +196,6 @@ async function showPicker() {
 function showDone() {
     showScreen("done");
 
-    // Show dispense summary
     const summaryEl = document.getElementById("done-summary");
     if (state.lastDispense && summaryEl) {
         const parts = [];
@@ -189,6 +215,8 @@ function showDone() {
         if (sec <= 0) {
             clearInterval(timer);
             state.balance = 0;
+            state.fee = 0;
+            state.available = 0;
             state.lastDispense = null;
             fetchStatus();
             showScreen("idle");
@@ -202,7 +230,6 @@ function resetInactivityTimer() {
     clearTimeout(state.inactivityTimer);
     state.inactivityTimer = setTimeout(() => {
         if (state.screen === "picker") {
-            // Auto-cancel after 60s of no interaction
             toast("Session timed out");
             cancelTransaction();
         }
@@ -220,7 +247,8 @@ function adjust(denom, delta) {
 
     if (delta > 0) {
         const total = getTotal();
-        if (total + denom > state.balance) return;
+        // Use available amount (balance - fee) as the cap
+        if (total + denom > state.available) return;
     }
 
     state.selection[denom] = newVal;
@@ -244,6 +272,7 @@ function updateCoinCard(d) {
 
 function updateBalanceDisplay() {
     document.getElementById("bal-amount").textContent = `₱${state.balance}`;
+    document.getElementById("picker-fee-amount").textContent = `₱${state.fee}`;
 }
 
 function updateStockDisplay() {
@@ -256,7 +285,8 @@ function updateStockDisplay() {
 }
 
 function updateRemaining() {
-    const rem = state.balance - getTotal();
+    // Remaining counts down from available (balance - fee)
+    const rem = state.available - getTotal();
     const el = document.getElementById("rem-amount");
     el.textContent = `₱${rem}`;
     el.className = "rem-value " + (rem === 0 ? "zero" : "nonzero");
@@ -264,7 +294,7 @@ function updateRemaining() {
 
 function updateConfirm() {
     const btn = document.getElementById("btn-confirm");
-    const rem = state.balance - getTotal();
+    const rem = state.available - getTotal();
     btn.classList.toggle("disabled", rem !== 0 || getTotal() === 0);
 }
 
@@ -281,8 +311,8 @@ function quickSelect(denom) {
     resetInactivityTimer();
     resetSelection();
 
-    // Fill as many of this denomination as possible
-    const maxByBalance = Math.floor(state.balance / denom);
+    // Fill as many of this denomination as possible using available amount
+    const maxByBalance = Math.floor(state.available / denom);
     const maxByStock = state.stock[denom] || 0;
     const qty = Math.min(maxByBalance, maxByStock);
 
@@ -293,14 +323,13 @@ function quickSelect(denom) {
 
     state.selection[denom] = qty;
 
-    // If there's remainder, leave it for user to fill manually
     for (const d of DENOMS) updateCoinCard(d);
     updateRemaining();
     updateConfirm();
 }
 
 async function confirmDispense() {
-    if (state.balance - getTotal() !== 0) return;
+    if (state.available - getTotal() !== 0) return;
     if (getTotal() === 0) return;
 
     resetInactivityTimer();
@@ -341,6 +370,8 @@ async function cancelTransaction() {
     clearTimeout(state.inactivityTimer);
     await fetch("/api/reset", { method: "POST" });
     state.balance = 0;
+    state.fee = 0;
+    state.available = 0;
     resetSelection();
     showScreen("idle");
 }
@@ -357,7 +388,7 @@ async function simulateBill(amount) {
         const data = await res.json();
         if (res.ok) {
             state.balance = data.balance;
-            showPicker();
+            showFeeScreen();
         }
     } catch (e) { toast("Simulation error"); }
 }
@@ -383,7 +414,7 @@ function toast(msg) {
     setTimeout(() => el.classList.add("hidden"), 3000);
 }
 
-// ── Unavailable Screen (out of stock / maintenance) ─────────────────────────
+// ── Unavailable Screen ──────────────────────────────────────────────────────
 
 function showUnavailable(isMaintenance, isNoStock) {
     const icon = document.getElementById("empty-icon");
@@ -417,131 +448,59 @@ function updateLowStockBanner() {
     }
 }
 
-// ── E-Payment Flow ──────────────────────────────────────────────────────────
+// ── E-Payment Flow (Redesigned: kiosk shows QR, phone selects amount) ───────
 
 let epayPollTimer = null;
 
-function showEpay() {
-    state.epayMethod = null;
-    state.epayAmount = null;
-    // Reset steps visibility
-    document.getElementById("epay-step-method").classList.remove("hidden");
-    document.getElementById("epay-step-amount").classList.add("hidden");
-    document.getElementById("epay-step-qr").classList.add("hidden");
-    document.getElementById("epay-step-confirmed").classList.add("hidden");
-    showScreen("epay");
-}
-
-function cancelEpay() {
-    // Clear pending payment on server
-    fetch("/api/epay/cancel", { method: "POST" }).catch(() => {});
-    // Stop polling for confirmation
-    if (epayPollTimer) {
-        clearInterval(epayPollTimer);
-        epayPollTimer = null;
-    }
-    state.epayMethod = null;
-    state.epayAmount = null;
-    showScreen("idle");
-}
-
-function selectEpayMethod(method) {
-    state.epayMethod = method;
-    document.getElementById("epay-method-label").textContent = method === "gcash" ? "GCash" : "Maya";
-    document.getElementById("epay-qr-method-label").textContent = method === "gcash" ? "Pay with GCash" : "Pay with Maya";
-    document.getElementById("epay-qr-method-label").className = "epay-qr-method-label " + method;
-    document.getElementById("epay-step-method").classList.add("hidden");
-    document.getElementById("epay-step-amount").classList.remove("hidden");
-}
-
-function epayBackToMethod() {
-    document.getElementById("epay-step-amount").classList.add("hidden");
-    document.getElementById("epay-step-method").classList.remove("hidden");
-}
-
-async function selectEpayAmount(amount) {
-    state.epayAmount = amount;
-
-    // Initiate pending payment on server (generates reference number)
+async function showEpay() {
+    // Initiate a payment — just get a reference number
     try {
         const res = await fetch("/api/epay/initiate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ method: state.epayMethod, amount: amount }),
+            body: JSON.stringify({}),
         });
         const data = await res.json();
         if (!res.ok) {
-            toast(data.error || "Payment initiation failed");
+            toast(data.error || "Failed to start e-payment");
             return;
         }
 
-        // Display reference number and amount
+        // Show QR screen with reference
         document.getElementById("epay-ref-num").textContent = data.reference_number;
-        document.getElementById("epay-amount-display").textContent = `₱${amount}`;
         document.getElementById("epay-processing-msg").textContent = "⏳ Waiting for payment...";
-
-        document.getElementById("epay-step-amount").classList.add("hidden");
         document.getElementById("epay-step-qr").classList.remove("hidden");
+        document.getElementById("epay-step-confirmed").classList.add("hidden");
 
-        // Start polling for confirmation from phone page
+        showScreen("epay");
         startEpayPolling();
-
     } catch (e) {
         toast("Connection error");
     }
+}
+
+function cancelEpay() {
+    fetch("/api/epay/cancel", { method: "POST" }).catch(() => {});
+    if (epayPollTimer) {
+        clearInterval(epayPollTimer);
+        epayPollTimer = null;
+    }
+    showScreen("idle");
 }
 
 function startEpayPolling() {
-    // Poll for epay_confirmed event via the normal event system
-    // The event polling already handles this — we just need to listen for it
     if (epayPollTimer) clearInterval(epayPollTimer);
     epayPollTimer = setInterval(async () => {
-        // Check if pending payment was confirmed (cleared from server)
         try {
             const res = await fetch("/api/epay/pending");
             const data = await res.json();
-            // If pending is null and we're still on the QR screen, payment was confirmed externally
+            // If pending is null and we're on the epay screen, payment was confirmed
             if (data === null && state.screen === "epay") {
                 clearInterval(epayPollTimer);
                 epayPollTimer = null;
-                // Show confirmed transition screen
-                document.getElementById("epay-step-qr").classList.add("hidden");
-                document.getElementById("epay-step-confirmed").classList.remove("hidden");
-                setTimeout(() => {
-                    document.getElementById("epay-step-confirmed").classList.add("hidden");
-                    showPicker();
-                }, 2000);
+                // The epay_confirmed event handler will show the confirmed screen
+                // and then navigate to fee screen
             }
         } catch (e) { /* silent */ }
     }, 1500);
-}
-
-async function confirmEpayManual() {
-    // "Nabayaran ko na" button — manually confirm payment
-    document.getElementById("epay-processing-msg").textContent = "⏳ Confirming...";
-    try {
-        const res = await fetch("/api/epay/confirm", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json();
-        if (res.ok) {
-            if (epayPollTimer) {
-                clearInterval(epayPollTimer);
-                epayPollTimer = null;
-            }
-            state.balance = data.balance;
-            // Show confirmed transition screen
-            document.getElementById("epay-step-qr").classList.add("hidden");
-            document.getElementById("epay-step-confirmed").classList.remove("hidden");
-            setTimeout(() => {
-                document.getElementById("epay-step-confirmed").classList.add("hidden");
-                showPicker();
-            }, 2000);
-        } else {
-            toast(data.error || "Payment failed");
-        }
-    } catch (e) {
-        toast("Connection error");
-    }
 }

@@ -14,12 +14,14 @@ import random
 import threading
 import time
 import sys
-from flask import Flask, render_template, jsonify, request, session
+from datetime import datetime, timedelta
+from flask import Flask, render_template, jsonify, request, session, Response
 from database import (
-    init_db, log_transaction, get_transactions, get_transaction_count,
-    get_summary, get_stock, update_stock, deduct_stock, refill_stock,
-    refill_all, is_any_stock_available, verify_pin, get_setting, set_setting,
-    get_maintenance_mode, set_maintenance_mode, get_low_stock_denominations,
+    init_db, log_transaction, get_transactions, get_transactions_by_date,
+    get_transaction_count, get_summary, get_stock, update_stock, deduct_stock,
+    refill_stock, refill_all, is_any_stock_available, verify_pin, get_setting,
+    set_setting, get_maintenance_mode, set_maintenance_mode,
+    get_low_stock_denominations, get_fee, get_fee_tiers, set_fee_tiers,
     REFILL_THRESHOLD
 )
 
@@ -35,6 +37,7 @@ class ESP32Connection:
         self.balance = 0
         self.connected = False
         self._listeners = []
+        self.payment_method = "cash"  # Track current payment method
 
         if simulate:
             self.connected = True
@@ -100,6 +103,7 @@ class ESP32Connection:
                     print(f"[ESP32] Bill ignored (maintenance mode)")
                     return
                 self.balance += amount
+                self.payment_method = "cash"
                 self._notify("bill", {"amount": amount, "balance": self.balance})
             except ValueError:
                 pass
@@ -141,6 +145,7 @@ class ESP32Connection:
     def simulate_bill(self, amount):
         if amount > 0:
             self.balance += amount
+            self.payment_method = "cash"
             self._notify("bill", {"amount": amount, "balance": self.balance})
             return True
         return False
@@ -154,7 +159,7 @@ app.secret_key = "coinverge-secret-key-change-in-production"
 esp32 = None
 event_queue = []
 event_lock = threading.Lock()
-pending_epay = None  # Tracks pending e-payment: {method, amount, reference_number}
+pending_epay = None  # Tracks pending e-payment: {reference_number, timestamp}
 
 
 def on_esp32_event(event_type, data):
@@ -178,6 +183,12 @@ def admin_page():
     return render_template("admin.html")
 
 
+@app.route("/phone")
+def phone_page():
+    """Phone mockup page — simulates GCash/Maya payment app."""
+    return render_template("phone.html")
+
+
 # ── User API ─────────────────────────────────────────────────────────────────
 
 @app.route("/api/status")
@@ -185,10 +196,14 @@ def api_status():
     stock = get_stock()
     low_stock = get_low_stock_denominations()
     maintenance = get_maintenance_mode()
+    balance = esp32.balance
+    fee = get_fee(balance) if balance > 0 else 0
     return jsonify({
         "connected": esp32.connected,
         "simulate": esp32.simulate,
-        "balance": esp32.balance,
+        "balance": balance,
+        "fee": fee,
+        "available": balance - fee if balance > 0 else 0,
         "stock": {str(d): s["current"] for d, s in stock.items()},
         "any_stock": is_any_stock_available(),
         "maintenance_mode": maintenance,
@@ -216,7 +231,7 @@ def api_dispense():
 
     combo = data["combination"]  # {"1": 10, "5": 4, "10": 2, "20": 1}
 
-    # Validate total
+    # Validate total (must equal balance - fee)
     total = 0
     int_combo = {}
     for denom, qty in combo.items():
@@ -225,8 +240,11 @@ def api_dispense():
             total += d * q
             int_combo[d] = q
 
-    if total != esp32.balance:
-        return jsonify({"error": f"Total ₱{total} doesn't match balance ₱{esp32.balance}"}), 400
+    fee = get_fee(esp32.balance)
+    available = esp32.balance - fee
+
+    if total != available:
+        return jsonify({"error": f"Total ₱{total} doesn't match available ₱{available} (balance ₱{esp32.balance} - fee ₱{fee})"}), 400
 
     if not int_combo:
         return jsonify({"error": "No coins selected"}), 400
@@ -234,9 +252,9 @@ def api_dispense():
     # Check stock
     stock = get_stock()
     for denom, qty in int_combo.items():
-        available = stock.get(denom, {}).get("current", 0)
-        if qty > available:
-            return jsonify({"error": f"Not enough ₱{denom} coins (need {qty}, have {available})"}), 400
+        avail_stock = stock.get(denom, {}).get("current", 0)
+        if qty > avail_stock:
+            return jsonify({"error": f"Not enough ₱{denom} coins (need {qty}, have {avail_stock})"}), 400
 
     # Build and send command
     parts = [f"{d}x{q}" for d, q in sorted(int_combo.items())]
@@ -244,12 +262,15 @@ def api_dispense():
     print(f"[CMD] {cmd}")
 
     bill_value = esp32.balance
+    payment_method = esp32.payment_method
 
     # Store pending transaction (will be committed when ESP32 confirms)
     esp32.pending_dispense = {
         "bill_value": bill_value,
         "combo": int_combo,
         "total_coins": sum(int_combo.values()),
+        "fee": fee,
+        "payment_method": payment_method,
     }
 
     # Sync ESP32 balance before dispensing (needed for e-payment where no physical bill)
@@ -261,9 +282,8 @@ def api_dispense():
     esp32.balance = 0
 
     # Deduct stock immediately (optimistic — coins are physically leaving)
-    # If ESP32 reports error, admin can manually adjust stock
     deduct_stock(int_combo)
-    log_transaction(bill_value, int_combo, sum(int_combo.values()))
+    log_transaction(bill_value, int_combo, sum(int_combo.values()), fee=fee, payment_method=payment_method)
 
     return jsonify({"status": "sent", "command": cmd})
 
@@ -291,7 +311,7 @@ def api_simulate_bill():
 
 @app.route("/api/epay", methods=["POST"])
 def api_epay():
-    """E-Payment mockup — simulates GCash/Maya payment received."""
+    """E-Payment mockup — simulates GCash/Maya payment received (legacy endpoint)."""
     if get_maintenance_mode():
         return jsonify({"error": "Machine is under maintenance"}), 503
 
@@ -310,6 +330,7 @@ def api_epay():
 
     # Credit the balance same as bill insertion
     esp32.balance += amount
+    esp32.payment_method = method
     on_esp32_event("bill", {"amount": amount, "balance": esp32.balance})
 
     return jsonify({"status": "ok", "balance": esp32.balance, "method": method})
@@ -317,31 +338,21 @@ def api_epay():
 
 @app.route("/api/epay/initiate", methods=["POST"])
 def api_epay_initiate():
-    """Initiate a pending e-payment — called when kiosk user selects method+amount."""
+    """Initiate a pending e-payment — kiosk shows QR and waits for phone to confirm."""
     global pending_epay
 
     if get_maintenance_mode():
         return jsonify({"error": "Machine is under maintenance"}), 503
 
-    data = request.get_json()
-    method = data.get("method", "")
-    amount = data.get("amount", 0)
-
-    if method not in ["gcash", "maya"]:
-        return jsonify({"error": "Invalid payment method"}), 400
-    if amount not in [20, 50, 100]:
-        return jsonify({"error": "Invalid amount"}), 400
-
-    # Reject if would exceed max balance
-    if esp32.balance + amount > 100:
-        return jsonify({"error": f"Cannot exceed ₱100 balance (current: ₱{esp32.balance})"}), 400
+    # No longer requires method/amount — just generates reference
+    # Reject if there's already a balance
+    if esp32.balance > 0:
+        return jsonify({"error": f"Balance already exists (₱{esp32.balance})"}), 400
 
     # Generate random 12-digit reference number
     ref_number = ''.join([str(random.randint(0, 9)) for _ in range(12)])
 
     pending_epay = {
-        "method": method,
-        "amount": amount,
         "reference_number": ref_number,
         "timestamp": time.time()
     }
@@ -349,8 +360,6 @@ def api_epay_initiate():
     return jsonify({
         "status": "ok",
         "reference_number": ref_number,
-        "method": method,
-        "amount": amount
     })
 
 
@@ -364,7 +373,8 @@ def api_epay_pending():
 
 @app.route("/api/epay/confirm", methods=["POST"])
 def api_epay_confirm():
-    """Confirms the pending e-payment — credits balance and notifies kiosk via event."""
+    """Confirms the pending e-payment — credits balance and notifies kiosk via event.
+    Now accepts {method, amount} from the phone side."""
     global pending_epay
 
     if pending_epay is None:
@@ -373,8 +383,14 @@ def api_epay_confirm():
     if get_maintenance_mode():
         return jsonify({"error": "Machine is under maintenance"}), 503
 
-    amount = pending_epay["amount"]
-    method = pending_epay["method"]
+    data = request.get_json() or {}
+    method = data.get("method", "gcash")
+    amount = data.get("amount", 0)
+
+    if method not in ["gcash", "maya"]:
+        return jsonify({"error": "Invalid payment method"}), 400
+    if amount not in [20, 50, 100]:
+        return jsonify({"error": "Invalid amount. Use 20, 50, or 100"}), 400
 
     # Reject if would exceed max balance
     if esp32.balance + amount > 100:
@@ -383,6 +399,7 @@ def api_epay_confirm():
 
     # Credit the balance same as bill insertion
     esp32.balance += amount
+    esp32.payment_method = method
     on_esp32_event("bill", {"amount": amount, "balance": esp32.balance})
 
     # Also fire a specific epay_confirmed event so kiosk JS can react
@@ -402,16 +419,11 @@ def api_epay_cancel():
     return jsonify({"status": "ok"})
 
 
-@app.route("/phone")
-def phone_page():
-    """Phone mockup page — simulates GCash/Maya payment app."""
-    return render_template("phone.html")
-
-
 @app.route("/api/reset", methods=["POST"])
 def api_reset():
     esp32.send_command("RESET")
     esp32.balance = 0
+    esp32.payment_method = "cash"
     return jsonify({"status": "ok"})
 
 
@@ -587,27 +599,129 @@ def api_admin_change_pin():
     return jsonify({"status": "ok"})
 
 
-@app.route("/api/admin/export_csv")
-def api_admin_export_csv():
-    """Export all transactions as CSV download."""
+@app.route("/api/admin/fee_tiers")
+def api_admin_fee_tiers():
+    """Get current fee tiers."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    tiers = get_fee_tiers()
+    return jsonify(tiers)
+
+
+@app.route("/api/admin/fee_tiers", methods=["POST"])
+def api_admin_set_fee_tiers():
+    """Update fee tiers."""
     if not require_admin():
         return jsonify({"error": "Unauthorized"}), 401
 
-    from flask import Response
+    data = request.get_json()
+    tiers = data.get("tiers", [])
+
+    if not tiers:
+        return jsonify({"error": "No tiers provided"}), 400
+
+    # Validate tiers
+    for t in tiers:
+        if "min_amount" not in t or "max_amount" not in t or "fee" not in t:
+            return jsonify({"error": "Each tier must have min_amount, max_amount, and fee"}), 400
+        if int(t["min_amount"]) > int(t["max_amount"]):
+            return jsonify({"error": "min_amount cannot be greater than max_amount"}), 400
+        if int(t["fee"]) < 0:
+            return jsonify({"error": "Fee cannot be negative"}), 400
+
+    set_fee_tiers(tiers)
+    return jsonify({"status": "ok", "tiers": get_fee_tiers()})
+
+
+@app.route("/api/admin/export_csv")
+def api_admin_export_csv():
+    """Export transactions as CSV with date range and proper formatting."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
     import io
 
-    transactions = get_transactions(limit=10000, offset=0)
+    # Parse date range parameters
+    start_date = request.args.get("start_date", None)
+    end_date = request.args.get("end_date", None)
+    preset = request.args.get("preset", None)
+
+    if preset == "today":
+        start_date = datetime.now().strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    elif preset == "week":
+        start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    elif preset == "month":
+        start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+
+    transactions = get_transactions_by_date(start_date, end_date)
+
+    # Format period string
+    if start_date and end_date:
+        try:
+            s = datetime.strptime(start_date, "%Y-%m-%d")
+            e = datetime.strptime(end_date, "%Y-%m-%d")
+            period_str = f"{s.strftime('%B %d')}-{e.strftime('%d, %Y')}"
+        except ValueError:
+            period_str = f"{start_date} to {end_date}"
+    else:
+        period_str = "All Time"
+
+    generated_str = datetime.now().strftime("%B %d, %Y %I:%M %p")
 
     output = io.StringIO()
-    output.write("ID,Timestamp,Bill Value (PHP),Coins Dispensed,Total Coins,Status\n")
-    for tx in transactions:
-        output.write(f"{tx['id']},{tx['timestamp']},{tx['bill_value']},\"{tx['coins_dispensed']}\",{tx['total_coins']},{tx['status']}\n")
+    output.write("CoinVerge Transaction Report\n")
+    output.write(f"Period: {period_str}\n")
+    output.write(f"Generated: {generated_str}\n")
+    output.write("\n")
+    output.write("No.,Date/Time,Bill Value,Fee,Coins Dispensed,Total Coins,Payment Method\n")
+
+    total_bills = 0
+    total_fees = 0
+    total_coins_value = 0
+    by_denom = {1: 0, 5: 0, 10: 0, 20: 0}
+
+    for i, tx in enumerate(transactions, 1):
+        bill_value = tx['bill_value']
+        fee = tx.get('fee', 0)
+        coins = tx['coins_dispensed']
+        total_c = tx['total_coins']
+        method = tx.get('payment_method', 'cash')
+
+        total_bills += bill_value
+        total_fees += fee
+
+        # Parse coins_dispensed for denomination breakdown
+        parts = coins.split(",")
+        for part in parts:
+            if "x" in part:
+                d, q = part.split("x")
+                d, q = int(d), int(q)
+                if d in by_denom:
+                    by_denom[d] += q
+                total_coins_value += d * q
+
+        output.write(f"{i},{tx['timestamp']},₱{bill_value},₱{fee},\"{coins}\",{total_c},{method.capitalize()}\n")
+
+    output.write("\n")
+    output.write("SUMMARY\n")
+    output.write(f"Total Transactions: {len(transactions)}\n")
+    output.write(f"Total Bills Received: ₱{total_bills:,}\n")
+    output.write(f"Total Fees Collected: ₱{total_fees:,}\n")
+    output.write(f"Total Coins Dispensed: ₱{total_coins_value:,}\n")
+    output.write("\n")
+    output.write("Breakdown by Denomination:\n")
+    for denom in [1, 5, 10, 20]:
+        output.write(f"₱{denom}: {by_denom[denom]} coins\n")
 
     csv_data = output.getvalue()
+    filename = f"coinverge_report_{start_date or 'all'}_{end_date or 'all'}.csv"
     return Response(
         csv_data,
         mimetype="text/csv",
-        headers={"Content-Disposition": "attachment; filename=coinverge_transactions.csv"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
 

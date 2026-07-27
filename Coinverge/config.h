@@ -52,7 +52,7 @@ const int HOPPER_MAP[DENOM_COUNT][3] = {
 };
 
 // Maximum coins per hopper (0 = disable stock tracking)
-#define MAX_COINS_PER_HOPPER  200
+#define MAX_COINS_PER_HOPPER  2000
 
 // ms per coin for timed dispensing (used as timeout fallback)
 #define HOP_MS_PER_COIN       1500

@@ -1,6 +1,6 @@
 """
 CoinVerge — Database Models (SQLite)
-Tracks transactions, coin stock, and admin settings.
+Tracks transactions, coin stock, fee tiers, and admin settings.
 """
 
 import sqlite3
@@ -11,6 +11,13 @@ DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "coinverge.db
 
 # Refill threshold — denominations below this count trigger warnings
 REFILL_THRESHOLD = 20
+
+# Default fee tiers: (min_amount, max_amount, fee)
+DEFAULT_FEE_TIERS = [
+    (20, 49, 2),
+    (50, 99, 3),
+    (100, 100, 5),
+]
 
 
 def get_db():
@@ -29,15 +36,17 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
             bill_value INTEGER NOT NULL,
+            fee INTEGER NOT NULL DEFAULT 0,
             coins_dispensed TEXT NOT NULL,
             total_coins INTEGER NOT NULL,
+            payment_method TEXT NOT NULL DEFAULT 'cash',
             status TEXT NOT NULL DEFAULT 'completed'
         );
 
         CREATE TABLE IF NOT EXISTS stock (
             denomination INTEGER PRIMARY KEY,
             current_count INTEGER NOT NULL DEFAULT 0,
-            max_capacity INTEGER NOT NULL DEFAULT 200
+            max_capacity INTEGER NOT NULL DEFAULT 2000
         );
 
         CREATE TABLE IF NOT EXISTS settings (
@@ -45,19 +54,47 @@ def init_db():
             value TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS fee_tiers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            min_amount INTEGER NOT NULL,
+            max_amount INTEGER NOT NULL,
+            fee INTEGER NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_transactions_timestamp
             ON transactions(timestamp);
     """)
+
+    # Add fee column if upgrading from old schema
+    try:
+        conn.execute("SELECT fee FROM transactions LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE transactions ADD COLUMN fee INTEGER NOT NULL DEFAULT 0")
+
+    # Add payment_method column if upgrading from old schema
+    try:
+        conn.execute("SELECT payment_method FROM transactions LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute("ALTER TABLE transactions ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'cash'")
 
     # Initialize stock if empty
     cursor = conn.execute("SELECT COUNT(*) FROM stock")
     if cursor.fetchone()[0] == 0:
         conn.executemany("INSERT INTO stock (denomination, current_count, max_capacity) VALUES (?, ?, ?)", [
-            (1, 200, 200),
-            (5, 200, 200),
-            (10, 200, 200),
-            (20, 200, 200),
+            (1, 2000, 2000),
+            (5, 2000, 2000),
+            (10, 2000, 2000),
+            (20, 2000, 2000),
         ])
+    else:
+        # Update max_capacity to 2000 for existing databases
+        conn.execute("UPDATE stock SET max_capacity = 2000 WHERE max_capacity < 2000")
+
+    # Initialize fee tiers if empty
+    cursor = conn.execute("SELECT COUNT(*) FROM fee_tiers")
+    if cursor.fetchone()[0] == 0:
+        conn.executemany("INSERT INTO fee_tiers (min_amount, max_amount, fee) VALUES (?, ?, ?)",
+                         DEFAULT_FEE_TIERS)
 
     # Initialize settings if empty
     cursor = conn.execute("SELECT COUNT(*) FROM settings")
@@ -77,9 +114,48 @@ def init_db():
     conn.close()
 
 
+# ── Fee Tier Functions ───────────────────────────────────────────────────────
+
+def get_fee(amount):
+    """Get the fee for a given amount based on fee tiers."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT fee FROM fee_tiers WHERE ? >= min_amount AND ? <= max_amount ORDER BY min_amount LIMIT 1",
+        (amount, amount)
+    ).fetchone()
+    conn.close()
+    if row:
+        return row["fee"]
+    return 0
+
+
+def get_fee_tiers():
+    """Get all fee tiers."""
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM fee_tiers ORDER BY min_amount").fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def set_fee_tiers(tiers):
+    """
+    Replace all fee tiers with new ones.
+    tiers: list of dicts [{"min_amount": 20, "max_amount": 49, "fee": 2}, ...]
+    """
+    conn = get_db()
+    conn.execute("DELETE FROM fee_tiers")
+    for t in tiers:
+        conn.execute(
+            "INSERT INTO fee_tiers (min_amount, max_amount, fee) VALUES (?, ?, ?)",
+            (t["min_amount"], t["max_amount"], t["fee"])
+        )
+    conn.commit()
+    conn.close()
+
+
 # ── Transaction Functions ────────────────────────────────────────────────────
 
-def log_transaction(bill_value, coins_dispensed, total_coins):
+def log_transaction(bill_value, coins_dispensed, total_coins, fee=0, payment_method="cash"):
     """
     Log a completed transaction.
     coins_dispensed: dict like {1: 10, 5: 4, 10: 2, 20: 1}
@@ -87,8 +163,8 @@ def log_transaction(bill_value, coins_dispensed, total_coins):
     conn = get_db()
     coins_str = ",".join(f"{d}x{q}" for d, q in sorted(coins_dispensed.items()) if q > 0)
     conn.execute(
-        "INSERT INTO transactions (bill_value, coins_dispensed, total_coins, status) VALUES (?, ?, ?, ?)",
-        (bill_value, coins_str, total_coins, "completed")
+        "INSERT INTO transactions (bill_value, fee, coins_dispensed, total_coins, payment_method, status) VALUES (?, ?, ?, ?, ?, ?)",
+        (bill_value, fee, coins_str, total_coins, payment_method, "completed")
     )
     conn.commit()
     conn.close()
@@ -105,6 +181,28 @@ def get_transactions(limit=50, offset=0):
     return [dict(r) for r in rows]
 
 
+def get_transactions_by_date(start_date=None, end_date=None, limit=10000):
+    """Get transactions within a date range."""
+    conn = get_db()
+    if start_date and end_date:
+        rows = conn.execute(
+            "SELECT * FROM transactions WHERE timestamp >= ? AND timestamp <= ? AND status = 'completed' ORDER BY timestamp DESC LIMIT ?",
+            (start_date, end_date + " 23:59:59", limit)
+        ).fetchall()
+    elif start_date:
+        rows = conn.execute(
+            "SELECT * FROM transactions WHERE timestamp >= ? AND status = 'completed' ORDER BY timestamp DESC LIMIT ?",
+            (start_date, limit)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM transactions WHERE status = 'completed' ORDER BY timestamp DESC LIMIT ?",
+            (limit,)
+        ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 def get_transaction_count():
     """Get total number of transactions."""
     conn = get_db()
@@ -117,7 +215,7 @@ def get_summary(period="week"):
     """
     Get transaction summary for a period.
     period: 'week', 'month', 'today'
-    Returns: {total_transactions, total_bill_value, total_coins_dispensed, by_denomination}
+    Returns: {total_transactions, total_bill_value, total_coins_dispensed, total_fees, by_denomination}
     """
     conn = get_db()
 
@@ -139,6 +237,7 @@ def get_summary(period="week"):
     total_transactions = len(rows)
     total_bill_value = sum(r["bill_value"] for r in rows)
     total_coins = sum(r["total_coins"] for r in rows)
+    total_fees = sum(r["fee"] for r in rows)
 
     # Count by denomination
     by_denom = {1: 0, 5: 0, 10: 0, 20: 0}
@@ -156,6 +255,7 @@ def get_summary(period="week"):
         "total_transactions": total_transactions,
         "total_bill_value": total_bill_value,
         "total_coins_dispensed": total_coins,
+        "total_fees": total_fees,
         "by_denomination": by_denom,
     }
 

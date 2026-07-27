@@ -6,6 +6,12 @@ let pinBuffer = "";
 let currentPage = 1;
 let currentPeriod = "today";
 
+// Coin weight per piece (BSP standard, grams)
+const COIN_WEIGHTS = { 1: 5.4, 5: 7.7, 10: 6.1, 20: 7.4 };
+
+// Coins per roll (Philippine standard)
+const COINS_PER_ROLL = { 1: 50, 5: 40, 10: 20, 20: 20 };
+
 // ── PIN Login ───────────────────────────────────────────────────────────────
 
 function pinPress(digit) {
@@ -65,17 +71,11 @@ function showAdminDashboard() {
     switchTab("stock");
 }
 
-function showTab(tab, evt) {
-    // Called from onclick — evt is the click event
-    switchTab(tab);
-}
-
 function switchTab(tab) {
     document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");
 
-    // Highlight the correct tab button
     document.querySelectorAll(".tab-btn").forEach(b => {
         if (b.textContent.toLowerCase().includes(tab)) b.classList.add("active");
     });
@@ -83,7 +83,7 @@ function switchTab(tab) {
     if (tab === "stock") loadStock();
     else if (tab === "history") loadHistory();
     else if (tab === "reports") loadReport(currentPeriod);
-    else if (tab === "settings") { /* static content */ }
+    else if (tab === "settings") loadFeeTiers();
 }
 
 async function logout() {
@@ -99,11 +99,9 @@ async function loadStock() {
         if (!res.ok) return;
         const stock = await res.json();
 
-        // Fetch status to get low_stock and maintenance info
         const statusRes = await fetch("/api/status");
         const statusData = statusRes.ok ? await statusRes.json() : {};
         const lowStock = statusData.low_stock || [];
-        const threshold = statusData.refill_threshold || 20;
 
         let anyLow = false;
 
@@ -118,7 +116,6 @@ async function loadStock() {
             document.getElementById(`scount-${denom}`).textContent = info.current;
             document.getElementById(`smax-${denom}`).textContent = info.max;
 
-            // Low stock warning indicator
             const warnEl = document.getElementById(`swarn-${denom}`);
             const cardEl = document.getElementById(`scard-${denom}`);
             if (warnEl && cardEl) {
@@ -129,13 +126,11 @@ async function loadStock() {
             }
         }
 
-        // Show/hide alert banner
         const alertBanner = document.getElementById("stock-alert-banner");
         if (alertBanner) {
             alertBanner.classList.toggle("hidden", !anyLow);
         }
 
-        // Machine status
         const mRes = await fetch("/api/admin/machine");
         if (mRes.ok) {
             const machine = await mRes.json();
@@ -145,7 +140,6 @@ async function loadStock() {
                 `Mode: ${machine.simulate_mode ? "Simulation" : "Hardware"}`;
         }
 
-        // Update maintenance status indicator
         updateMaintenanceUI(statusData.maintenance_mode || false);
     } catch (e) { /* silent */ }
 }
@@ -183,6 +177,80 @@ async function setStockManual(denom) {
     loadStock();
 }
 
+// ── Weight-Based Counting ───────────────────────────────────────────────────
+
+function calcWeight(denom) {
+    const input = document.getElementById(`weight-${denom}`);
+    const result = document.getElementById(`wcalc-${denom}`);
+    const grams = parseFloat(input.value);
+    if (isNaN(grams) || grams <= 0) {
+        result.textContent = "—";
+        return;
+    }
+    const weight = COIN_WEIGHTS[denom];
+    const coins = Math.floor(grams / weight);
+    result.textContent = `${grams}g ÷ ${weight}g = ${coins} coins`;
+}
+
+async function applyWeight(denom) {
+    const input = document.getElementById(`weight-${denom}`);
+    const grams = parseFloat(input.value);
+    if (isNaN(grams) || grams <= 0) {
+        alert("Enter a valid weight in grams");
+        return;
+    }
+    const weight = COIN_WEIGHTS[denom];
+    const coins = Math.floor(grams / weight);
+
+    if (!confirm(`Set ₱${denom} stock to ${coins} coins (from ${grams}g)?`)) return;
+
+    await fetch("/api/admin/set_stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ denomination: denom, count: coins }),
+    });
+    input.value = "";
+    document.getElementById(`wcalc-${denom}`).textContent = "—";
+    loadStock();
+}
+
+// ── Roll-Based Counting ─────────────────────────────────────────────────────
+
+function calcRoll(denom) {
+    const input = document.getElementById(`roll-${denom}`);
+    const result = document.getElementById(`rcalc-${denom}`);
+    const rolls = parseInt(input.value);
+    if (isNaN(rolls) || rolls <= 0) {
+        result.textContent = "—";
+        return;
+    }
+    const perRoll = COINS_PER_ROLL[denom];
+    const coins = rolls * perRoll;
+    result.textContent = `${rolls} rolls × ${perRoll} pcs = ${coins} coins`;
+}
+
+async function applyRoll(denom) {
+    const input = document.getElementById(`roll-${denom}`);
+    const rolls = parseInt(input.value);
+    if (isNaN(rolls) || rolls <= 0) {
+        alert("Enter a valid number of rolls");
+        return;
+    }
+    const perRoll = COINS_PER_ROLL[denom];
+    const coins = rolls * perRoll;
+
+    if (!confirm(`Set ₱${denom} stock to ${coins} coins (${rolls} rolls × ${perRoll})?`)) return;
+
+    await fetch("/api/admin/set_stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ denomination: denom, count: coins }),
+    });
+    input.value = "";
+    document.getElementById(`rcalc-${denom}`).textContent = "—";
+    loadStock();
+}
+
 // ── History Tab ─────────────────────────────────────────────────────────────
 
 async function loadHistory() {
@@ -195,15 +263,19 @@ async function loadHistory() {
         tbody.innerHTML = "";
 
         if (data.transactions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-dim)">No transactions yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim)">No transactions yet</td></tr>';
         } else {
             for (const tx of data.transactions) {
                 const row = document.createElement("tr");
+                const fee = tx.fee || 0;
+                const method = tx.payment_method || "cash";
                 row.innerHTML = `
                     <td>${formatDate(tx.timestamp)}</td>
                     <td>₱${tx.bill_value}</td>
+                    <td>₱${fee}</td>
                     <td>${tx.coins_dispensed}</td>
                     <td>${tx.total_coins} pcs</td>
+                    <td>${method.charAt(0).toUpperCase() + method.slice(1)}</td>
                 `;
                 tbody.appendChild(row);
             }
@@ -227,17 +299,46 @@ function formatDate(ts) {
         " " + d.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" });
 }
 
+// ── CSV Export with Date Range ──────────────────────────────────────────────
+
+// Show/hide custom date inputs
+document.addEventListener("DOMContentLoaded", () => {
+    const presetEl = document.getElementById("export-preset");
+    if (presetEl) {
+        presetEl.addEventListener("change", () => {
+            const isCustom = presetEl.value === "custom";
+            document.getElementById("export-start").classList.toggle("hidden", !isCustom);
+            document.getElementById("export-end").classList.toggle("hidden", !isCustom);
+        });
+    }
+});
+
 async function exportCSV() {
+    const preset = document.getElementById("export-preset").value;
+    let url = "/api/admin/export_csv?";
+
+    if (preset === "custom") {
+        const start = document.getElementById("export-start").value;
+        const end = document.getElementById("export-end").value;
+        if (!start || !end) {
+            alert("Please select both start and end dates");
+            return;
+        }
+        url += `start_date=${start}&end_date=${end}`;
+    } else {
+        url += `preset=${preset}`;
+    }
+
     try {
-        const res = await fetch("/api/admin/export_csv");
+        const res = await fetch(url);
         if (!res.ok) { alert("Export failed"); return; }
         const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
+        const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url;
-        a.download = `coinverge_transactions_${new Date().toISOString().slice(0,10)}.csv`;
+        a.href = blobUrl;
+        a.download = `coinverge_report_${new Date().toISOString().slice(0,10)}.csv`;
         a.click();
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(blobUrl);
     } catch (e) { alert("Export error: " + e.message); }
 }
 
@@ -246,7 +347,6 @@ async function exportCSV() {
 async function loadReport(period) {
     currentPeriod = period;
 
-    // Update button styles
     document.querySelectorAll(".rpt-btn").forEach(b => b.classList.remove("active"));
     document.querySelectorAll(".rpt-btn").forEach(b => {
         if (b.getAttribute("data-period") === period) b.classList.add("active");
@@ -259,6 +359,7 @@ async function loadReport(period) {
 
         document.getElementById("rpt-transactions").textContent = data.total_transactions;
         document.getElementById("rpt-bills").textContent = `₱${data.total_bill_value.toLocaleString()}`;
+        document.getElementById("rpt-fees").textContent = `₱${(data.total_fees || 0).toLocaleString()}`;
         document.getElementById("rpt-coins").textContent = data.total_coins_dispensed.toLocaleString();
 
         const grid = document.getElementById("breakdown-grid");
@@ -274,6 +375,114 @@ async function loadReport(period) {
     } catch (e) { /* silent */ }
 }
 
+// ── Fee Configuration ───────────────────────────────────────────────────────
+
+async function loadFeeTiers() {
+    try {
+        const res = await fetch("/api/admin/fee_tiers");
+        if (!res.ok) return;
+        const tiers = await res.json();
+
+        const container = document.getElementById("fee-tiers-container");
+        container.innerHTML = "";
+
+        tiers.forEach((tier, i) => {
+            container.innerHTML += `
+                <div class="fee-tier-row" id="fee-tier-${i}">
+                    <span class="fee-tier-label">₱</span>
+                    <input type="number" class="fee-input" id="fee-min-${i}" value="${tier.min_amount}" min="0" placeholder="Min">
+                    <span class="fee-tier-label">— ₱</span>
+                    <input type="number" class="fee-input" id="fee-max-${i}" value="${tier.max_amount}" min="0" placeholder="Max">
+                    <span class="fee-tier-label">→ Fee: ₱</span>
+                    <input type="number" class="fee-input" id="fee-val-${i}" value="${tier.fee}" min="0" placeholder="Fee">
+                    <button class="fee-remove-btn" onclick="removeFeeRow(${i})">✕</button>
+                </div>
+            `;
+        });
+
+        container.innerHTML += `
+            <button class="fee-add-btn" onclick="addFeeRow()">+ Add Tier</button>
+        `;
+    } catch (e) { /* silent */ }
+}
+
+function addFeeRow() {
+    const container = document.getElementById("fee-tiers-container");
+    // Count existing rows
+    const rows = container.querySelectorAll(".fee-tier-row");
+    const i = rows.length;
+
+    // Remove the add button and re-add it after the new row
+    const addBtn = container.querySelector(".fee-add-btn");
+    if (addBtn) addBtn.remove();
+
+    const div = document.createElement("div");
+    div.className = "fee-tier-row";
+    div.id = `fee-tier-${i}`;
+    div.innerHTML = `
+        <span class="fee-tier-label">₱</span>
+        <input type="number" class="fee-input" id="fee-min-${i}" value="0" min="0" placeholder="Min">
+        <span class="fee-tier-label">— ₱</span>
+        <input type="number" class="fee-input" id="fee-max-${i}" value="0" min="0" placeholder="Max">
+        <span class="fee-tier-label">→ Fee: ₱</span>
+        <input type="number" class="fee-input" id="fee-val-${i}" value="0" min="0" placeholder="Fee">
+        <button class="fee-remove-btn" onclick="removeFeeRow(${i})">✕</button>
+    `;
+    container.appendChild(div);
+
+    const btn = document.createElement("button");
+    btn.className = "fee-add-btn";
+    btn.onclick = addFeeRow;
+    btn.textContent = "+ Add Tier";
+    container.appendChild(btn);
+}
+
+function removeFeeRow(index) {
+    const row = document.getElementById(`fee-tier-${index}`);
+    if (row) row.remove();
+}
+
+async function saveFeeTiers() {
+    const container = document.getElementById("fee-tiers-container");
+    const rows = container.querySelectorAll(".fee-tier-row");
+    const tiers = [];
+
+    rows.forEach((row, i) => {
+        const minEl = row.querySelector(`[id^="fee-min-"]`);
+        const maxEl = row.querySelector(`[id^="fee-max-"]`);
+        const valEl = row.querySelector(`[id^="fee-val-"]`);
+        if (minEl && maxEl && valEl) {
+            tiers.push({
+                min_amount: parseInt(minEl.value) || 0,
+                max_amount: parseInt(maxEl.value) || 0,
+                fee: parseInt(valEl.value) || 0,
+            });
+        }
+    });
+
+    if (tiers.length === 0) {
+        alert("At least one fee tier is required");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/admin/fee_tiers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tiers }),
+        });
+        if (res.ok) {
+            alert("Fee tiers saved!");
+            loadFeeTiers();
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "Failed to save"));
+        }
+    } catch (e) {
+        alert("Connection error");
+    }
+}
+
 // ── Settings Tab ────────────────────────────────────────────────────────────
 
 async function changePin() {
@@ -282,8 +491,8 @@ async function changePin() {
         alert("PIN must be exactly 4 digits");
         return;
     }
-    const confirm = prompt("Confirm new PIN:");
-    if (newPin !== confirm) {
+    const confirmPin = prompt("Confirm new PIN:");
+    if (newPin !== confirmPin) {
         alert("PINs don't match");
         return;
     }
@@ -350,7 +559,7 @@ async function syncStock() {
         const currentEl = document.getElementById(`scount-${d}`);
         const current = currentEl ? currentEl.textContent : "0";
         const input = prompt(`Physical count for ₱${d} coins (current in system: ${current}):`, current);
-        if (input === null) return; // User cancelled
+        if (input === null) return;
         const count = parseInt(input);
         if (isNaN(count) || count < 0) {
             alert(`Invalid number for ₱${d}`);

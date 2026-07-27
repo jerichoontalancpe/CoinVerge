@@ -70,7 +70,7 @@
                         <div class="scard-fill" id="sfill-1"></div>
                     </div>
                     <div class="scard-info">
-                        <span id="scount-1">200</span> / <span id="smax-1">200</span>
+                        <span id="scount-1">0</span> / <span id="smax-1">2000</span>
                     </div>
                     <div class="scard-actions">
                         <button class="refill-btn" onclick="refillDenom(1)">Refill</button>
@@ -85,7 +85,7 @@
                         <div class="scard-fill" id="sfill-5"></div>
                     </div>
                     <div class="scard-info">
-                        <span id="scount-5">200</span> / <span id="smax-5">200</span>
+                        <span id="scount-5">0</span> / <span id="smax-5">2000</span>
                     </div>
                     <div class="scard-actions">
                         <button class="refill-btn" onclick="refillDenom(5)">Refill</button>
@@ -100,7 +100,7 @@
                         <div class="scard-fill" id="sfill-10"></div>
                     </div>
                     <div class="scard-info">
-                        <span id="scount-10">200</span> / <span id="smax-10">200</span>
+                        <span id="scount-10">0</span> / <span id="smax-10">2000</span>
                     </div>
                     <div class="scard-actions">
                         <button class="refill-btn" onclick="refillDenom(10)">Refill</button>
@@ -115,7 +115,7 @@
                         <div class="scard-fill" id="sfill-20"></div>
                     </div>
                     <div class="scard-info">
-                        <span id="scount-20">200</span> / <span id="smax-20">200</span>
+                        <span id="scount-20">0</span> / <span id="smax-20">2000</span>
                     </div>
                     <div class="scard-actions">
                         <button class="refill-btn" onclick="refillDenom(20)">Refill</button>
@@ -124,6 +124,71 @@
                 </div>
             </div>
             <button class="refill-all-btn" onclick="refillAll()">Refill All Hoppers</button>
+
+            <!-- Weight-Based Counting -->
+            <div class="counting-section">
+                <h3>⚖️ Count by Weight</h3>
+                <p class="counting-desc">Enter total weight in grams — auto-calculates coin count</p>
+                <div class="counting-grid">
+                    <div class="counting-item">
+                        <label>₱1 <span class="weight-per">(5.4g/coin)</span></label>
+                        <input type="number" id="weight-1" placeholder="grams" min="0" step="0.1" oninput="calcWeight(1)">
+                        <span class="calc-result" id="wcalc-1">—</span>
+                        <button class="apply-btn" onclick="applyWeight(1)">Apply</button>
+                    </div>
+                    <div class="counting-item">
+                        <label>₱5 <span class="weight-per">(7.7g/coin)</span></label>
+                        <input type="number" id="weight-5" placeholder="grams" min="0" step="0.1" oninput="calcWeight(5)">
+                        <span class="calc-result" id="wcalc-5">—</span>
+                        <button class="apply-btn" onclick="applyWeight(5)">Apply</button>
+                    </div>
+                    <div class="counting-item">
+                        <label>₱10 <span class="weight-per">(6.1g/coin)</span></label>
+                        <input type="number" id="weight-10" placeholder="grams" min="0" step="0.1" oninput="calcWeight(10)">
+                        <span class="calc-result" id="wcalc-10">—</span>
+                        <button class="apply-btn" onclick="applyWeight(10)">Apply</button>
+                    </div>
+                    <div class="counting-item">
+                        <label>₱20 <span class="weight-per">(7.4g/coin)</span></label>
+                        <input type="number" id="weight-20" placeholder="grams" min="0" step="0.1" oninput="calcWeight(20)">
+                        <span class="calc-result" id="wcalc-20">—</span>
+                        <button class="apply-btn" onclick="applyWeight(20)">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roll-Based Counting -->
+            <div class="counting-section">
+                <h3>🪙 Count by Rolls</h3>
+                <p class="counting-desc">Enter number of rolls — auto-calculates coin count</p>
+                <div class="counting-grid">
+                    <div class="counting-item">
+                        <label>₱1 <span class="weight-per">(50 pcs/roll)</span></label>
+                        <input type="number" id="roll-1" placeholder="rolls" min="0" oninput="calcRoll(1)">
+                        <span class="calc-result" id="rcalc-1">—</span>
+                        <button class="apply-btn" onclick="applyRoll(1)">Apply</button>
+                    </div>
+                    <div class="counting-item">
+                        <label>₱5 <span class="weight-per">(40 pcs/roll)</span></label>
+                        <input type="number" id="roll-5" placeholder="rolls" min="0" oninput="calcRoll(5)">
+                        <span class="calc-result" id="rcalc-5">—</span>
+                        <button class="apply-btn" onclick="applyRoll(5)">Apply</button>
+                    </div>
+                    <div class="counting-item">
+                        <label>₱10 <span class="weight-per">(20 pcs/roll)</span></label>
+                        <input type="number" id="roll-10" placeholder="rolls" min="0" oninput="calcRoll(10)">
+                        <span class="calc-result" id="rcalc-10">—</span>
+                        <button class="apply-btn" onclick="applyRoll(10)">Apply</button>
+                    </div>
+                    <div class="counting-item">
+                        <label>₱20 <span class="weight-per">(20 pcs/roll)</span></label>
+                        <input type="number" id="roll-20" placeholder="rolls" min="0" oninput="calcRoll(20)">
+                        <span class="calc-result" id="rcalc-20">—</span>
+                        <button class="apply-btn" onclick="applyRoll(20)">Apply</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="machine-status" id="machine-status"></div>
         </div>
 
@@ -133,7 +198,17 @@
                 <button class="page-btn" id="prev-btn" onclick="prevPage()">← Prev</button>
                 <span id="page-info">Page 1</span>
                 <button class="page-btn" id="next-btn" onclick="nextPage()">Next →</button>
-                <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
+                <div class="export-group">
+                    <select id="export-preset" class="export-select">
+                        <option value="today">Today</option>
+                        <option value="week" selected>This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                    <input type="date" id="export-start" class="export-date hidden">
+                    <input type="date" id="export-end" class="export-date hidden">
+                    <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
+                </div>
             </div>
             <div class="history-table-wrap">
                 <table class="history-table">
@@ -141,8 +216,10 @@
                         <tr>
                             <th>Date/Time</th>
                             <th>Bill</th>
+                            <th>Fee</th>
                             <th>Coins Given</th>
                             <th>Total</th>
+                            <th>Method</th>
                         </tr>
                     </thead>
                     <tbody id="history-body">
@@ -168,6 +245,10 @@
                     <div class="rpt-label">Total Bills</div>
                 </div>
                 <div class="rpt-card">
+                    <div class="rpt-value" id="rpt-fees">₱0</div>
+                    <div class="rpt-label">Fees Collected</div>
+                </div>
+                <div class="rpt-card">
                     <div class="rpt-value" id="rpt-coins">0</div>
                     <div class="rpt-label">Coins Dispensed</div>
                 </div>
@@ -188,12 +269,20 @@
                 <button class="settings-btn" onclick="syncStock()">🔄 Sync Stock (Manual Count)</button>
             </div>
             <div class="settings-section">
+                <h3>💰 Fee Configuration</h3>
+                <p class="settings-info">Set transaction fee tiers based on bill amount</p>
+                <div id="fee-tiers-container" class="fee-tiers-container">
+                    <!-- Populated by JS -->
+                </div>
+                <button class="settings-btn save-fees-btn" onclick="saveFeeTiers()">💾 Save Fee Tiers</button>
+            </div>
+            <div class="settings-section">
                 <h3>Security</h3>
                 <button class="settings-btn" onclick="changePin()">🔒 Change Admin PIN</button>
             </div>
             <div class="settings-section">
                 <h3>About</h3>
-                <p class="settings-info">CoinVerge v1.0</p>
+                <p class="settings-info">CoinVerge v1.1</p>
                 <p class="settings-info">Coin Exchange Kiosk System</p>
                 <p class="settings-info">Screen: 7" Touchscreen (800×480)</p>
             </div>
