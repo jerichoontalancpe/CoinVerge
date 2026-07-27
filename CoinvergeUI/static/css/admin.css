@@ -499,3 +499,128 @@ html, body {
         top: 50%; transform: translateY(-50%);
     }
 }
+
+/* ── COUNT BUTTON ────────────────────────────────────────────────────────── */
+
+.count-btn {
+    padding: 6px 10px; border-radius: 6px; border: 1px solid var(--ph-gold-dim);
+    background: rgba(252, 209, 22, 0.1); color: var(--ph-gold);
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+}
+.count-btn:active { background: rgba(252, 209, 22, 0.25); }
+
+/* ── COUNTING MODAL ──────────────────────────────────────────────────────── */
+
+.count-modal {
+    position: fixed; inset: 0;
+    background: rgba(0, 10, 30, 0.92);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+.count-modal.hidden { display: none; }
+
+.count-modal-content {
+    background: var(--bg-card);
+    border: 2px solid var(--ph-gold-dim);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    min-width: 320px;
+    max-width: 400px;
+    animation: countPulse 0.3s ease-out;
+}
+
+@keyframes countPulse {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.count-modal-icon {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+}
+
+.count-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--ph-gold);
+    margin-bottom: 12px;
+}
+
+.count-modal-counter {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.count-modal-value {
+    font-size: 1rem;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+}
+
+.count-modal-progress {
+    width: 100%;
+    height: 6px;
+    background: #001030;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.count-modal-bar {
+    height: 100%;
+    background: var(--ph-gold);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s;
+    animation: countBarAnim 1.5s ease-in-out infinite;
+}
+
+@keyframes countBarAnim {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+.count-modal-bar.done {
+    width: 100% !important;
+    background: var(--success);
+    animation: none;
+}
+
+.count-modal-status {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+}
+
+.count-stop-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 2px solid var(--danger);
+    background: rgba(255, 61, 61, 0.1);
+    color: var(--danger);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.count-stop-btn:active { background: rgba(255, 61, 61, 0.3); }
+.count-stop-btn.hidden { display: none; }
+
+.count-ok-btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 2px solid var(--success);
+    background: rgba(0, 200, 83, 0.1);
+    color: var(--success);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.count-ok-btn:active { background: rgba(0, 200, 83, 0.3); }
+.count-ok-btn.hidden { display: none; }

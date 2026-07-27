@@ -603,3 +603,133 @@ async function testBill(amount) {
         }
     } catch (e) { alert("Error: " + e.message); }
 }
+
+// ── Coin Counting (Hopper Self-Count) ───────────────────────────────────────
+
+let countPollingInterval = null;
+let countingDenom = 0;
+
+async function startCount(denom) {
+    // Show confirmation dialog
+    const confirmed = confirm(
+        `⚠️ Place a container below the ₱${denom} hopper.\n\n` +
+        `All coins will be dispensed and counted.\n` +
+        `After counting, put coins back into the hopper.\n\n` +
+        `Continue?`
+    );
+    if (!confirmed) return;
+
+    countingDenom = denom;
+
+    try {
+        const res = await fetch("/api/admin/count_coins", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ denomination: denom }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(`❌ ${data.error}`);
+            return;
+        }
+
+        // Show counting modal
+        showCountModal(denom);
+
+        // Start polling for status
+        countPollingInterval = setInterval(pollCountStatus, 500);
+    } catch (e) {
+        alert("Connection error: " + e.message);
+    }
+}
+
+function showCountModal(denom) {
+    const modal = document.getElementById("count-modal");
+    modal.classList.remove("hidden");
+
+    document.getElementById("count-modal-title").textContent = `Counting ₱${denom} coins...`;
+    document.getElementById("count-modal-counter").textContent = "0";
+    document.getElementById("count-modal-value").textContent = "₱0";
+    document.getElementById("count-modal-status").textContent = "Dispensing and counting...";
+    document.getElementById("count-modal-bar").className = "count-modal-bar";
+    document.getElementById("count-modal-bar").style.width = "50%";
+    document.getElementById("count-stop-btn").classList.remove("hidden");
+    document.getElementById("count-ok-btn").classList.add("hidden");
+}
+
+async function pollCountStatus() {
+    try {
+        const res = await fetch("/api/admin/count_status");
+        if (!res.ok) return;
+        const state = await res.json();
+
+        const counter = document.getElementById("count-modal-counter");
+        const value = document.getElementById("count-modal-value");
+
+        counter.textContent = state.count.toLocaleString();
+        value.textContent = `₱${(state.count * state.denomination).toLocaleString()}`;
+
+        if (!state.active) {
+            // Counting finished
+            clearInterval(countPollingInterval);
+            countPollingInterval = null;
+            showCountComplete(state.denomination, state.count);
+        }
+    } catch (e) { /* silent */ }
+}
+
+function showCountComplete(denom, total) {
+    const totalValue = total * denom;
+    document.getElementById("count-modal-icon").textContent = "✅";
+    document.getElementById("count-modal-title").textContent = "Count Complete!";
+    document.getElementById("count-modal-counter").textContent = total.toLocaleString();
+    document.getElementById("count-modal-value").textContent = `₱${totalValue.toLocaleString()}`;
+    document.getElementById("count-modal-status").textContent =
+        `Put coins back into the ₱${denom} hopper and press OK.\nStock has been updated automatically.`;
+    document.getElementById("count-modal-bar").className = "count-modal-bar done";
+    document.getElementById("count-modal-bar").style.width = "100%";
+    document.getElementById("count-stop-btn").classList.add("hidden");
+    document.getElementById("count-ok-btn").classList.remove("hidden");
+}
+
+async function stopCount() {
+    try {
+        await fetch("/api/admin/count_stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
+    } catch (e) { /* silent */ }
+
+    // Stop polling and close
+    if (countPollingInterval) {
+        clearInterval(countPollingInterval);
+        countPollingInterval = null;
+    }
+
+    // Wait a moment then show stopped state
+    setTimeout(async () => {
+        try {
+            const res = await fetch("/api/admin/count_status");
+            if (res.ok) {
+                const state = await res.json();
+                document.getElementById("count-modal-icon").textContent = "⏹";
+                document.getElementById("count-modal-title").textContent = "Counting Stopped";
+                document.getElementById("count-modal-counter").textContent = state.count.toLocaleString();
+                document.getElementById("count-modal-value").textContent =
+                    `₱${(state.count * (state.denomination || countingDenom)).toLocaleString()}`;
+                document.getElementById("count-modal-status").textContent =
+                    "Counting was stopped early. Stock was NOT updated.";
+                document.getElementById("count-modal-bar").style.width = "0%";
+                document.getElementById("count-stop-btn").classList.add("hidden");
+                document.getElementById("count-ok-btn").classList.remove("hidden");
+            }
+        } catch (e) { /* silent */ }
+    }, 600);
+}
+
+function closeCountModal() {
+    document.getElementById("count-modal").classList.add("hidden");
+    document.getElementById("count-modal-icon").textContent = "🔢";
+    loadStock();  // Refresh stock display
+}

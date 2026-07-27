@@ -48,6 +48,11 @@ static volatile int  g_totalMoney   = 0;     // accumulated bill value, waiting 
 static int           g_coinStock[DENOM_COUNT];
 static String        g_serialBuf    = "";     // incoming Serial command buffer
 
+// ── Coin Counting State ─────────────────────────────────────────────────────
+static bool          g_countActive  = false;  // true while counting is in progress
+static bool          g_countAbort   = false;  // set true by COUNT_STOP command
+static int           g_countIndex   = -1;     // hopper index being counted
+
 // ============================================================================
 //  FORWARD DECLARATIONS
 // ============================================================================
@@ -59,6 +64,7 @@ void exchangeTerminate();
 void sendStockReport();
 void processCommand(String cmd);
 bool executeDispense(String args);
+void executeCount(int hopperIndex);
 int  lookupBillPulses(int pulses);
 
 // ============================================================================
@@ -281,6 +287,26 @@ void processCommand(String cmd) {
             }
         } else {
             Serial.printf("CREDIT:ERROR:INVALID_AMOUNT:%d\n", amount);
+        }
+
+    // ── COUNT:<hopper_index> — count all coins in a hopper ──
+    } else if (upper.startsWith("COUNT:")) {
+        int idx = upper.substring(6).toInt();
+        if (idx < 0 || idx >= DENOM_COUNT) {
+            Serial.printf("COUNT:ERROR:INVALID_INDEX:%d\n", idx);
+        } else if (g_countActive) {
+            Serial.println("COUNT:ERROR:ALREADY_COUNTING");
+        } else {
+            executeCount(idx);
+        }
+
+    // ── COUNT_STOP — abort an active coin count ─────────────
+    } else if (upper == "COUNT_STOP") {
+        if (g_countActive) {
+            g_countAbort = true;
+            Serial.println("COUNT_STOP:OK");
+        } else {
+            Serial.println("COUNT_STOP:ERROR:NOT_COUNTING");
         }
 
 #if DEBUG_MODE
@@ -521,6 +547,122 @@ void closeAllHoppers() {
 void exchangeTerminate() {
     closeAllHoppers();
     g_totalMoney = 0;
+}
+
+// ============================================================================
+//  executeCount() — count all coins in a hopper (admin coin counting)
+//  Turns on motor, counts sensor pulses until 3-second timeout with no coins.
+//  Sends progress every 10 coins and final count when done.
+// ============================================================================
+
+void executeCount(int hopperIndex) {
+    g_countActive = true;
+    g_countAbort  = false;
+    g_countIndex  = hopperIndex;
+
+    int denom     = HOPPER_MAP[hopperIndex][0];
+    int sensorPin = HOPPER_MAP[hopperIndex][2];
+    int total     = 0;
+
+    Serial.printf("[COUNT] Starting count for P%d (hopper %d)\n", denom, hopperIndex);
+
+#if DEBUG_MODE
+    // In debug mode, simulate counting with a simple loop
+    openhop(hopperIndex);
+    int simTotal = random(50, 201);  // simulate 50-200 coins
+    for (int i = 1; i <= simTotal; i++) {
+        if (g_countAbort) break;
+        total = i;
+        if (total % 10 == 0) {
+            Serial.printf("COUNT_PROGRESS:%d:%d\n", hopperIndex, total);
+        }
+        delay(50);  // simulate counting speed
+
+        // Check for COUNT_STOP command during simulation
+        while (Serial.available()) {
+            char c = Serial.read();
+            if (c == '\n' || c == '\r') {
+                g_serialBuf.trim();
+                String bufUpper = g_serialBuf;
+                bufUpper.toUpperCase();
+                if (bufUpper == "COUNT_STOP") {
+                    g_countAbort = true;
+                    Serial.println("COUNT_STOP:OK");
+                }
+                g_serialBuf = "";
+            } else {
+                g_serialBuf += c;
+            }
+        }
+    }
+    closehop(hopperIndex);
+
+#else
+    // Real hardware: turn on motor, count sensor edges, timeout after 3s of no coins
+    openhop(hopperIndex);
+
+    bool lastSensorState = digitalRead(sensorPin);
+    unsigned long lastCoinTime = millis();  // time of last detected coin
+    const unsigned long COUNT_TIMEOUT_MS = 3000;  // 3 seconds no coin = done
+
+    while (!g_countAbort) {
+        bool currentState = digitalRead(sensorPin);
+
+        // Detect edge transition (same logic as dispensing)
+        bool coinDetected = false;
+        if (hopperIndex == 0) {
+            // ₱1: Normally Closed — detect rising edge (LOW → HIGH)
+            coinDetected = (lastSensorState == LOW && currentState == HIGH);
+        } else {
+            // ₱5,₱10,₱20: Normally Open — detect falling edge (HIGH → LOW)
+            coinDetected = (lastSensorState == HIGH && currentState == LOW);
+        }
+
+        if (coinDetected) {
+            total++;
+            lastCoinTime = millis();
+            if (total % 10 == 0) {
+                Serial.printf("COUNT_PROGRESS:%d:%d\n", hopperIndex, total);
+            }
+            delay(30);  // debounce
+        }
+        lastSensorState = currentState;
+
+        // Timeout: no coin for 3 seconds → done
+        if (millis() - lastCoinTime > COUNT_TIMEOUT_MS) {
+            break;
+        }
+
+        // Check for COUNT_STOP command mid-count
+        while (Serial.available()) {
+            char c = Serial.read();
+            if (c == '\n' || c == '\r') {
+                g_serialBuf.trim();
+                String bufUpper = g_serialBuf;
+                bufUpper.toUpperCase();
+                if (bufUpper == "COUNT_STOP") {
+                    g_countAbort = true;
+                    Serial.println("COUNT_STOP:OK");
+                }
+                g_serialBuf = "";
+            } else {
+                g_serialBuf += c;
+            }
+        }
+
+        delay(2);  // fast polling
+    }
+
+    closehop(hopperIndex);
+#endif
+
+    // Send final result
+    Serial.printf("COUNT_DONE:%d:%d\n", hopperIndex, total);
+    Serial.printf("[COUNT] Finished: %d coins (P%d)\n", total, denom);
+
+    g_countActive = false;
+    g_countAbort  = false;
+    g_countIndex  = -1;
 }
 
 // ============================================================================

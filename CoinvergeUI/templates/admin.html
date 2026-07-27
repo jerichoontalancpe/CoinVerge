@@ -75,6 +75,7 @@
                     <div class="scard-actions">
                         <button class="refill-btn" onclick="refillDenom(1)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(1)">Set</button>
+                        <button class="count-btn" onclick="startCount(1)">🔢</button>
                     </div>
                 </div>
 
@@ -90,6 +91,7 @@
                     <div class="scard-actions">
                         <button class="refill-btn" onclick="refillDenom(5)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(5)">Set</button>
+                        <button class="count-btn" onclick="startCount(5)">🔢</button>
                     </div>
                 </div>
 
@@ -105,6 +107,7 @@
                     <div class="scard-actions">
                         <button class="refill-btn" onclick="refillDenom(10)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(10)">Set</button>
+                        <button class="count-btn" onclick="startCount(10)">🔢</button>
                     </div>
                 </div>
 
@@ -120,6 +123,7 @@
                     <div class="scard-actions">
                         <button class="refill-btn" onclick="refillDenom(20)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(20)">Set</button>
+                        <button class="count-btn" onclick="startCount(20)">🔢</button>
                     </div>
                 </div>
             </div>
@@ -295,6 +299,24 @@
                 <p class="settings-info">Coin Exchange Kiosk System</p>
                 <p class="settings-info">Screen: 7" Touchscreen (800×480)</p>
             </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- COIN COUNTING MODAL                                                -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <div id="count-modal" class="count-modal hidden">
+        <div class="count-modal-content">
+            <div class="count-modal-icon">🔢</div>
+            <div class="count-modal-title" id="count-modal-title">Counting ₱10 coins...</div>
+            <div class="count-modal-counter" id="count-modal-counter">0</div>
+            <div class="count-modal-value" id="count-modal-value">₱0</div>
+            <div class="count-modal-progress">
+                <div class="count-modal-bar" id="count-modal-bar"></div>
+            </div>
+            <div class="count-modal-status" id="count-modal-status">Dispensing and counting...</div>
+            <button class="count-stop-btn" id="count-stop-btn" onclick="stopCount()">⏹ Stop</button>
+            <button class="count-ok-btn hidden" id="count-ok-btn" onclick="closeCountModal()">OK</button>
         </div>
     </div>
 

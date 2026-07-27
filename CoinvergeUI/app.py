@@ -27,6 +27,14 @@ from database import (
 
 # ── ESP32 Serial Connection ──────────────────────────────────────────────────
 
+# Hopper index to denomination mapping (matches ESP32 HOPPER_MAP)
+HOPPER_INDEX_MAP = {0: 1, 1: 5, 2: 10, 3: 20}
+DENOM_TO_INDEX = {1: 0, 5: 1, 10: 2, 20: 3}
+
+# Coin counting state (admin feature)
+counting_state = {"active": False, "denomination": 0, "count": 0}
+
+
 class ESP32Connection:
     """Manages serial communication with the ESP32."""
 
@@ -93,6 +101,7 @@ class ESP32Connection:
                 time.sleep(0.5)
 
     def _process_line(self, line):
+        global counting_state
         print(f"[ESP32] {line}")
 
         if line.startswith("BILL:"):
@@ -112,6 +121,36 @@ class ESP32Connection:
         elif line.startswith("DISPENSED:ERROR"):
             reason = line.split(":", 2)[2] if line.count(":") >= 2 else "unknown"
             self._notify("dispensed", {"status": "error", "reason": reason})
+        elif line.startswith("COUNT_PROGRESS:"):
+            # FORMAT: COUNT_PROGRESS:<index>:<count>
+            try:
+                parts = line.split(":")
+                idx = int(parts[1])
+                count = int(parts[2])
+                denom = HOPPER_INDEX_MAP.get(idx, 0)
+                counting_state["active"] = True
+                counting_state["denomination"] = denom
+                counting_state["count"] = count
+                self._notify("count_progress", {"denomination": denom, "count": count})
+            except (ValueError, IndexError):
+                pass
+        elif line.startswith("COUNT_DONE:"):
+            # FORMAT: COUNT_DONE:<index>:<total>
+            try:
+                parts = line.split(":")
+                idx = int(parts[1])
+                total = int(parts[2])
+                denom = HOPPER_INDEX_MAP.get(idx, 0)
+                counting_state["active"] = False
+                counting_state["denomination"] = denom
+                counting_state["count"] = total
+                # Auto-update stock in database
+                if denom > 0:
+                    update_stock(denom, total)
+                    print(f"[COUNT] Stock updated: ₱{denom} = {total} coins")
+                self._notify("count_done", {"denomination": denom, "total": total})
+            except (ValueError, IndexError):
+                pass
         elif line == "READY":
             self._notify("ready", {})
 
@@ -132,6 +171,7 @@ class ESP32Connection:
             return False
 
     def _simulate_command(self, cmd):
+        global counting_state
         cmd_upper = cmd.upper()
         if cmd_upper.startswith("DISPENSE:"):
             # Simulate 2-second dispensing delay
@@ -139,6 +179,40 @@ class ESP32Connection:
             return True
         elif cmd_upper == "RESET":
             self.balance = 0
+            return True
+        elif cmd_upper.startswith("COUNT:"):
+            # Simulate coin counting
+            try:
+                idx = int(cmd_upper.split(":")[1])
+                denom = HOPPER_INDEX_MAP.get(idx, 0)
+                if denom == 0:
+                    return False
+                counting_state["active"] = True
+                counting_state["denomination"] = denom
+                counting_state["count"] = 0
+
+                def simulate_counting():
+                    global counting_state
+                    target = random.randint(50, 200)
+                    count = 0
+                    while count < target and counting_state["active"]:
+                        time.sleep(0.2)
+                        if not counting_state["active"]:
+                            break  # Aborted
+                        count += 1
+                        counting_state["count"] = count
+                        if count % 10 == 0:
+                            self._process_line(f"COUNT_PROGRESS:{idx}:{count}")
+                    # Fire COUNT_DONE
+                    self._process_line(f"COUNT_DONE:{idx}:{count}")
+
+                threading.Thread(target=simulate_counting, daemon=True).start()
+            except (ValueError, IndexError):
+                return False
+            return True
+        elif cmd_upper == "COUNT_STOP":
+            if counting_state["active"]:
+                counting_state["active"] = False
             return True
         return False
 
@@ -536,6 +610,55 @@ def api_admin_set_stock():
 
     update_stock(denom, count)
     return jsonify({"status": "ok", "stock": get_stock()})
+
+
+@app.route("/api/admin/count_coins", methods=["POST"])
+def api_admin_count_coins():
+    """Start counting coins in a hopper. Sends COUNT:<index> to ESP32."""
+    global counting_state
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    denom = int(data.get("denomination", 0))
+
+    if denom not in [1, 5, 10, 20]:
+        return jsonify({"error": "Invalid denomination"}), 400
+
+    if counting_state["active"]:
+        return jsonify({"error": "Counting already in progress"}), 400
+
+    idx = DENOM_TO_INDEX[denom]
+    counting_state = {"active": True, "denomination": denom, "count": 0}
+
+    cmd = f"COUNT:{idx}"
+    print(f"[CMD] {cmd}")
+    esp32.send_command(cmd)
+
+    return jsonify({"status": "ok", "denomination": denom, "index": idx})
+
+
+@app.route("/api/admin/count_status")
+def api_admin_count_status():
+    """Get current counting state."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify(counting_state)
+
+
+@app.route("/api/admin/count_stop", methods=["POST"])
+def api_admin_count_stop():
+    """Stop an active coin count."""
+    global counting_state
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if not counting_state["active"]:
+        return jsonify({"error": "No active counting"}), 400
+
+    esp32.send_command("COUNT_STOP")
+    counting_state["active"] = False
+    return jsonify({"status": "ok", "final_count": counting_state["count"]})
 
 
 @app.route("/api/admin/maintenance", methods=["POST"])
