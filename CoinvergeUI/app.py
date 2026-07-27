@@ -22,6 +22,7 @@ from database import (
     refill_stock, refill_all, is_any_stock_available, verify_pin, get_setting,
     set_setting, get_maintenance_mode, set_maintenance_mode,
     get_low_stock_denominations, get_fee, get_fee_tiers, set_fee_tiers,
+    log_stock_count, get_stock_counts, get_stock_counts_by_date,
     REFILL_THRESHOLD
 )
 
@@ -147,6 +148,7 @@ class ESP32Connection:
                 # Auto-update stock in database
                 if denom > 0:
                     update_stock(denom, total)
+                    log_stock_count(denom, total)
                     print(f"[COUNT] Stock updated: ₱{denom} = {total} coins")
                 self._notify("count_done", {"denomination": denom, "total": total})
             except (ValueError, IndexError):
@@ -780,6 +782,7 @@ def api_admin_export_csv():
         end_date = datetime.now().strftime("%Y-%m-%d")
 
     transactions = get_transactions_by_date(start_date, end_date)
+    stock_count_records = get_stock_counts_by_date(start_date, end_date)
 
     # Format period string
     if start_date and end_date:
@@ -839,6 +842,14 @@ def api_admin_export_csv():
     for denom in [1, 5, 10, 20]:
         output.write(f"₱{denom}: {by_denom[denom]} coins\n")
 
+    # Stock Counts section
+    if stock_count_records:
+        output.write("\n")
+        output.write("STOCK COUNTS\n")
+        output.write("Date/Time,Denomination,Count Result\n")
+        for sc in stock_count_records:
+            output.write(f"{sc['timestamp']},₱{sc['denomination']},{sc['count_result']} coins\n")
+
     csv_data = output.getvalue()
     filename = f"coinverge_report_{start_date or 'all'}_{end_date or 'all'}.csv"
     return Response(
@@ -846,6 +857,265 @@ def api_admin_export_csv():
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+@app.route("/api/admin/export_html")
+def api_admin_export_html():
+    """Export transactions as a styled HTML report for printing."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Parse date range parameters
+    start_date = request.args.get("start_date", None)
+    end_date = request.args.get("end_date", None)
+    preset = request.args.get("preset", None)
+
+    if preset == "today":
+        start_date = datetime.now().strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    elif preset == "week":
+        start_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+    elif preset == "month":
+        start_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        end_date = datetime.now().strftime("%Y-%m-%d")
+
+    transactions = get_transactions_by_date(start_date, end_date)
+    stock_count_records = get_stock_counts_by_date(start_date, end_date)
+
+    # Format period string
+    if start_date and end_date:
+        try:
+            s = datetime.strptime(start_date, "%Y-%m-%d")
+            e = datetime.strptime(end_date, "%Y-%m-%d")
+            period_str = f"{s.strftime('%B %d')} – {e.strftime('%B %d, %Y')}"
+        except ValueError:
+            period_str = f"{start_date} to {end_date}"
+    else:
+        period_str = "All Time"
+
+    generated_str = datetime.now().strftime("%B %d, %Y %I:%M %p")
+
+    # Calculate totals
+    total_bills = 0
+    total_fees = 0
+    total_coins_value = 0
+    by_denom = {1: 0, 5: 0, 10: 0, 20: 0}
+
+    for tx in transactions:
+        total_bills += tx['bill_value']
+        total_fees += tx.get('fee', 0)
+        parts = tx['coins_dispensed'].split(",")
+        for part in parts:
+            if "x" in part:
+                d, q = part.split("x")
+                d, q = int(d), int(q)
+                if d in by_denom:
+                    by_denom[d] += q
+                total_coins_value += d * q
+
+    # Build transaction rows
+    tx_rows = ""
+    for i, tx in enumerate(transactions, 1):
+        fee = tx.get('fee', 0)
+        method = tx.get('payment_method', 'cash').capitalize()
+        row_class = "even" if i % 2 == 0 else "odd"
+        tx_rows += f"""<tr class="{row_class}">
+            <td>{i}</td>
+            <td>{tx['timestamp']}</td>
+            <td>₱{tx['bill_value']}</td>
+            <td>₱{fee}</td>
+            <td>{tx['coins_dispensed']}</td>
+            <td>{tx['total_coins']}</td>
+            <td>{method}</td>
+        </tr>"""
+
+    # Build stock counts rows
+    sc_rows = ""
+    if stock_count_records:
+        for sc in stock_count_records:
+            sc_rows += f"""<tr>
+                <td>{sc['timestamp']}</td>
+                <td>₱{sc['denomination']}</td>
+                <td>{sc['count_result']:,} coins</td>
+                <td>₱{sc['denomination'] * sc['count_result']:,}</td>
+            </tr>"""
+
+    stock_counts_section = ""
+    if stock_count_records:
+        stock_counts_section = f"""
+        <div class="section">
+            <h2>📊 Stock Counts</h2>
+            <table>
+                <thead>
+                    <tr><th>Date/Time</th><th>Denomination</th><th>Count</th><th>Value</th></tr>
+                </thead>
+                <tbody>{sc_rows}</tbody>
+            </table>
+        </div>
+        """
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CoinVerge Report — {period_str}</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #1a1a2e; background: #fff; padding: 24px;
+            font-size: 11px;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #0038a8 0%, #002060 100%);
+            color: #fff; padding: 20px 24px; border-radius: 8px;
+            margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+        }}
+        .header h1 {{ font-size: 20px; }}
+        .header .subtitle {{ color: #fcd116; font-size: 12px; margin-top: 4px; }}
+        .header .logo {{
+            width: 48px; height: 48px; border-radius: 50%;
+            background: #fcd116; color: #002060;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: 900;
+        }}
+        .meta {{ color: #555; font-size: 10px; margin-bottom: 16px; text-align: right; }}
+        .summary-cards {{
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 12px; margin-bottom: 20px;
+        }}
+        .summary-card {{
+            background: #f0f4ff; border: 1px solid #d0d8f0;
+            border-radius: 8px; padding: 12px; text-align: center;
+        }}
+        .summary-card .value {{ font-size: 18px; font-weight: 800; color: #0038a8; }}
+        .summary-card .label {{ font-size: 10px; color: #555; margin-top: 4px; }}
+        .summary-card.gold {{ background: #fffbea; border-color: #fcd116; }}
+        .summary-card.gold .value {{ color: #b8960a; }}
+        .denom-grid {{
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 8px; margin-bottom: 20px;
+        }}
+        .denom-item {{
+            background: #f8f9ff; border: 1px solid #e0e4f0; border-radius: 6px;
+            padding: 10px; text-align: center;
+        }}
+        .denom-item .denom {{ font-size: 16px; font-weight: 800; color: #0038a8; }}
+        .denom-item .count {{ font-size: 11px; color: #555; }}
+        .denom-item .bar {{
+            height: 4px; background: #e0e4f0; border-radius: 2px; margin-top: 6px; overflow: hidden;
+        }}
+        .denom-item .bar-fill {{ height: 100%; background: #fcd116; border-radius: 2px; }}
+        .section {{ margin-bottom: 20px; }}
+        .section h2 {{
+            font-size: 13px; color: #0038a8; border-bottom: 2px solid #fcd116;
+            padding-bottom: 4px; margin-bottom: 10px;
+        }}
+        table {{ width: 100%; border-collapse: collapse; font-size: 10px; }}
+        th {{
+            background: #0038a8; color: #fff; padding: 6px 8px;
+            text-align: left; font-weight: 600;
+        }}
+        td {{ padding: 5px 8px; border-bottom: 1px solid #e8ecf0; }}
+        tr.even {{ background: #f8f9ff; }}
+        tr.odd {{ background: #fff; }}
+        .footer {{
+            margin-top: 24px; padding-top: 12px; border-top: 1px solid #e0e4f0;
+            text-align: center; color: #888; font-size: 9px;
+        }}
+        @media print {{
+            body {{ padding: 12px; }}
+            .header {{ page-break-after: avoid; }}
+            table {{ page-break-inside: auto; }}
+            tr {{ page-break-inside: avoid; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>CoinVerge</h1>
+            <div class="subtitle">Transaction Report — {period_str}</div>
+        </div>
+        <div class="logo">₱</div>
+    </div>
+    <div class="meta">Generated: {generated_str}</div>
+
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="value">{len(transactions)}</div>
+            <div class="label">Transactions</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">₱{total_bills:,}</div>
+            <div class="label">Bills Received</div>
+        </div>
+        <div class="summary-card gold">
+            <div class="value">₱{total_fees:,}</div>
+            <div class="label">Fees Collected</div>
+        </div>
+        <div class="summary-card">
+            <div class="value">₱{total_coins_value:,}</div>
+            <div class="label">Coins Dispensed</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>💰 Denomination Breakdown</h2>
+        <div class="denom-grid">
+            <div class="denom-item">
+                <div class="denom">₱1</div>
+                <div class="count">{by_denom[1]:,} coins</div>
+                <div class="bar"><div class="bar-fill" style="width:{min(100, (by_denom[1] / max(1, max(by_denom.values()))) * 100):.0f}%"></div></div>
+            </div>
+            <div class="denom-item">
+                <div class="denom">₱5</div>
+                <div class="count">{by_denom[5]:,} coins</div>
+                <div class="bar"><div class="bar-fill" style="width:{min(100, (by_denom[5] / max(1, max(by_denom.values()))) * 100):.0f}%"></div></div>
+            </div>
+            <div class="denom-item">
+                <div class="denom">₱10</div>
+                <div class="count">{by_denom[10]:,} coins</div>
+                <div class="bar"><div class="bar-fill" style="width:{min(100, (by_denom[10] / max(1, max(by_denom.values()))) * 100):.0f}%"></div></div>
+            </div>
+            <div class="denom-item">
+                <div class="denom">₱20</div>
+                <div class="count">{by_denom[20]:,} coins</div>
+                <div class="bar"><div class="bar-fill" style="width:{min(100, (by_denom[20] / max(1, max(by_denom.values()))) * 100):.0f}%"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📋 Transaction Details</h2>
+        <table>
+            <thead>
+                <tr><th>#</th><th>Date/Time</th><th>Bill</th><th>Fee</th><th>Coins</th><th>Total</th><th>Method</th></tr>
+            </thead>
+            <tbody>{tx_rows if tx_rows else '<tr><td colspan="7" style="text-align:center;color:#888">No transactions in this period</td></tr>'}</tbody>
+        </table>
+    </div>
+
+    {stock_counts_section}
+
+    <div class="footer">
+        CoinVerge Coin Exchange Kiosk System • Report generated {generated_str}
+    </div>
+</body>
+</html>"""
+
+    return Response(html, mimetype="text/html")
+
+
+@app.route("/api/admin/stock_counts")
+def api_admin_stock_counts():
+    """Get recent stock count records."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    limit = int(request.args.get("limit", 20))
+    counts = get_stock_counts(limit)
+    return jsonify(counts)
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────

@@ -61,8 +61,17 @@ def init_db():
             fee INTEGER NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS stock_counts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+            denomination INTEGER NOT NULL,
+            count_result INTEGER NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_transactions_timestamp
             ON transactions(timestamp);
+        CREATE INDEX IF NOT EXISTS idx_stock_counts_timestamp
+            ON stock_counts(timestamp);
     """)
 
     # Add fee column if upgrading from old schema
@@ -377,3 +386,48 @@ def get_low_stock_denominations():
         if info["current"] < REFILL_THRESHOLD:
             low.append(denom)
     return low
+
+
+# ── Stock Count Functions ────────────────────────────────────────────────────
+
+def log_stock_count(denomination, count_result):
+    """Log a stock count operation."""
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO stock_counts (denomination, count_result) VALUES (?, ?)",
+        (denomination, count_result)
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_stock_counts(limit=20):
+    """Get recent stock count records."""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM stock_counts ORDER BY timestamp DESC LIMIT ?",
+        (limit,)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_stock_counts_by_date(start_date=None, end_date=None):
+    """Get stock counts within a date range."""
+    conn = get_db()
+    if start_date and end_date:
+        rows = conn.execute(
+            "SELECT * FROM stock_counts WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC",
+            (start_date, end_date + " 23:59:59")
+        ).fetchall()
+    elif start_date:
+        rows = conn.execute(
+            "SELECT * FROM stock_counts WHERE timestamp >= ? ORDER BY timestamp DESC",
+            (start_date,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM stock_counts ORDER BY timestamp DESC"
+        ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]

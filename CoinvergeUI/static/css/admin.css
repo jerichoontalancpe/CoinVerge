@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    CoinVerge — Admin Panel Stylesheet
-   Same theme as kiosk but with tables and management UI
+   Redesigned with hopper frame cards and Philippine blue/gold theme
    ═══════════════════════════════════════════════════════════════════════════ */
 
 * {
@@ -22,6 +22,7 @@
     --text: #ffffff;
     --text-dim: #8eaacc;
     --success: #00c853;
+    --warning: #ffab00;
     --danger: #ff3d3d;
     --radius: 10px;
 }
@@ -132,178 +133,233 @@ html, body {
 
 .tab-content {
     display: none; width: 100%; height: calc(480px - 52px);
-    overflow-y: auto; padding: 12px 16px;
+    overflow-y: auto; padding: 10px 12px;
 }
 .tab-content.active { display: block; }
 
-/* ── STOCK TAB ───────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   STOCK TAB — 4 HOPPER FRAMES (2×2 grid)
+   ══════════════════════════════════════════════════════════════════════════ */
 
-.stock-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 10px; margin-bottom: 12px;
+.hopper-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    height: calc(100% - 42px);
 }
 
-.stock-card {
-    background: var(--bg-card); border-radius: var(--radius);
-    padding: 12px; text-align: center;
+.hopper-frame {
+    background: var(--bg-card);
+    border-radius: 12px;
+    border: 2px solid var(--success);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
     position: relative;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 0 8px rgba(0, 200, 83, 0.15);
 }
-.stock-card.stock-low {
-    border: 1px solid var(--ph-gold-dim);
-}
-.scard-denom { font-size: 1.3rem; font-weight: 800; color: var(--ph-gold); }
 
-.scard-bar {
-    width: 100%; height: 8px; background: #001030;
-    border-radius: 4px; margin: 8px 0; overflow: hidden;
+/* Status-based colors */
+.hopper-frame[data-status="full"],
+.hopper-frame[data-status="ok"] {
+    border-color: var(--success);
+    box-shadow: 0 0 8px rgba(0, 200, 83, 0.15);
 }
-.scard-fill {
-    height: 100%; background: var(--success);
-    border-radius: 4px; transition: width 0.5s;
+.hopper-frame[data-status="low"] {
+    border-color: var(--warning);
+    box-shadow: 0 0 10px rgba(255, 171, 0, 0.25);
 }
-.scard-fill.low { background: var(--ph-gold); }
-.scard-fill.critical { background: var(--danger); }
+.hopper-frame[data-status="critical"] {
+    border-color: var(--danger);
+    box-shadow: 0 0 12px rgba(255, 61, 61, 0.3);
+    animation: criticalPulse 1.5s ease-in-out infinite;
+}
+.hopper-frame[data-status="empty"] {
+    border-color: #445566;
+    box-shadow: none;
+    opacity: 0.7;
+}
 
-.scard-info { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; }
+@keyframes criticalPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(255, 61, 61, 0.3); }
+    50% { box-shadow: 0 0 18px rgba(255, 61, 61, 0.6); }
+}
+
+.hopper-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.hopper-denom {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--ph-gold);
+}
+
+.hopper-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.hopper-badge.full,
+.hopper-badge.ok {
+    background: rgba(0, 200, 83, 0.2);
+    color: var(--success);
+    border: 1px solid var(--success);
+}
+.hopper-badge.low {
+    background: rgba(255, 171, 0, 0.2);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+.hopper-badge.critical {
+    background: rgba(255, 61, 61, 0.2);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+.hopper-badge.empty {
+    background: rgba(100, 120, 140, 0.2);
+    color: #778899;
+    border: 1px solid #556677;
+}
+
+/* ── Hopper Tank (visual fill indicator) ─────────────────────────────────── */
+
+.hopper-tank {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 0;
+}
+
+.tank-container {
+    width: 70px;
+    height: 100%;
+    min-height: 60px;
+    max-height: 90px;
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px 6px 10px 10px;
+    overflow: hidden;
+    background: rgba(0, 10, 30, 0.6);
+    /* Hopper funnel shape — wider at top, narrower at bottom */
+    clip-path: polygon(5% 0%, 95% 0%, 100% 8%, 100% 100%, 85% 100%, 85% 95%, 15% 95%, 15% 100%, 0% 100%, 0% 8%);
+}
+
+.tank-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, var(--success) 0%, rgba(0, 200, 83, 0.6) 100%);
+    transition: height 0.6s ease, background 0.3s;
+    border-radius: 0 0 8px 8px;
+}
+
+.hopper-frame[data-status="low"] .tank-fill {
+    background: linear-gradient(to top, var(--warning) 0%, rgba(255, 171, 0, 0.5) 100%);
+}
+.hopper-frame[data-status="critical"] .tank-fill {
+    background: linear-gradient(to top, var(--danger) 0%, rgba(255, 61, 61, 0.5) 100%);
+}
+.hopper-frame[data-status="empty"] .tank-fill {
+    background: rgba(100, 120, 140, 0.3);
+}
+
+.tank-level-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* ── Hopper Stats ────────────────────────────────────────────────────────── */
+
+.hopper-stats {
+    text-align: center;
+    margin: 4px 0;
+}
+
+.hopper-count {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.hopper-value {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--ph-gold);
+}
+
+/* ── Hopper Actions ──────────────────────────────────────────────────────── */
+
+.hopper-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
 
 .refill-btn {
-    padding: 6px 12px; border-radius: 6px; border: none;
+    padding: 5px 10px; border-radius: 6px; border: none;
     background: var(--ph-blue-light); color: var(--text);
-    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+    font-size: 0.7rem; font-weight: 600; cursor: pointer;
 }
 .refill-btn:active { background: var(--ph-blue); }
 
 .set-btn {
-    padding: 6px 12px; border-radius: 6px; border: 1px solid var(--text-dim);
+    padding: 5px 10px; border-radius: 6px; border: 1px solid var(--text-dim);
     background: transparent; color: var(--text-dim);
-    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+    font-size: 0.7rem; font-weight: 600; cursor: pointer;
 }
 .set-btn:active { background: var(--bg-surface); }
 
-.scard-actions { display: flex; gap: 6px; justify-content: center; margin-top: 4px; }
+.count-btn {
+    padding: 5px 10px; border-radius: 6px; border: 1px solid var(--ph-gold-dim);
+    background: rgba(252, 209, 22, 0.1); color: var(--ph-gold);
+    font-size: 0.7rem; font-weight: 600; cursor: pointer;
+}
+.count-btn:active { background: rgba(252, 209, 22, 0.25); }
+
+/* ── Hopper Footer ───────────────────────────────────────────────────────── */
+
+.hopper-footer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
 
 .refill-all-btn {
-    width: 100%; padding: 10px; border-radius: var(--radius);
+    padding: 8px 16px; border-radius: var(--radius);
     border: 2px solid var(--success); background: #103020;
-    color: var(--success); font-size: 0.9rem; font-weight: 700;
-    cursor: pointer; margin-bottom: 12px;
+    color: var(--success); font-size: 0.8rem; font-weight: 700;
+    cursor: pointer; white-space: nowrap;
 }
 
 .machine-status {
-    margin-top: 12px; padding: 8px 12px;
+    flex: 1;
+    padding: 6px 10px;
     background: var(--bg-card); border-radius: 6px;
-    font-size: 0.8rem; color: var(--text-dim);
+    font-size: 0.75rem; color: var(--text-dim);
 }
 
-/* ── STOCK ALERT BANNER ──────────────────────────────────────────────────── */
-
-.stock-alert-banner {
-    background: rgba(252, 209, 22, 0.15);
-    border: 1px solid var(--ph-gold-dim);
-    color: var(--ph-gold);
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-bottom: 10px;
-    text-align: center;
-}
-.stock-alert-banner.hidden { display: none; }
-
-.scard-warning {
-    position: absolute;
-    top: 4px; right: 4px;
-    font-size: 0.6rem;
-    color: var(--ph-gold);
-    font-weight: 700;
-    background: rgba(252, 209, 22, 0.2);
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-.scard-warning.hidden { display: none; }
-
-/* ── COUNTING SECTIONS (Weight & Roll) ───────────────────────────────────── */
-
-.counting-section {
-    background: var(--bg-card);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    margin-bottom: 12px;
-}
-
-.counting-section h3 {
-    font-size: 0.9rem;
-    color: var(--ph-gold);
-    margin-bottom: 4px;
-}
-
-.counting-desc {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    margin-bottom: 10px;
-}
-
-.counting-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-}
-
-.counting-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--bg-surface);
-    border-radius: 6px;
-    padding: 6px 8px;
-}
-
-.counting-item label {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--ph-gold);
-    min-width: 60px;
-}
-
-.weight-per {
-    font-size: 0.6rem;
-    color: var(--text-dim);
-    font-weight: 400;
-}
-
-.counting-item input {
-    width: 55px;
-    padding: 4px 6px;
-    border-radius: 4px;
-    border: 1px solid var(--text-dim);
-    background: var(--bg);
-    color: var(--text);
-    font-size: 0.75rem;
-    text-align: center;
-}
-
-.calc-result {
-    font-size: 0.65rem;
-    color: var(--text-dim);
-    min-width: 80px;
-    text-align: center;
-}
-
-.apply-btn {
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid var(--success);
-    background: transparent;
-    color: var(--success);
-    font-size: 0.65rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-.apply-btn:active {
-    background: rgba(0, 200, 83, 0.2);
-}
-
-/* ── HISTORY TAB ─────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   HISTORY TAB
+   ══════════════════════════════════════════════════════════════════════════ */
 
 .history-controls {
     display: flex; justify-content: space-between; align-items: center;
@@ -341,13 +397,18 @@ html, body {
 .export-date.hidden { display: none; }
 
 .export-btn {
-    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--ph-gold-dim);
+    padding: 6px 12px; border-radius: 6px; border: 1px solid var(--ph-gold-dim);
     background: var(--bg-card); color: var(--ph-gold);
-    font-size: 0.8rem; font-weight: 600; cursor: pointer;
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
 }
+.export-btn.print-btn {
+    border-color: var(--ph-blue-light);
+    color: var(--text);
+}
+
 #page-info { font-size: 0.8rem; color: var(--text-dim); }
 
-.history-table-wrap { overflow-y: auto; max-height: 320px; }
+.history-table-wrap { overflow-y: auto; max-height: 340px; }
 
 .history-table {
     width: 100%; border-collapse: collapse;
@@ -362,7 +423,9 @@ html, body {
     padding: 6px 8px; border-bottom: 1px solid #0a2a50;
 }
 
-/* ── REPORTS TAB ─────────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   REPORTS TAB
+   ══════════════════════════════════════════════════════════════════════════ */
 
 .report-tabs {
     display: flex; gap: 8px; margin-bottom: 12px;
@@ -376,27 +439,69 @@ html, body {
 
 .report-cards {
     display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 10px; margin-bottom: 16px;
+    gap: 10px; margin-bottom: 14px;
 }
 .rpt-card {
     background: var(--bg-card); border-radius: var(--radius);
-    padding: 12px; text-align: center;
+    padding: 10px; text-align: center;
 }
-.rpt-value { font-size: 1.3rem; font-weight: 800; color: var(--ph-gold); }
+.rpt-value { font-size: 1.2rem; font-weight: 800; color: var(--ph-gold); }
 .rpt-label { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
 
-.report-breakdown h3 { font-size: 0.9rem; margin-bottom: 8px; color: var(--text-dim); }
+.report-breakdown h3 { font-size: 0.85rem; margin-bottom: 8px; color: var(--text-dim); }
 .breakdown-grid {
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin-bottom: 14px;
 }
 .bd-item {
     background: var(--bg-card); border-radius: 8px;
-    padding: 10px; text-align: center;
+    padding: 8px; text-align: center;
 }
-.bd-denom { font-weight: 700; color: var(--ph-gold); font-size: 1rem; }
-.bd-count { font-size: 0.85rem; color: var(--text-dim); margin-top: 4px; }
+.bd-denom { font-weight: 700; color: var(--ph-gold); font-size: 0.9rem; }
+.bd-count { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
 
-/* ── SETTINGS TAB ────────────────────────────────────────────────────────── */
+/* Stock Counts Section in Reports */
+.report-stock-counts {
+    margin-top: 10px;
+}
+.report-stock-counts h3 {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+}
+
+.stock-counts-list {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 10px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.stock-count-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.75rem;
+}
+.stock-count-entry:last-child { border-bottom: none; }
+
+.sc-time { color: var(--text-dim); }
+.sc-denom { color: var(--ph-gold); font-weight: 700; }
+.sc-result { color: var(--text); }
+
+.no-data {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 12px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SETTINGS TAB
+   ══════════════════════════════════════════════════════════════════════════ */
 
 .settings-section {
     background: var(--bg-card); border-radius: var(--radius);
@@ -489,27 +594,9 @@ html, body {
     text-align: center !important;
 }
 
-/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
-@media (min-width: 801px) {
-    html, body {
-        width: 100vw; height: 100vh;
-        max-width: 800px; max-height: 480px;
-        margin: auto; border: 2px solid #333;
-        border-radius: 8px; position: relative;
-        top: 50%; transform: translateY(-50%);
-    }
-}
-
-/* ── COUNT BUTTON ────────────────────────────────────────────────────────── */
-
-.count-btn {
-    padding: 6px 10px; border-radius: 6px; border: 1px solid var(--ph-gold-dim);
-    background: rgba(252, 209, 22, 0.1); color: var(--ph-gold);
-    font-size: 0.75rem; font-weight: 600; cursor: pointer;
-}
-.count-btn:active { background: rgba(252, 209, 22, 0.25); }
-
-/* ── COUNTING MODAL ──────────────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════════
+   COUNTING MODAL
+   ══════════════════════════════════════════════════════════════════════════ */
 
 .count-modal {
     position: fixed; inset: 0;
@@ -597,6 +684,7 @@ html, body {
     font-size: 0.8rem;
     color: var(--text-dim);
     margin-bottom: 14px;
+    white-space: pre-line;
 }
 
 .count-stop-btn {
@@ -624,3 +712,14 @@ html, body {
 }
 .count-ok-btn:active { background: rgba(0, 200, 83, 0.3); }
 .count-ok-btn.hidden { display: none; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+@media (min-width: 801px) {
+    html, body {
+        width: 100vw; height: 100vh;
+        max-width: 800px; max-height: 480px;
+        margin: auto; border: 2px solid #333;
+        border-radius: 8px; position: relative;
+        top: 50%; transform: translateY(-50%);
+    }
+}

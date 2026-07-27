@@ -57,143 +57,101 @@
             </div>
         </div>
 
-        <!-- TAB: Stock Management -->
+        <!-- TAB: Stock Management — 4 Hopper Frames -->
         <div id="tab-stock" class="tab-content active">
-            <div id="stock-alert-banner" class="stock-alert-banner hidden">
-                ⚠️ Some hoppers are below refill threshold
-            </div>
-            <div class="stock-grid">
-                <div class="stock-card" id="scard-1">
-                    <div class="scard-warning hidden" id="swarn-1">⚠️ LOW</div>
-                    <div class="scard-denom">₱1</div>
-                    <div class="scard-bar">
-                        <div class="scard-fill" id="sfill-1"></div>
+            <div class="hopper-grid">
+                <div class="hopper-frame" id="hopper-1" data-status="ok">
+                    <div class="hopper-header">
+                        <div class="hopper-denom">₱1</div>
+                        <div class="hopper-badge" id="badge-1">OK</div>
                     </div>
-                    <div class="scard-info">
-                        <span id="scount-1">0</span> / <span id="smax-1">2000</span>
+                    <div class="hopper-tank">
+                        <div class="tank-container">
+                            <div class="tank-fill" id="tank-fill-1"></div>
+                            <div class="tank-level-text" id="tank-level-1">0%</div>
+                        </div>
                     </div>
-                    <div class="scard-actions">
+                    <div class="hopper-stats">
+                        <div class="hopper-count"><span id="scount-1">0</span> / <span id="smax-1">2,000</span></div>
+                        <div class="hopper-value" id="svalue-1">₱0</div>
+                    </div>
+                    <div class="hopper-actions">
                         <button class="refill-btn" onclick="refillDenom(1)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(1)">Set</button>
-                        <button class="count-btn" onclick="startCount(1)">🔢</button>
+                        <button class="count-btn" onclick="startCount(1)">🔢 Count</button>
                     </div>
                 </div>
 
-                <div class="stock-card" id="scard-5">
-                    <div class="scard-warning hidden" id="swarn-5">⚠️ LOW</div>
-                    <div class="scard-denom">₱5</div>
-                    <div class="scard-bar">
-                        <div class="scard-fill" id="sfill-5"></div>
+                <div class="hopper-frame" id="hopper-5" data-status="ok">
+                    <div class="hopper-header">
+                        <div class="hopper-denom">₱5</div>
+                        <div class="hopper-badge" id="badge-5">OK</div>
                     </div>
-                    <div class="scard-info">
-                        <span id="scount-5">0</span> / <span id="smax-5">2000</span>
+                    <div class="hopper-tank">
+                        <div class="tank-container">
+                            <div class="tank-fill" id="tank-fill-5"></div>
+                            <div class="tank-level-text" id="tank-level-5">0%</div>
+                        </div>
                     </div>
-                    <div class="scard-actions">
+                    <div class="hopper-stats">
+                        <div class="hopper-count"><span id="scount-5">0</span> / <span id="smax-5">2,000</span></div>
+                        <div class="hopper-value" id="svalue-5">₱0</div>
+                    </div>
+                    <div class="hopper-actions">
                         <button class="refill-btn" onclick="refillDenom(5)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(5)">Set</button>
-                        <button class="count-btn" onclick="startCount(5)">🔢</button>
+                        <button class="count-btn" onclick="startCount(5)">🔢 Count</button>
                     </div>
                 </div>
 
-                <div class="stock-card" id="scard-10">
-                    <div class="scard-warning hidden" id="swarn-10">⚠️ LOW</div>
-                    <div class="scard-denom">₱10</div>
-                    <div class="scard-bar">
-                        <div class="scard-fill" id="sfill-10"></div>
+                <div class="hopper-frame" id="hopper-10" data-status="ok">
+                    <div class="hopper-header">
+                        <div class="hopper-denom">₱10</div>
+                        <div class="hopper-badge" id="badge-10">OK</div>
                     </div>
-                    <div class="scard-info">
-                        <span id="scount-10">0</span> / <span id="smax-10">2000</span>
+                    <div class="hopper-tank">
+                        <div class="tank-container">
+                            <div class="tank-fill" id="tank-fill-10"></div>
+                            <div class="tank-level-text" id="tank-level-10">0%</div>
+                        </div>
                     </div>
-                    <div class="scard-actions">
+                    <div class="hopper-stats">
+                        <div class="hopper-count"><span id="scount-10">0</span> / <span id="smax-10">2,000</span></div>
+                        <div class="hopper-value" id="svalue-10">₱0</div>
+                    </div>
+                    <div class="hopper-actions">
                         <button class="refill-btn" onclick="refillDenom(10)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(10)">Set</button>
-                        <button class="count-btn" onclick="startCount(10)">🔢</button>
+                        <button class="count-btn" onclick="startCount(10)">🔢 Count</button>
                     </div>
                 </div>
 
-                <div class="stock-card" id="scard-20">
-                    <div class="scard-warning hidden" id="swarn-20">⚠️ LOW</div>
-                    <div class="scard-denom">₱20</div>
-                    <div class="scard-bar">
-                        <div class="scard-fill" id="sfill-20"></div>
+                <div class="hopper-frame" id="hopper-20" data-status="ok">
+                    <div class="hopper-header">
+                        <div class="hopper-denom">₱20</div>
+                        <div class="hopper-badge" id="badge-20">OK</div>
                     </div>
-                    <div class="scard-info">
-                        <span id="scount-20">0</span> / <span id="smax-20">2000</span>
+                    <div class="hopper-tank">
+                        <div class="tank-container">
+                            <div class="tank-fill" id="tank-fill-20"></div>
+                            <div class="tank-level-text" id="tank-level-20">0%</div>
+                        </div>
                     </div>
-                    <div class="scard-actions">
+                    <div class="hopper-stats">
+                        <div class="hopper-count"><span id="scount-20">0</span> / <span id="smax-20">2,000</span></div>
+                        <div class="hopper-value" id="svalue-20">₱0</div>
+                    </div>
+                    <div class="hopper-actions">
                         <button class="refill-btn" onclick="refillDenom(20)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(20)">Set</button>
-                        <button class="count-btn" onclick="startCount(20)">🔢</button>
+                        <button class="count-btn" onclick="startCount(20)">🔢 Count</button>
                     </div>
                 </div>
             </div>
-            <button class="refill-all-btn" onclick="refillAll()">Refill All Hoppers</button>
-
-            <!-- Weight-Based Counting -->
-            <div class="counting-section">
-                <h3>⚖️ Count by Weight</h3>
-                <p class="counting-desc">Enter total weight in grams — auto-calculates coin count</p>
-                <div class="counting-grid">
-                    <div class="counting-item">
-                        <label>₱1 <span class="weight-per">(5.4g/coin)</span></label>
-                        <input type="number" id="weight-1" placeholder="grams" min="0" step="0.1" oninput="calcWeight(1)">
-                        <span class="calc-result" id="wcalc-1">—</span>
-                        <button class="apply-btn" onclick="applyWeight(1)">Apply</button>
-                    </div>
-                    <div class="counting-item">
-                        <label>₱5 <span class="weight-per">(7.7g/coin)</span></label>
-                        <input type="number" id="weight-5" placeholder="grams" min="0" step="0.1" oninput="calcWeight(5)">
-                        <span class="calc-result" id="wcalc-5">—</span>
-                        <button class="apply-btn" onclick="applyWeight(5)">Apply</button>
-                    </div>
-                    <div class="counting-item">
-                        <label>₱10 <span class="weight-per">(6.1g/coin)</span></label>
-                        <input type="number" id="weight-10" placeholder="grams" min="0" step="0.1" oninput="calcWeight(10)">
-                        <span class="calc-result" id="wcalc-10">—</span>
-                        <button class="apply-btn" onclick="applyWeight(10)">Apply</button>
-                    </div>
-                    <div class="counting-item">
-                        <label>₱20 <span class="weight-per">(7.4g/coin)</span></label>
-                        <input type="number" id="weight-20" placeholder="grams" min="0" step="0.1" oninput="calcWeight(20)">
-                        <span class="calc-result" id="wcalc-20">—</span>
-                        <button class="apply-btn" onclick="applyWeight(20)">Apply</button>
-                    </div>
-                </div>
+            <div class="hopper-footer">
+                <button class="refill-all-btn" onclick="refillAll()">Refill All Hoppers</button>
+                <div class="machine-status" id="machine-status"></div>
             </div>
-
-            <!-- Roll-Based Counting -->
-            <div class="counting-section">
-                <h3>🪙 Count by Rolls</h3>
-                <p class="counting-desc">Enter number of rolls — auto-calculates coin count</p>
-                <div class="counting-grid">
-                    <div class="counting-item">
-                        <label>₱1 <span class="weight-per">(50 pcs/roll)</span></label>
-                        <input type="number" id="roll-1" placeholder="rolls" min="0" oninput="calcRoll(1)">
-                        <span class="calc-result" id="rcalc-1">—</span>
-                        <button class="apply-btn" onclick="applyRoll(1)">Apply</button>
-                    </div>
-                    <div class="counting-item">
-                        <label>₱5 <span class="weight-per">(40 pcs/roll)</span></label>
-                        <input type="number" id="roll-5" placeholder="rolls" min="0" oninput="calcRoll(5)">
-                        <span class="calc-result" id="rcalc-5">—</span>
-                        <button class="apply-btn" onclick="applyRoll(5)">Apply</button>
-                    </div>
-                    <div class="counting-item">
-                        <label>₱10 <span class="weight-per">(20 pcs/roll)</span></label>
-                        <input type="number" id="roll-10" placeholder="rolls" min="0" oninput="calcRoll(10)">
-                        <span class="calc-result" id="rcalc-10">—</span>
-                        <button class="apply-btn" onclick="applyRoll(10)">Apply</button>
-                    </div>
-                    <div class="counting-item">
-                        <label>₱20 <span class="weight-per">(20 pcs/roll)</span></label>
-                        <input type="number" id="roll-20" placeholder="rolls" min="0" oninput="calcRoll(20)">
-                        <span class="calc-result" id="rcalc-20">—</span>
-                        <button class="apply-btn" onclick="applyRoll(20)">Apply</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="machine-status" id="machine-status"></div>
         </div>
 
         <!-- TAB: Transaction History -->
@@ -211,7 +169,8 @@
                     </select>
                     <input type="date" id="export-start" class="export-date hidden">
                     <input type="date" id="export-end" class="export-date hidden">
-                    <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
+                    <button class="export-btn" onclick="exportCSV()">📥 CSV</button>
+                    <button class="export-btn print-btn" onclick="exportHTMLReport()">🖨️ Report</button>
                 </div>
             </div>
             <div class="history-table-wrap">
@@ -261,6 +220,12 @@
                 <h3>Breakdown by Denomination</h3>
                 <div class="breakdown-grid" id="breakdown-grid"></div>
             </div>
+            <div class="report-stock-counts" id="report-stock-counts">
+                <h3>📊 Recent Stock Counts</h3>
+                <div class="stock-counts-list" id="stock-counts-list">
+                    <p class="no-data">No stock counts recorded yet</p>
+                </div>
+            </div>
         </div>
 
         <!-- TAB: Settings -->
@@ -295,7 +260,7 @@
             </div>
             <div class="settings-section">
                 <h3>About</h3>
-                <p class="settings-info">CoinVerge v1.1</p>
+                <p class="settings-info">CoinVerge v1.2</p>
                 <p class="settings-info">Coin Exchange Kiosk System</p>
                 <p class="settings-info">Screen: 7" Touchscreen (800×480)</p>
             </div>

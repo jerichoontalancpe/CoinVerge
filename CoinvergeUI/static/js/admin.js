@@ -1,16 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    CoinVerge — Admin Panel Logic
+   v1.2 — Hopper frame design, improved exports
    ═══════════════════════════════════════════════════════════════════════════ */
 
 let pinBuffer = "";
 let currentPage = 1;
 let currentPeriod = "today";
-
-// Coin weight per piece (BSP standard, grams)
-const COIN_WEIGHTS = { 1: 5.4, 5: 7.7, 10: 6.1, 20: 7.4 };
-
-// Coins per roll (Philippine standard)
-const COINS_PER_ROLL = { 1: 50, 5: 40, 10: 20, 20: 20 };
 
 // ── PIN Login ───────────────────────────────────────────────────────────────
 
@@ -91,7 +86,9 @@ async function logout() {
     window.location = "/";
 }
 
-// ── Stock Tab ───────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// STOCK TAB — Hopper Frame Cards
+// ══════════════════════════════════════════════════════════════════════════════
 
 async function loadStock() {
     try {
@@ -99,48 +96,70 @@ async function loadStock() {
         if (!res.ok) return;
         const stock = await res.json();
 
-        const statusRes = await fetch("/api/status");
-        const statusData = statusRes.ok ? await statusRes.json() : {};
-        const lowStock = statusData.low_stock || [];
-
-        let anyLow = false;
-
         for (const [denom, info] of Object.entries(stock)) {
             const pct = info.max > 0 ? (info.current / info.max * 100) : 0;
-            const fill = document.getElementById(`sfill-${denom}`);
-            if (!fill) continue;
-            fill.style.width = `${pct}%`;
-            fill.className = "scard-fill" +
-                (pct < 10 ? " critical" : pct < 30 ? " low" : "");
+            const frame = document.getElementById(`hopper-${denom}`);
+            if (!frame) continue;
 
-            document.getElementById(`scount-${denom}`).textContent = info.current;
-            document.getElementById(`smax-${denom}`).textContent = info.max;
+            // Determine status
+            let status;
+            if (pct >= 95) status = "full";
+            else if (pct >= 30) status = "ok";
+            else if (pct >= 10) status = "low";
+            else if (pct > 0) status = "critical";
+            else status = "empty";
 
-            const warnEl = document.getElementById(`swarn-${denom}`);
-            const cardEl = document.getElementById(`scard-${denom}`);
-            if (warnEl && cardEl) {
-                const isLow = lowStock.includes(parseInt(denom));
-                warnEl.classList.toggle("hidden", !isLow);
-                cardEl.classList.toggle("stock-low", isLow);
-                if (isLow) anyLow = true;
+            frame.setAttribute("data-status", status);
+
+            // Update badge
+            const badge = document.getElementById(`badge-${denom}`);
+            if (badge) {
+                badge.textContent = status.toUpperCase();
+                badge.className = `hopper-badge ${status}`;
+            }
+
+            // Update tank fill
+            const tankFill = document.getElementById(`tank-fill-${denom}`);
+            if (tankFill) {
+                tankFill.style.height = `${pct}%`;
+            }
+
+            // Update tank level text
+            const tankLevel = document.getElementById(`tank-level-${denom}`);
+            if (tankLevel) {
+                tankLevel.textContent = `${Math.round(pct)}%`;
+            }
+
+            // Update count
+            document.getElementById(`scount-${denom}`).textContent = info.current.toLocaleString();
+            document.getElementById(`smax-${denom}`).textContent = info.max.toLocaleString();
+
+            // Update peso value
+            const valueEl = document.getElementById(`svalue-${denom}`);
+            if (valueEl) {
+                valueEl.textContent = `₱${(info.current * parseInt(denom)).toLocaleString()}`;
             }
         }
 
-        const alertBanner = document.getElementById("stock-alert-banner");
-        if (alertBanner) {
-            alertBanner.classList.toggle("hidden", !anyLow);
-        }
-
+        // Machine status
         const mRes = await fetch("/api/admin/machine");
         if (mRes.ok) {
             const machine = await mRes.json();
-            document.getElementById("machine-status").innerHTML =
-                `<strong>${machine.machine_name}</strong> | ` +
-                `ESP32: ${machine.esp32_connected ? "✅ Connected" : "❌ Disconnected"} | ` +
-                `Mode: ${machine.simulate_mode ? "Simulation" : "Hardware"}`;
+            const statusEl = document.getElementById("machine-status");
+            if (statusEl) {
+                statusEl.innerHTML =
+                    `<strong>${machine.machine_name}</strong> | ` +
+                    `ESP32: ${machine.esp32_connected ? "✅" : "❌"} | ` +
+                    `Mode: ${machine.simulate_mode ? "Sim" : "HW"}`;
+            }
         }
 
-        updateMaintenanceUI(statusData.maintenance_mode || false);
+        // Load maintenance status
+        const statusRes = await fetch("/api/status");
+        if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            updateMaintenanceUI(statusData.maintenance_mode || false);
+        }
     } catch (e) { /* silent */ }
 }
 
@@ -163,7 +182,7 @@ async function refillAll() {
 }
 
 async function setStockManual(denom) {
-    const current = document.getElementById(`scount-${denom}`).textContent;
+    const current = document.getElementById(`scount-${denom}`).textContent.replace(/,/g, '');
     const input = prompt(`Set ₱${denom} coin count (current: ${current}):`, current);
     if (input === null) return;
     const count = parseInt(input);
@@ -177,81 +196,9 @@ async function setStockManual(denom) {
     loadStock();
 }
 
-// ── Weight-Based Counting ───────────────────────────────────────────────────
-
-function calcWeight(denom) {
-    const input = document.getElementById(`weight-${denom}`);
-    const result = document.getElementById(`wcalc-${denom}`);
-    const grams = parseFloat(input.value);
-    if (isNaN(grams) || grams <= 0) {
-        result.textContent = "—";
-        return;
-    }
-    const weight = COIN_WEIGHTS[denom];
-    const coins = Math.floor(grams / weight);
-    result.textContent = `${grams}g ÷ ${weight}g = ${coins} coins`;
-}
-
-async function applyWeight(denom) {
-    const input = document.getElementById(`weight-${denom}`);
-    const grams = parseFloat(input.value);
-    if (isNaN(grams) || grams <= 0) {
-        alert("Enter a valid weight in grams");
-        return;
-    }
-    const weight = COIN_WEIGHTS[denom];
-    const coins = Math.floor(grams / weight);
-
-    if (!confirm(`Set ₱${denom} stock to ${coins} coins (from ${grams}g)?`)) return;
-
-    await fetch("/api/admin/set_stock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ denomination: denom, count: coins }),
-    });
-    input.value = "";
-    document.getElementById(`wcalc-${denom}`).textContent = "—";
-    loadStock();
-}
-
-// ── Roll-Based Counting ─────────────────────────────────────────────────────
-
-function calcRoll(denom) {
-    const input = document.getElementById(`roll-${denom}`);
-    const result = document.getElementById(`rcalc-${denom}`);
-    const rolls = parseInt(input.value);
-    if (isNaN(rolls) || rolls <= 0) {
-        result.textContent = "—";
-        return;
-    }
-    const perRoll = COINS_PER_ROLL[denom];
-    const coins = rolls * perRoll;
-    result.textContent = `${rolls} rolls × ${perRoll} pcs = ${coins} coins`;
-}
-
-async function applyRoll(denom) {
-    const input = document.getElementById(`roll-${denom}`);
-    const rolls = parseInt(input.value);
-    if (isNaN(rolls) || rolls <= 0) {
-        alert("Enter a valid number of rolls");
-        return;
-    }
-    const perRoll = COINS_PER_ROLL[denom];
-    const coins = rolls * perRoll;
-
-    if (!confirm(`Set ₱${denom} stock to ${coins} coins (${rolls} rolls × ${perRoll})?`)) return;
-
-    await fetch("/api/admin/set_stock", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ denomination: denom, count: coins }),
-    });
-    input.value = "";
-    document.getElementById(`rcalc-${denom}`).textContent = "—";
-    loadStock();
-}
-
-// ── History Tab ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// HISTORY TAB
+// ══════════════════════════════════════════════════════════════════════════════
 
 async function loadHistory() {
     try {
@@ -299,7 +246,9 @@ function formatDate(ts) {
         " " + d.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" });
 }
 
-// ── CSV Export with Date Range ──────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// CSV & HTML REPORT EXPORT
+// ══════════════════════════════════════════════════════════════════════════════
 
 // Show/hide custom date inputs
 document.addEventListener("DOMContentLoaded", () => {
@@ -313,21 +262,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-async function exportCSV() {
+function getExportUrl(base) {
     const preset = document.getElementById("export-preset").value;
-    let url = "/api/admin/export_csv?";
+    let url = base + "?";
 
     if (preset === "custom") {
         const start = document.getElementById("export-start").value;
         const end = document.getElementById("export-end").value;
         if (!start || !end) {
             alert("Please select both start and end dates");
-            return;
+            return null;
         }
         url += `start_date=${start}&end_date=${end}`;
     } else {
         url += `preset=${preset}`;
     }
+    return url;
+}
+
+async function exportCSV() {
+    const url = getExportUrl("/api/admin/export_csv");
+    if (!url) return;
 
     try {
         const res = await fetch(url);
@@ -342,7 +297,15 @@ async function exportCSV() {
     } catch (e) { alert("Export error: " + e.message); }
 }
 
-// ── Reports Tab ─────────────────────────────────────────────────────────────
+function exportHTMLReport() {
+    const url = getExportUrl("/api/admin/export_html");
+    if (!url) return;
+    window.open(url, "_blank");
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// REPORTS TAB
+// ══════════════════════════════════════════════════════════════════════════════
 
 async function loadReport(period) {
     currentPeriod = period;
@@ -373,9 +336,40 @@ async function loadReport(period) {
             `;
         }
     } catch (e) { /* silent */ }
+
+    // Load stock counts
+    loadStockCounts();
 }
 
-// ── Fee Configuration ───────────────────────────────────────────────────────
+async function loadStockCounts() {
+    try {
+        const res = await fetch("/api/admin/stock_counts?limit=10");
+        if (!res.ok) return;
+        const counts = await res.json();
+
+        const container = document.getElementById("stock-counts-list");
+        if (counts.length === 0) {
+            container.innerHTML = '<p class="no-data">No stock counts recorded yet</p>';
+            return;
+        }
+
+        let html = "";
+        for (const sc of counts) {
+            html += `
+                <div class="stock-count-entry">
+                    <span class="sc-time">${formatDate(sc.timestamp)}</span>
+                    <span class="sc-denom">₱${sc.denomination}</span>
+                    <span class="sc-result">${sc.count_result.toLocaleString()} coins (₱${(sc.count_result * sc.denomination).toLocaleString()})</span>
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    } catch (e) { /* silent */ }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// FEE CONFIGURATION
+// ══════════════════════════════════════════════════════════════════════════════
 
 async function loadFeeTiers() {
     try {
@@ -408,11 +402,9 @@ async function loadFeeTiers() {
 
 function addFeeRow() {
     const container = document.getElementById("fee-tiers-container");
-    // Count existing rows
     const rows = container.querySelectorAll(".fee-tier-row");
     const i = rows.length;
 
-    // Remove the add button and re-add it after the new row
     const addBtn = container.querySelector(".fee-add-btn");
     if (addBtn) addBtn.remove();
 
@@ -483,7 +475,9 @@ async function saveFeeTiers() {
     }
 }
 
-// ── Settings Tab ────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// SETTINGS TAB
+// ══════════════════════════════════════════════════════════════════════════════
 
 async function changePin() {
     const newPin = prompt("Enter new 4-digit PIN:");
@@ -557,7 +551,7 @@ async function syncStock() {
     const denoms = [1, 5, 10, 20];
     for (const d of denoms) {
         const currentEl = document.getElementById(`scount-${d}`);
-        const current = currentEl ? currentEl.textContent : "0";
+        const current = currentEl ? currentEl.textContent.replace(/,/g, '') : "0";
         const input = prompt(`Physical count for ₱${d} coins (current in system: ${current}):`, current);
         if (input === null) return;
         const count = parseInt(input);
@@ -604,13 +598,14 @@ async function testBill(amount) {
     } catch (e) { alert("Error: " + e.message); }
 }
 
-// ── Coin Counting (Hopper Self-Count) ───────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// COIN COUNTING (Hopper Self-Count)
+// ══════════════════════════════════════════════════════════════════════════════
 
 let countPollingInterval = null;
 let countingDenom = 0;
 
 async function startCount(denom) {
-    // Show confirmation dialog
     const confirmed = confirm(
         `⚠️ Place a container below the ₱${denom} hopper.\n\n` +
         `All coins will be dispensed and counted.\n` +
@@ -634,10 +629,7 @@ async function startCount(denom) {
             return;
         }
 
-        // Show counting modal
         showCountModal(denom);
-
-        // Start polling for status
         countPollingInterval = setInterval(pollCountStatus, 500);
     } catch (e) {
         alert("Connection error: " + e.message);
@@ -671,7 +663,6 @@ async function pollCountStatus() {
         value.textContent = `₱${(state.count * state.denomination).toLocaleString()}`;
 
         if (!state.active) {
-            // Counting finished
             clearInterval(countPollingInterval);
             countPollingInterval = null;
             showCountComplete(state.denomination, state.count);
@@ -701,13 +692,11 @@ async function stopCount() {
         });
     } catch (e) { /* silent */ }
 
-    // Stop polling and close
     if (countPollingInterval) {
         clearInterval(countPollingInterval);
         countPollingInterval = null;
     }
 
-    // Wait a moment then show stopped state
     setTimeout(async () => {
         try {
             const res = await fetch("/api/admin/count_status");
@@ -731,5 +720,5 @@ async function stopCount() {
 function closeCountModal() {
     document.getElementById("count-modal").classList.add("hidden");
     document.getElementById("count-modal-icon").textContent = "🔢";
-    loadStock();  // Refresh stock display
+    loadStock();
 }
