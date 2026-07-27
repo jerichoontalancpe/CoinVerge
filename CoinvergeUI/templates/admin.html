@@ -76,7 +76,6 @@
                         <div class="hopper-value" id="svalue-1">₱0</div>
                     </div>
                     <div class="hopper-actions">
-                        <button class="refill-btn" onclick="refillDenom(1)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(1)">Set</button>
                         <button class="count-btn" onclick="startCount(1)">🔢 Count</button>
                     </div>
@@ -98,7 +97,6 @@
                         <div class="hopper-value" id="svalue-5">₱0</div>
                     </div>
                     <div class="hopper-actions">
-                        <button class="refill-btn" onclick="refillDenom(5)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(5)">Set</button>
                         <button class="count-btn" onclick="startCount(5)">🔢 Count</button>
                     </div>
@@ -120,7 +118,6 @@
                         <div class="hopper-value" id="svalue-10">₱0</div>
                     </div>
                     <div class="hopper-actions">
-                        <button class="refill-btn" onclick="refillDenom(10)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(10)">Set</button>
                         <button class="count-btn" onclick="startCount(10)">🔢 Count</button>
                     </div>
@@ -142,14 +139,12 @@
                         <div class="hopper-value" id="svalue-20">₱0</div>
                     </div>
                     <div class="hopper-actions">
-                        <button class="refill-btn" onclick="refillDenom(20)">Refill</button>
                         <button class="set-btn" onclick="setStockManual(20)">Set</button>
                         <button class="count-btn" onclick="startCount(20)">🔢 Count</button>
                     </div>
                 </div>
             </div>
             <div class="hopper-footer">
-                <button class="refill-all-btn" onclick="refillAll()">Refill All Hoppers</button>
                 <div class="machine-status" id="machine-status"></div>
             </div>
         </div>
@@ -272,7 +267,7 @@
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <div id="count-modal" class="count-modal hidden">
         <div class="count-modal-content">
-            <div class="count-modal-icon">🔢</div>
+            <div class="count-modal-icon" id="count-modal-icon">🔢</div>
             <div class="count-modal-title" id="count-modal-title">Counting ₱10 coins...</div>
             <div class="count-modal-counter" id="count-modal-counter">0</div>
             <div class="count-modal-value" id="count-modal-value">₱0</div>

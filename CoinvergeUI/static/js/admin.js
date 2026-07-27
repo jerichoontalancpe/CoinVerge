@@ -163,23 +163,6 @@ async function loadStock() {
     } catch (e) { /* silent */ }
 }
 
-async function refillDenom(denom) {
-    await fetch("/api/admin/refill", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ denomination: String(denom) }),
-    });
-    loadStock();
-}
-
-async function refillAll() {
-    await fetch("/api/admin/refill", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ denomination: "all" }),
-    });
-    loadStock();
-}
 
 async function setStockManual(denom) {
     const current = document.getElementById(`scount-${denom}`).textContent.replace(/,/g, '');
@@ -670,6 +653,8 @@ async function pollCountStatus() {
     } catch (e) { /* silent */ }
 }
 
+let countAutoCloseTimer = null;
+
 function showCountComplete(denom, total) {
     const totalValue = total * denom;
     document.getElementById("count-modal-icon").textContent = "✅";
@@ -677,11 +662,19 @@ function showCountComplete(denom, total) {
     document.getElementById("count-modal-counter").textContent = total.toLocaleString();
     document.getElementById("count-modal-value").textContent = `₱${totalValue.toLocaleString()}`;
     document.getElementById("count-modal-status").textContent =
-        `Put coins back into the ₱${denom} hopper and press OK.\nStock has been updated automatically.`;
+        `Put coins back into the ₱${denom} hopper and press Done.\nStock has been updated automatically.`;
     document.getElementById("count-modal-bar").className = "count-modal-bar done";
     document.getElementById("count-modal-bar").style.width = "100%";
     document.getElementById("count-stop-btn").classList.add("hidden");
-    document.getElementById("count-ok-btn").classList.remove("hidden");
+
+    const okBtn = document.getElementById("count-ok-btn");
+    okBtn.textContent = "Done";
+    okBtn.classList.remove("hidden");
+
+    // Auto-close after 3 seconds
+    countAutoCloseTimer = setTimeout(() => {
+        closeCountModal();
+    }, 3000);
 }
 
 async function stopCount() {
@@ -718,7 +711,13 @@ async function stopCount() {
 }
 
 function closeCountModal() {
+    // Clear auto-close timer if user clicks Done manually
+    if (countAutoCloseTimer) {
+        clearTimeout(countAutoCloseTimer);
+        countAutoCloseTimer = null;
+    }
     document.getElementById("count-modal").classList.add("hidden");
     document.getElementById("count-modal-icon").textContent = "🔢";
+    document.getElementById("count-ok-btn").textContent = "OK";
     loadStock();
 }
