@@ -269,6 +269,15 @@
                 <button class="settings-btn" onclick="syncStock()">🔄 Sync Stock (Manual Count)</button>
             </div>
             <div class="settings-section">
+                <h3>🧪 Test Mode (Simulation)</h3>
+                <p class="settings-info">Simulate bill insertion for testing without hardware</p>
+                <div class="test-bill-btns">
+                    <button class="settings-btn" onclick="testBill(20)">Insert ₱20</button>
+                    <button class="settings-btn" onclick="testBill(50)">Insert ₱50</button>
+                    <button class="settings-btn" onclick="testBill(100)">Insert ₱100</button>
+                </div>
+            </div>
+            <div class="settings-section">
                 <h3>💰 Fee Configuration</h3>
                 <p class="settings-info">Set transaction fee tiers based on bill amount</p>
                 <div id="fee-tiers-container" class="fee-tiers-container">

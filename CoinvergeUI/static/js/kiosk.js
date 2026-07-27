@@ -44,10 +44,6 @@ async function fetchStatus() {
             state.stock[parseInt(k)] = v;
         }
 
-        if (state.simulate) {
-            document.getElementById("sim-controls").classList.remove("hidden");
-        }
-
         // Show unavailable screen if no stock or maintenance mode
         if (!data.any_stock || data.maintenance_mode) {
             showUnavailable(data.maintenance_mode, !data.any_stock);

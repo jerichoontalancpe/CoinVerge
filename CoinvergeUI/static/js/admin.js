@@ -585,3 +585,21 @@ async function syncStock() {
         alert("Connection error");
     }
 }
+
+// ── Test Bill (Simulation) ──────────────────────────────────────────────────
+
+async function testBill(amount) {
+    try {
+        const res = await fetch("/api/simulate_bill", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`✅ Simulated ₱${amount} bill inserted. Check kiosk screen.`);
+        } else {
+            alert(`❌ ${data.error}`);
+        }
+    } catch (e) { alert("Error: " + e.message); }
+}
