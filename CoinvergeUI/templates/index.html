@@ -13,22 +13,42 @@
             <div class="idle-brand">
                 <img src="/static/img/logo.png" alt="CoinVerge" class="brand-logo">
             </div>
+            <div class="step-guide">
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Insert Money</span>
+                </div>
+                <span class="step-arrow"></span>
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Choose Coins</span>
+                </div>
+                <span class="step-arrow"></span>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Collect</span>
+                </div>
+            </div>
             <div class="idle-cta">
                 <div class="cta-arrow"></div>
                 <p class="cta-text">Insert bill or coins below</p>
+                <p class="cta-sub">Maglagay ng pera sa ibaba</p>
                 <div class="accepted-bills">
-                    <span class="bill-chip">P20</span>
-                    <span class="bill-chip">P50</span>
-                    <span class="bill-chip">P100</span>
+                    <span class="bill-chip">&#8369;20</span>
+                    <span class="bill-chip">&#8369;50</span>
+                    <span class="bill-chip">&#8369;100</span>
                 </div>
                 <div class="accepted-coins">
-                    <span class="coin-chip">P1</span>
-                    <span class="coin-chip">P5</span>
-                    <span class="coin-chip">P10</span>
-                    <span class="coin-chip">P20</span>
+                    <span class="coin-chip">&#8369;1</span>
+                    <span class="coin-chip">&#8369;5</span>
+                    <span class="coin-chip">&#8369;10</span>
+                    <span class="coin-chip">&#8369;20</span>
                 </div>
                 <div class="epay-section">
-                    <button class="epay-btn" onclick="showEpay()">E-Payment</button>
+                    <button class="epay-btn" onclick="showEpay()">
+                        <span class="epay-btn-main">Pay with GCash / Maya</span>
+                        <span class="epay-btn-sub">Scan QR code from your phone</span>
+                    </button>
                 </div>
             </div>
             <div id="low-stock-banner" class="low-stock-banner hidden">
@@ -51,29 +71,31 @@
     <!-- SCREEN: FEE NOTIFICATION -->
     <div id="screen-fee" class="screen">
         <div class="fee-container">
-            <div class="fee-icon">P</div>
+            <div class="fee-icon">&#8369;</div>
+            <div class="fee-badge-area" id="fee-badge-area"></div>
             <div class="fee-message-fil" id="fee-message-fil">
-                May service charge na <span class="fee-highlight" id="fee-amount-fil">P0</span> ang makinang ito.
+                May service charge na <span class="fee-highlight" id="fee-amount-fil">&#8369;0</span> ang makinang ito.
             </div>
             <div class="fee-message-en" id="fee-message-en">
-                This machine will charge you <span class="fee-highlight" id="fee-amount-en">P0</span> as a service fee.
+                This machine will charge you <span class="fee-highlight" id="fee-amount-en">&#8369;0</span> as a service fee.
             </div>
             <div class="fee-breakdown">
                 <div class="fee-breakdown-row">
                     <span class="fee-label">Inserted:</span>
-                    <span class="fee-value" id="fee-inserted">P0</span>
+                    <span class="fee-value" id="fee-inserted">&#8369;0</span>
                 </div>
                 <div class="fee-breakdown-row">
                     <span class="fee-label">Fee:</span>
-                    <span class="fee-value fee-deduct" id="fee-charge">-P0</span>
+                    <span class="fee-value fee-deduct" id="fee-charge">-&#8369;0</span>
                 </div>
                 <div class="fee-breakdown-divider"></div>
                 <div class="fee-breakdown-row total">
                     <span class="fee-label">You receive:</span>
-                    <span class="fee-value fee-receive" id="fee-receive">P0</span>
+                    <span class="fee-value fee-receive" id="fee-receive">&#8369;0</span>
                 </div>
             </div>
-            <button class="fee-proceed-btn" onclick="proceedFromFee()">Proceed — Pumili ng barya</button>
+            <button class="fee-proceed-btn" onclick="proceedFromFee()">Proceed — Choose your coins</button>
+            <p class="fee-proceed-sub">Pumili ng barya</p>
             <button class="fee-cancel-btn" onclick="cancelTransaction()">Cancel</button>
         </div>
     </div>
@@ -81,8 +103,9 @@
     <!-- SCREEN: E-PAYMENT -->
     <div id="screen-epay" class="screen">
         <div id="epay-step-qr" class="epay-container">
-            <h2 class="epay-title">E-Payment</h2>
+            <h2 class="epay-title">Pay with GCash / Maya</h2>
             <p class="epay-subtitle">Open GCash or Maya on your phone and scan the QR code below</p>
+            <p class="epay-subtitle-fil">I-scan ang QR code gamit ang iyong phone</p>
             <div class="epay-qr-box">
                 <div class="epay-qr-placeholder">
                     <svg viewBox="0 0 29 29" class="qr-svg" shape-rendering="crispEdges">
@@ -179,21 +202,49 @@
         <div class="picker-top">
             <div class="picker-balance">
                 <span class="bal-label">Inserted:</span>
-                <span id="bal-amount" class="bal-value">P100</span>
+                <span id="bal-amount" class="bal-value">&#8369;100</span>
             </div>
             <div class="picker-fee-info">
-                <span class="fee-info-label">Fee: <span id="picker-fee-amount">P0</span></span>
+                <span class="fee-info-label">Fee: <span id="picker-fee-amount">&#8369;0</span></span>
             </div>
             <div class="picker-remaining">
                 <span class="rem-label">Remaining:</span>
-                <span id="rem-amount" class="rem-value zero">P0</span>
+                <span id="rem-amount" class="rem-value zero">&#8369;0</span>
             </div>
+        </div>
+
+        <div class="picker-section-title">
+            <span class="picker-section-main">Quick Exchange</span>
+            <span class="picker-section-sub">Pumili ng isa — one tap lang</span>
+        </div>
+
+        <div class="quick-exchange-grid">
+            <button class="quick-card" onclick="quickSelect(1)">
+                <span class="quick-card-denom">All &#8369;1 coins</span>
+                <span class="quick-card-count" id="quick-count-1"></span>
+            </button>
+            <button class="quick-card" onclick="quickSelect(5)">
+                <span class="quick-card-denom">All &#8369;5 coins</span>
+                <span class="quick-card-count" id="quick-count-5"></span>
+            </button>
+            <button class="quick-card" onclick="quickSelect(10)">
+                <span class="quick-card-denom">All &#8369;10 coins</span>
+                <span class="quick-card-count" id="quick-count-10"></span>
+            </button>
+            <button class="quick-card" onclick="quickSelect(20)">
+                <span class="quick-card-denom">All &#8369;20 coins</span>
+                <span class="quick-card-count" id="quick-count-20"></span>
+            </button>
+        </div>
+
+        <div class="picker-section-title customize-title">
+            <span class="picker-section-main">Or customize:</span>
         </div>
 
         <div class="picker-grid">
             <div class="coin-card" data-denom="1" id="card-1">
                 <div class="card-header">
-                    <span class="card-denom">P1</span>
+                    <span class="card-denom">&#8369;1</span>
                     <span class="card-stock" id="stock-1">200 pcs</span>
                 </div>
                 <div class="card-controls">
@@ -201,12 +252,12 @@
                     <span class="ctrl-count" id="count-1">0</span>
                     <button class="ctrl-btn plus" onclick="adjust(1,1)">+</button>
                 </div>
-                <div class="card-sub" id="sub-1">P0</div>
+                <div class="card-sub" id="sub-1">&#8369;0</div>
             </div>
 
             <div class="coin-card" data-denom="5" id="card-5">
                 <div class="card-header">
-                    <span class="card-denom">P5</span>
+                    <span class="card-denom">&#8369;5</span>
                     <span class="card-stock" id="stock-5">200 pcs</span>
                 </div>
                 <div class="card-controls">
@@ -214,12 +265,12 @@
                     <span class="ctrl-count" id="count-5">0</span>
                     <button class="ctrl-btn plus" onclick="adjust(5,1)">+</button>
                 </div>
-                <div class="card-sub" id="sub-5">P0</div>
+                <div class="card-sub" id="sub-5">&#8369;0</div>
             </div>
 
             <div class="coin-card" data-denom="10" id="card-10">
                 <div class="card-header">
-                    <span class="card-denom">P10</span>
+                    <span class="card-denom">&#8369;10</span>
                     <span class="card-stock" id="stock-10">200 pcs</span>
                 </div>
                 <div class="card-controls">
@@ -227,12 +278,12 @@
                     <span class="ctrl-count" id="count-10">0</span>
                     <button class="ctrl-btn plus" onclick="adjust(10,1)">+</button>
                 </div>
-                <div class="card-sub" id="sub-10">P0</div>
+                <div class="card-sub" id="sub-10">&#8369;0</div>
             </div>
 
             <div class="coin-card" data-denom="20" id="card-20">
                 <div class="card-header">
-                    <span class="card-denom">P20</span>
+                    <span class="card-denom">&#8369;20</span>
                     <span class="card-stock" id="stock-20">200 pcs</span>
                 </div>
                 <div class="card-controls">
@@ -240,16 +291,12 @@
                     <span class="ctrl-count" id="count-20">0</span>
                     <button class="ctrl-btn plus" onclick="adjust(20,1)">+</button>
                 </div>
-                <div class="card-sub" id="sub-20">P0</div>
+                <div class="card-sub" id="sub-20">&#8369;0</div>
             </div>
         </div>
 
         <div class="picker-actions">
-            <button class="action-btn quick" onclick="quickSelect(1)">All P1</button>
-            <button class="action-btn quick" onclick="quickSelect(5)">All P5</button>
-            <button class="action-btn quick" onclick="quickSelect(10)">All P10</button>
-            <button class="action-btn quick" onclick="quickSelect(20)">All P20</button>
-            <button class="action-btn confirm disabled" id="btn-confirm" onclick="confirmDispense()">Confirm</button>
+            <button class="action-btn confirm disabled" id="btn-confirm" onclick="confirmDispense()">Confirm Exchange</button>
         </div>
     </div>
 
@@ -261,8 +308,12 @@
                 <span class="disp-coin c2"></span>
                 <span class="disp-coin c3"></span>
             </div>
-            <h2>Nagbabayad ng barya...</h2>
-            <p>Dispensing your coins — please wait</p>
+            <h2 class="disp-title">Dispensing your coins...</h2>
+            <p class="disp-sub">Nagbabayad ng barya</p>
+            <p class="disp-detail" id="disp-detail"></p>
+            <div class="disp-progress" id="disp-progress">
+                <span class="disp-progress-text" id="disp-progress-text"></span>
+            </div>
         </div>
     </div>
 
@@ -270,12 +321,13 @@
     <div id="screen-done" class="screen">
         <div class="done-container">
             <div class="done-check"></div>
-            <h2>Tapos na!</h2>
-            <p>Kunin ang iyong barya sa ibaba</p>
-            <p class="done-english">Collect your coins below</p>
+            <h2>Transaction Complete</h2>
+            <p class="done-main-sub">Tapos na!</p>
+            <p class="done-collect">Collect your coins at the bottom</p>
+            <p class="done-collect-fil">Kunin ang iyong barya sa ibaba</p>
             <p class="done-summary" id="done-summary"></p>
             <div class="done-timer">
-                <span id="done-countdown">5</span>s
+                Returning to home in <span id="done-countdown">5</span>s
             </div>
         </div>
     </div>

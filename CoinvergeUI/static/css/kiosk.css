@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   CoinVerge — Kiosk UI Stylesheet (Redesigned)
+   CoinVerge — Kiosk UI Stylesheet (UX Overhaul)
    Philippine-themed | 7" touchscreen (800x480)
    Glass-morphism | Navy + Royal Blue + Gold + White
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -35,7 +35,7 @@ html, body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
     background: linear-gradient(160deg, var(--navy) 0%, var(--navy-mid) 100%);
     color: var(--text);
-    font-size: 14px;
+    font-size: 15px;
 }
 
 /* Circuit board pattern overlay */
@@ -70,35 +70,96 @@ body::before {
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     height: 100%; width: 100%;
-    padding: 2rem;
+    padding: 1.2rem 2rem;
     position: relative;
 }
 
 .idle-brand {
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.6rem;
     text-align: center;
 }
 
 .brand-logo {
-    width: 180px;
-    height: 180px;
-    max-height: 200px;
+    width: 120px;
+    height: 120px;
     object-fit: cover;
     border-radius: 50%;
     border: 3px solid rgba(252, 209, 22, 0.7);
     box-shadow: 0 0 20px rgba(252, 209, 22, 0.15), 0 8px 32px rgba(0, 0, 0, 0.4);
     background: rgba(255, 255, 255, 0.95);
-    padding: 8px;
+    padding: 6px;
+    animation: floatLogo 4s ease-in-out infinite;
 }
+
+@keyframes floatLogo {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* ── Step Guide ──────────────────────────────────────────────────────────── */
+
+.step-guide {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 0.8rem;
+    opacity: 0;
+    animation: fadeInGuide 0.8s ease forwards;
+    animation-delay: 2s;
+}
+
+@keyframes fadeInGuide {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.step-number {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(252, 209, 22, 0.15);
+    border: 1.5px solid var(--gold-dim);
+    color: var(--gold);
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.step-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+.step-arrow {
+    width: 20px;
+    height: 2px;
+    background: rgba(252, 209, 22, 0.3);
+    position: relative;
+}
+.step-arrow::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 5px solid rgba(252, 209, 22, 0.4);
+    border-top: 3px solid transparent;
+    border-bottom: 3px solid transparent;
+}
+
+/* ── Idle CTA ────────────────────────────────────────────────────────────── */
 
 .idle-cta {
     text-align: center;
-    animation: idlePulseGlow 3s ease-in-out infinite;
-}
-
-@keyframes idlePulseGlow {
-    0%, 100% { filter: drop-shadow(0 0 0px transparent); }
-    50% { filter: drop-shadow(0 0 12px rgba(252, 209, 22, 0.15)); }
 }
 
 .cta-arrow {
@@ -106,8 +167,6 @@ body::before {
     animation: bounce 1.2s ease-in-out infinite;
     display: inline-block;
 }
-
-/* CSS arrow icon replacing emoji */
 .cta-arrow::before {
     content: '';
     display: inline-block;
@@ -119,14 +178,28 @@ body::before {
 }
 
 .cta-text {
-    font-size: 1.3rem; font-weight: 500;
-    margin: 0.5rem 0;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0.3rem 0 0.1rem;
     letter-spacing: 0.2px;
+    animation: pulseText 3s ease-in-out infinite;
+}
+
+@keyframes pulseText {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.cta-sub {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-bottom: 0.6rem;
 }
 
 .accepted-bills {
     display: flex; gap: 0.6rem; justify-content: center;
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
 }
 
 .bill-chip {
@@ -136,7 +209,24 @@ body::before {
     border: 2px solid var(--gold-dim);
     padding: 0.4rem 1rem; border-radius: 20px;
     font-weight: 700; color: var(--gold);
-    font-size: 1rem;
+    font-size: 1.2rem;
+    animation: shimmerChip 3s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+.bill-chip::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -100%;
+    width: 200%; height: 200%;
+    background: linear-gradient(90deg, transparent 0%, rgba(252,209,22,0.1) 50%, transparent 100%);
+    animation: shimmerPass 4s ease-in-out infinite;
+}
+
+@keyframes shimmerPass {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
 .accepted-coins {
@@ -151,41 +241,53 @@ body::before {
     padding: 4px 12px;
     border-radius: 20px;
     font-weight: 700;
-    font-size: 0.85em;
+    font-size: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+.coin-chip::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -100%;
+    width: 200%; height: 200%;
+    background: linear-gradient(90deg, transparent 0%, rgba(252,209,22,0.08) 50%, transparent 100%);
+    animation: shimmerPass 5s ease-in-out infinite;
+    animation-delay: 1s;
 }
 
 .epay-section {
-    margin-top: 1rem;
+    margin-top: 0.8rem;
 }
 
 .epay-btn {
-    padding: 12px 28px;
+    padding: 10px 24px;
     border-radius: var(--radius);
     border: 1px solid var(--glass-border);
     background: var(--glass-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     color: var(--gold);
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 2px;
 }
 .epay-btn:active {
     transform: scale(0.95);
     background: rgba(255, 255, 255, 0.1);
 }
-/* Arrow icon for epay button */
-.epay-btn::after {
-    content: '';
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-right: 2px solid var(--gold);
-    border-top: 2px solid var(--gold);
-    transform: rotate(45deg);
+.epay-btn-main {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.epay-btn-sub {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-weight: 400;
 }
 
 .admin-trigger {
@@ -197,7 +299,7 @@ body::before {
 
 .low-stock-banner {
     position: absolute;
-    bottom: 50px;
+    bottom: 30px;
     left: 50%; transform: translateX(-50%);
     background: rgba(252, 209, 22, 0.1);
     backdrop-filter: blur(8px);
@@ -206,14 +308,13 @@ body::before {
     color: var(--gold);
     padding: 8px 18px;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
     animation: pulse 2s ease-in-out infinite;
     display: flex;
     align-items: center;
     gap: 8px;
 }
-/* CSS warning triangle icon */
 .low-stock-banner::before {
     content: '!';
     display: inline-flex;
@@ -247,8 +348,8 @@ body::before {
     font-weight: 800;
 }
 .empty-container h2 { font-size: 2rem; color: var(--danger); margin-bottom: 0.5rem; }
-.empty-container p { font-size: 1.1rem; color: var(--text-dim); }
-.empty-sub { margin-top: 1rem; font-size: 0.9rem; }
+.empty-container p { font-size: 1.2rem; color: var(--text-dim); }
+.empty-sub { margin-top: 1rem; font-size: 1rem; }
 
 /* ── FEE NOTIFICATION SCREEN ────────────────────────────────────────────── */
 
@@ -256,42 +357,60 @@ body::before {
     text-align: center;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    padding: 1.5rem 2rem;
-    max-width: 500px;
+    padding: 1.2rem 2rem;
+    max-width: 550px;
 }
 
 .fee-icon {
-    width: 60px; height: 60px;
+    width: 56px; height: 56px;
     border-radius: 50%;
     background: linear-gradient(135deg, rgba(252, 209, 22, 0.2), rgba(252, 209, 22, 0.05));
     border: 2px solid var(--gold-dim);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: 900;
     color: var(--gold);
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     animation: popIn 0.4s ease;
 }
 
+.fee-badge-area {
+    margin-bottom: 0.4rem;
+}
+
+.fee-badge {
+    display: inline-block;
+    background: rgba(0, 200, 83, 0.15);
+    border: 1.5px solid var(--success);
+    color: var(--success);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
 .fee-message-fil {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.3rem;
     line-height: 1.4;
 }
 
 .fee-message-en {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--text-dim);
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
     line-height: 1.4;
+    font-style: italic;
 }
 
 .fee-highlight {
     color: var(--gold);
     font-weight: 800;
-    font-size: 1.3em;
+    font-size: 1.2em;
 }
 
 .fee-free {
@@ -304,10 +423,10 @@ body::before {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: var(--radius);
-    padding: 16px 28px;
+    padding: 14px 24px;
     width: 100%;
-    max-width: 320px;
-    margin-bottom: 1.25rem;
+    max-width: 340px;
+    margin-bottom: 1rem;
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
 }
@@ -316,20 +435,20 @@ body::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
+    padding: 5px 0;
 }
 
 .fee-breakdown-row.total {
-    padding-top: 10px;
+    padding-top: 8px;
 }
 
 .fee-label {
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: var(--text-dim);
 }
 
 .fee-value {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--text);
 }
@@ -339,33 +458,43 @@ body::before {
 }
 
 .fee-receive {
-    color: var(--success);
-    font-size: 1.4rem;
-    font-weight: 800;
+    color: var(--gold);
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-shadow: 0 0 20px rgba(252, 209, 22, 0.3);
 }
 
 .fee-breakdown-divider {
     height: 1px;
     background: rgba(255, 255, 255, 0.1);
-    margin: 6px 0;
+    margin: 4px 0;
 }
 
 .fee-proceed-btn {
-    padding: 14px 36px;
+    padding: 16px 48px;
     border-radius: var(--radius);
     border: none;
     background: linear-gradient(135deg, var(--gold), #e6b800);
     color: var(--navy);
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 800;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.3rem;
     box-shadow: 0 4px 16px rgba(252, 209, 22, 0.3);
-    min-height: 48px;
+    min-height: 56px;
+    width: 100%;
+    max-width: 380px;
 }
 .fee-proceed-btn:active {
     transform: scale(0.95);
+}
+
+.fee-proceed-sub {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-bottom: 0.6rem;
 }
 
 .fee-cancel-btn {
@@ -374,7 +503,7 @@ body::before {
     border: 1px solid rgba(255, 61, 61, 0.4);
     background: transparent;
     color: var(--danger);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     min-height: 44px;
@@ -388,7 +517,7 @@ body::before {
 
 #screen-picker {
     flex-direction: column;
-    padding: 12px 16px;
+    padding: 8px 14px;
     justify-content: space-between;
 }
 
@@ -403,7 +532,7 @@ body::before {
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
-    padding: 8px 14px;
+    padding: 6px 12px;
 }
 .picker-fee-info {
     background: var(--glass-bg);
@@ -411,23 +540,93 @@ body::before {
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
-    padding: 8px 12px;
+    padding: 6px 10px;
 }
 .fee-info-label {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: var(--gold);
     font-weight: 600;
 }
 .bal-label, .rem-label { font-size: 0.75rem; color: var(--text-dim); }
-.bal-value { font-size: 1.5rem; font-weight: 800; color: var(--gold); margin-left: 6px; }
-.rem-value { font-size: 1.5rem; font-weight: 800; margin-left: 6px; }
+.bal-value { font-size: 1.4rem; font-weight: 800; color: var(--gold); margin-left: 6px; }
+.rem-value { font-size: 1.4rem; font-weight: 800; margin-left: 6px; }
 .rem-value.zero { color: var(--success); }
 .rem-value.nonzero { color: var(--danger); }
 
+/* ── Quick Exchange Section ──────────────────────────────────────────────── */
+
+.picker-section-title {
+    width: 100%;
+    padding: 4px 8px 2px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+.picker-section-main {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gold);
+}
+.picker-section-sub {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-style: italic;
+}
+.customize-title {
+    padding-top: 2px;
+    padding-bottom: 0;
+}
+.customize-title .picker-section-main {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 500;
+}
+
+.quick-exchange-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    padding: 0 4px;
+}
+
+.quick-card {
+    background: linear-gradient(135deg, rgba(252, 209, 22, 0.08), rgba(252, 209, 22, 0.02));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(252, 209, 22, 0.3);
+    border-radius: var(--radius);
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 62px;
+}
+.quick-card:active {
+    transform: scale(0.95);
+    background: rgba(252, 209, 22, 0.15);
+    border-color: var(--gold);
+}
+.quick-card-denom {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gold);
+}
+.quick-card-count {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+}
+
+/* ── Picker Grid (Customize) ────────────────────────────────────────────── */
+
 .picker-grid {
     display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 10px; width: 100%; flex: 1;
-    align-content: center; padding: 8px 0;
+    gap: 8px; width: 100%;
+    align-content: center; padding: 2px 4px;
 }
 
 .coin-card {
@@ -435,7 +634,7 @@ body::before {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: var(--radius);
-    padding: 10px 6px; text-align: center;
+    padding: 8px 4px; text-align: center;
     border: 2px solid var(--glass-border);
     transition: all 0.3s ease;
 }
@@ -445,7 +644,6 @@ body::before {
 }
 .coin-card.disabled { opacity: 0.3; pointer-events: none; }
 
-/* Denomination-specific border colors when active */
 .coin-card[data-denom="1"].active {
     border-color: #cd7f32;
     box-shadow: 0 0 16px rgba(205, 127, 50, 0.3);
@@ -463,20 +661,20 @@ body::before {
     box-shadow: 0 0 16px rgba(252, 209, 22, 0.3);
 }
 
-.card-header { margin-bottom: 6px; }
-.card-denom { font-size: 1.4rem; font-weight: 800; color: var(--gold); }
-.card-stock { display: block; font-size: 0.65rem; color: var(--text-dim); margin-top: 2px; }
+.card-header { margin-bottom: 4px; }
+.card-denom { font-size: 1.2rem; font-weight: 800; color: var(--gold); }
+.card-stock { display: block; font-size: 0.65rem; color: var(--text-dim); margin-top: 1px; }
 
 .card-controls {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 
 .ctrl-btn {
-    width: 40px; height: 40px; border-radius: 50%; border: none;
-    font-size: 1.4rem; font-weight: 700; cursor: pointer;
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    font-size: 1.3rem; font-weight: 700; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: transform 0.15s ease;
-    min-width: 44px; min-height: 44px;
+    min-width: 40px; min-height: 40px;
 }
 .ctrl-btn:active { transform: scale(0.85); }
 .ctrl-btn.minus {
@@ -490,39 +688,33 @@ body::before {
     color: var(--success);
 }
 
-.ctrl-count { font-size: 1.4rem; font-weight: 800; min-width: 2rem; text-align: center; }
+.ctrl-count { font-size: 2rem; font-weight: 800; min-width: 2rem; text-align: center; }
 
-.card-sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
+.card-sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
 
 .picker-actions {
     display: flex; gap: 8px; width: 100%; justify-content: center;
-    align-items: center; flex-wrap: wrap;
+    align-items: center; padding: 0 4px;
 }
 
 .action-btn {
-    padding: 10px 12px; border-radius: var(--radius);
-    border: none; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    padding: 12px 16px; border-radius: var(--radius);
+    border: none; font-size: 1.1rem; font-weight: 700; cursor: pointer;
     transition: all 0.3s ease;
-    min-height: 44px;
+    min-height: 56px;
 }
 .action-btn:active { transform: scale(0.95); }
-.action-btn.quick {
-    background: var(--glass-bg);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: var(--gold);
-    border: 1px solid var(--glass-border);
-    font-size: 0.8rem;
-}
 .action-btn.confirm {
     background: linear-gradient(135deg, var(--gold), #e6b800);
     color: var(--navy);
-    padding: 10px 28px;
+    padding: 14px 36px;
     box-shadow: 0 4px 16px rgba(252, 209, 22, 0.3);
     position: relative;
     overflow: hidden;
+    width: 100%;
+    font-size: 1.2rem;
+    font-weight: 800;
 }
-/* Subtle shine animation on confirm */
 .action-btn.confirm::after {
     content: '';
     position: absolute;
@@ -541,9 +733,9 @@ body::before {
 /* ── DISPENSING SCREEN ───────────────────────────────────────────────────── */
 
 .disp-container { text-align: center; }
-.disp-coins { margin-bottom: 1.5rem; display: flex; justify-content: center; gap: 12px; }
+.disp-coins { margin-bottom: 1.2rem; display: flex; justify-content: center; gap: 12px; }
 .disp-coin {
-    width: 28px; height: 28px;
+    width: 32px; height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, var(--gold), #e6b800);
     box-shadow: 0 0 12px rgba(252, 209, 22, 0.4);
@@ -552,35 +744,68 @@ body::before {
 }
 .disp-coin.c2 { animation-delay: 0.2s; }
 .disp-coin.c3 { animation-delay: 0.4s; }
-.disp-container h2 { font-size: 1.6rem; margin-bottom: 0.5rem; }
-.disp-container p { color: var(--text-dim); }
+.disp-title { font-size: 1.8rem; margin-bottom: 0.3rem; font-weight: 700; }
+.disp-sub { color: var(--text-dim); font-style: italic; font-size: 1rem; margin-bottom: 0.8rem; }
+.disp-detail {
+    font-size: 1.3rem;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+.disp-progress {
+    margin-top: 0.5rem;
+}
+.disp-progress-text {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
 
 /* ── DONE SCREEN ─────────────────────────────────────────────────────────── */
 
 .done-container { text-align: center; }
 .done-check {
-    width: 80px; height: 80px; border-radius: 50%;
+    width: 100px; height: 100px; border-radius: 50%;
     background: var(--success);
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 1rem;
     animation: popIn 0.4s ease;
-    box-shadow: 0 0 30px rgba(0, 200, 83, 0.4);
+    box-shadow: 0 0 40px rgba(0, 200, 83, 0.5);
     position: relative;
 }
-/* CSS checkmark */
 .done-check::after {
     content: '';
     display: block;
-    width: 22px; height: 36px;
-    border-right: 5px solid var(--navy);
-    border-bottom: 5px solid var(--navy);
+    width: 28px; height: 44px;
+    border-right: 6px solid var(--navy);
+    border-bottom: 6px solid var(--navy);
     transform: rotate(45deg) translate(-2px, -4px);
 }
-.done-container h2 { font-size: 2rem; color: var(--success); margin-bottom: 0.5rem; }
-.done-container p { font-size: 1.2rem; }
-.done-english { color: var(--text-dim); font-size: 1rem; margin-top: 0.25rem; }
-.done-summary { color: var(--gold); font-size: 1rem; font-weight: 600; margin-top: 0.75rem; }
-.done-timer { margin-top: 1rem; color: var(--text-dim); font-size: 0.9rem; }
+.done-container h2 { font-size: 2rem; color: var(--success); margin-bottom: 0.3rem; }
+.done-main-sub { font-size: 1.1rem; color: var(--text-dim); font-style: italic; margin-bottom: 0.6rem; }
+.done-collect { font-size: 1.4rem; font-weight: 600; }
+.done-collect-fil { font-size: 1rem; color: var(--text-dim); font-style: italic; margin-top: 0.2rem; }
+.done-summary {
+    color: var(--gold);
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-top: 0.75rem;
+    padding: 8px 16px;
+    background: rgba(252, 209, 22, 0.08);
+    border: 1px solid rgba(252, 209, 22, 0.2);
+    border-radius: 12px;
+    display: inline-block;
+}
+.done-timer {
+    margin-top: 0.8rem;
+    color: var(--text-dim);
+    font-size: 1.1rem;
+}
+.done-timer span {
+    color: var(--gold);
+    font-weight: 800;
+    font-size: 1.4rem;
+}
 
 /* ── E-PAYMENT SCREEN ────────────────────────────────────────────────────── */
 
@@ -603,32 +828,39 @@ body::before {
 .epay-title {
     font-size: 1.6rem;
     color: var(--gold);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     font-weight: 800;
 }
 .epay-subtitle {
     color: var(--text-dim);
     font-size: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.3rem;
     max-width: 400px;
     line-height: 1.4;
 }
+.epay-subtitle-fil {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-bottom: 0.8rem;
+    opacity: 0.7;
+}
 
 .epay-qr-box {
-    margin: 0.75rem 0;
+    margin: 0.5rem 0;
     text-align: center;
 }
 
 .epay-qr-placeholder {
-    width: 180px;
-    height: 180px;
+    width: 170px;
+    height: 170px;
     margin: 0 auto;
     background: #fff;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: 14px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.1);
 }
 
@@ -638,7 +870,7 @@ body::before {
 }
 
 .epay-qr-info {
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
 }
 
 .epay-ref {
@@ -648,15 +880,14 @@ body::before {
 
 .epay-processing {
     color: var(--gold);
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    margin-top: 0.75rem;
+    margin-top: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 4px;
 }
-/* Animated dots */
 .epay-processing::after {
     content: '';
     animation: dots 1.5s steps(4, end) infinite;
@@ -674,7 +905,7 @@ body::before {
     flex-direction: column;
     gap: 10px;
     align-items: center;
-    margin-top: 1rem;
+    margin-top: 0.8rem;
 }
 
 .epay-cancel-btn {
@@ -685,11 +916,11 @@ body::before {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     color: var(--danger);
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-height: 44px;
+    min-height: 48px;
 }
 .epay-cancel-btn:active {
     transform: scale(0.95);
@@ -721,7 +952,6 @@ body::before {
     box-shadow: 0 8px 30px rgba(0, 200, 83, 0.4);
     position: relative;
 }
-/* CSS checkmark for confirmed */
 .epay-confirmed-icon::after {
     content: '';
     display: block;
@@ -750,7 +980,7 @@ body::before {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     color: #fff; padding: 12px 24px;
-    border-radius: var(--radius); font-weight: 600; font-size: 0.9rem;
+    border-radius: var(--radius); font-weight: 600; font-size: 1rem;
     transition: opacity 0.3s; z-index: 999;
     border: 1px solid rgba(255, 61, 61, 0.5);
     box-shadow: 0 4px 20px rgba(255, 61, 61, 0.3);
@@ -807,7 +1037,7 @@ body::before {
 }
 
 @media (max-height: 480px) {
-    .brand-logo { max-height: 140px; width: 140px; height: 140px; }
+    .brand-logo { max-height: 100px; width: 100px; height: 100px; }
     .idle-cta { margin-top: 0; }
-    .cta-text { font-size: 1.1rem; }
+    .cta-text { font-size: 1.4rem; }
 }

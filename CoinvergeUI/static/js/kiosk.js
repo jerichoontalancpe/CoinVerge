@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   CoinVerge — Kiosk Frontend Logic
+   CoinVerge — Kiosk Frontend Logic (UX Overhaul)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const DENOMS = [1, 5, 10, 20];
@@ -94,19 +94,16 @@ function handleEvent(ev) {
                 break;
             }
             if (ev.data.balance > 100) {
-                toast("Maximum ₱100 reached");
+                toast("Maximum \u20B1100 reached");
                 break;
             }
             state.balance = ev.data.balance;
             state.paymentSource = "bill";
-            // After bill detected, show fee screen first (not picker directly)
             if (state.screen === "idle" || state.screen === "empty") {
                 showFeeScreen();
             } else if (state.screen === "fee") {
-                // Another bill inserted while on fee screen — update it
                 updateFeeScreen();
             } else if (state.screen === "picker") {
-                // Another bill inserted — show fee screen again
                 showFeeScreen();
             }
             break;
@@ -116,12 +113,11 @@ function handleEvent(ev) {
                 break;
             }
             if (ev.data.balance > 100) {
-                toast("Maximum ₱100 reached");
+                toast("Maximum \u20B1100 reached");
                 break;
             }
             state.balance = ev.data.balance;
             state.paymentSource = "coin";
-            // After coin detected, show fee screen (which shows FREE for coins)
             if (state.screen === "idle" || state.screen === "empty") {
                 showFeeScreen();
             } else if (state.screen === "fee") {
@@ -137,7 +133,6 @@ function handleEvent(ev) {
                     clearInterval(epayPollTimer);
                     epayPollTimer = null;
                 }
-                // Show confirmed transition screen
                 document.getElementById("epay-step-qr").classList.add("hidden");
                 document.getElementById("epay-step-confirmed").classList.remove("hidden");
                 setTimeout(() => {
@@ -193,23 +188,26 @@ function updateFeeScreen() {
     const feeAmountEn = document.getElementById("fee-amount-en");
     const feeMessageFil = document.getElementById("fee-message-fil");
     const feeMessageEn = document.getElementById("fee-message-en");
+    const feeBadgeArea = document.getElementById("fee-badge-area");
 
     if (state.paymentSource === "coin") {
         // Coin exchange — no fee!
-        feeAmountFil.textContent = "₱0";
-        feeAmountEn.textContent = "₱0";
-        if (feeMessageFil) feeMessageFil.innerHTML = 'Coin Exchange — <span class="fee-highlight fee-free">Walang Service Fee!</span>';
-        if (feeMessageEn) feeMessageEn.innerHTML = 'Free Coin Redistribution — <span class="fee-highlight fee-free">No charge!</span>';
+        feeAmountFil.textContent = "\u20B10";
+        feeAmountEn.textContent = "\u20B10";
+        if (feeMessageFil) feeMessageFil.innerHTML = 'You inserted: <span class="fee-highlight">\u20B1' + balance + '</span> in coins';
+        if (feeMessageEn) feeMessageEn.innerHTML = 'No service fee \u2014 free exchange!';
+        if (feeBadgeArea) feeBadgeArea.innerHTML = '<span class="fee-badge">FREE EXCHANGE</span>';
     } else {
-        feeAmountFil.textContent = `₱${fee}`;
-        feeAmountEn.textContent = `₱${fee}`;
-        if (feeMessageFil) feeMessageFil.innerHTML = `May service charge na <span class="fee-highlight">₱${fee}</span> ang makinang ito.`;
-        if (feeMessageEn) feeMessageEn.innerHTML = `This machine will charge you <span class="fee-highlight">₱${fee}</span> as a service fee.`;
+        if (feeBadgeArea) feeBadgeArea.innerHTML = '';
+        feeAmountFil.textContent = `\u20B1${fee}`;
+        feeAmountEn.textContent = `\u20B1${fee}`;
+        if (feeMessageFil) feeMessageFil.innerHTML = `Service Fee: <span class="fee-highlight">\u20B1${fee}</span>`;
+        if (feeMessageEn) feeMessageEn.innerHTML = `May bayad na \u20B1${fee} bawat palitan`;
     }
 
-    document.getElementById("fee-inserted").textContent = `₱${balance}`;
-    document.getElementById("fee-charge").textContent = `−₱${fee}`;
-    document.getElementById("fee-receive").textContent = `₱${receive}`;
+    document.getElementById("fee-inserted").textContent = `\u20B1${balance}`;
+    document.getElementById("fee-charge").textContent = `\u2212\u20B1${fee}`;
+    document.getElementById("fee-receive").textContent = `\u20B1${receive}`;
 }
 
 function proceedFromFee() {
@@ -225,8 +223,21 @@ async function showPicker() {
     updateStockDisplay();
     updateRemaining();
     updateConfirm();
+    updateQuickCounts();
     showScreen("picker");
     resetInactivityTimer();
+}
+
+function updateQuickCounts() {
+    for (const d of DENOMS) {
+        const maxByBalance = Math.floor(state.available / d);
+        const maxByStock = state.stock[d] || 0;
+        const qty = Math.min(maxByBalance, maxByStock);
+        const el = document.getElementById(`quick-count-${d}`);
+        if (el) {
+            el.textContent = qty > 0 ? `${qty} coins` : "unavailable";
+        }
+    }
 }
 
 function showDone() {
@@ -237,9 +248,9 @@ function showDone() {
         const parts = [];
         for (const d of DENOMS) {
             const qty = state.lastDispense[d];
-            if (qty && qty > 0) parts.push(`${qty} × ₱${d}`);
+            if (qty && qty > 0) parts.push(`${qty} \u00D7 \u20B1${d}`);
         }
-        summaryEl.textContent = parts.join(", ");
+        summaryEl.textContent = "You received: " + parts.join(", ");
     }
 
     let sec = 5;
@@ -284,7 +295,6 @@ function adjust(denom, delta) {
 
     if (delta > 0) {
         const total = getTotal();
-        // Use available amount (balance - fee) as the cap
         if (total + denom > state.available) return;
     }
 
@@ -302,14 +312,14 @@ function getTotal() {
 
 function updateCoinCard(d) {
     document.getElementById(`count-${d}`).textContent = state.selection[d];
-    document.getElementById(`sub-${d}`).textContent = `₱${d * state.selection[d]}`;
+    document.getElementById(`sub-${d}`).textContent = `\u20B1${d * state.selection[d]}`;
     const card = document.getElementById(`card-${d}`);
     card.classList.toggle("active", state.selection[d] > 0);
 }
 
 function updateBalanceDisplay() {
-    document.getElementById("bal-amount").textContent = `₱${state.balance}`;
-    document.getElementById("picker-fee-amount").textContent = `₱${state.fee}`;
+    document.getElementById("bal-amount").textContent = `\u20B1${state.balance}`;
+    document.getElementById("picker-fee-amount").textContent = `\u20B1${state.fee}`;
 }
 
 function updateStockDisplay() {
@@ -322,10 +332,9 @@ function updateStockDisplay() {
 }
 
 function updateRemaining() {
-    // Remaining counts down from available (balance - fee)
     const rem = state.available - getTotal();
     const el = document.getElementById("rem-amount");
-    el.textContent = `₱${rem}`;
+    el.textContent = `\u20B1${rem}`;
     el.className = "rem-value " + (rem === 0 ? "zero" : "nonzero");
 }
 
@@ -348,13 +357,12 @@ function quickSelect(denom) {
     resetInactivityTimer();
     resetSelection();
 
-    // Fill as many of this denomination as possible using available amount
     const maxByBalance = Math.floor(state.available / denom);
     const maxByStock = state.stock[denom] || 0;
     const qty = Math.min(maxByBalance, maxByStock);
 
     if (qty === 0) {
-        toast(`No ₱${denom} coins available`);
+        toast(`No \u20B1${denom} coins available`);
         return;
     }
 
@@ -379,6 +387,9 @@ async function confirmDispense() {
     // Save for Done screen summary
     state.lastDispense = { ...state.selection };
 
+    // Update dispensing screen with details
+    updateDispensingScreen();
+
     showScreen("dispensing");
 
     try {
@@ -394,6 +405,7 @@ async function confirmDispense() {
             return;
         }
         // Wait for DISPENSED:OK event from polling or fallback timeout
+        startDispenseProgress();
         setTimeout(() => {
             if (state.screen === "dispensing") showDone();
         }, 5000);
@@ -401,6 +413,45 @@ async function confirmDispense() {
         toast("Connection error");
         showPicker();
     }
+}
+
+function updateDispensingScreen() {
+    const detailEl = document.getElementById("disp-detail");
+    if (detailEl && state.lastDispense) {
+        const parts = [];
+        for (const d of DENOMS) {
+            const qty = state.lastDispense[d];
+            if (qty && qty > 0) parts.push(`${qty} \u00D7 \u20B1${d}`);
+        }
+        detailEl.textContent = "Dispensing " + parts.join(", ");
+    }
+}
+
+function startDispenseProgress() {
+    const progressText = document.getElementById("disp-progress-text");
+    if (!progressText || !state.lastDispense) return;
+
+    let totalCoins = 0;
+    for (const d of DENOMS) {
+        totalCoins += state.lastDispense[d] || 0;
+    }
+
+    let dispensed = 0;
+    const interval = Math.max(100, 4000 / totalCoins);
+
+    const timer = setInterval(() => {
+        if (state.screen !== "dispensing") {
+            clearInterval(timer);
+            return;
+        }
+        dispensed++;
+        if (dispensed >= totalCoins) {
+            progressText.textContent = `${totalCoins} of ${totalCoins} dispensed`;
+            clearInterval(timer);
+        } else {
+            progressText.textContent = `${dispensed} of ${totalCoins} dispensed...`;
+        }
+    }, interval);
 }
 
 async function cancelTransaction() {
@@ -463,13 +514,13 @@ function showUnavailable(isMaintenance, isNoStock) {
     if (isMaintenance) {
         icon.textContent = "M";
         title.textContent = "Under Maintenance";
-        msg.textContent = "Pakibalik mamaya";
-        sub.textContent = "The machine is temporarily unavailable.";
+        msg.textContent = "The machine is temporarily unavailable.";
+        sub.textContent = "Pakibalik mamaya";
     } else if (isNoStock) {
         icon.textContent = "X";
-        title.textContent = "Walang Barya";
-        msg.textContent = "Out of coins — please try again later.";
-        sub.textContent = "Pakitawagan ang operator para sa refill.";
+        title.textContent = "Out of Coins";
+        msg.textContent = "Please try again later.";
+        sub.textContent = "Walang barya — pakitawagan ang operator para sa refill.";
     }
     showScreen("empty");
 }
@@ -486,12 +537,11 @@ function updateLowStockBanner() {
     }
 }
 
-// ── E-Payment Flow (Redesigned: kiosk shows QR, phone selects amount) ───────
+// ── E-Payment Flow ──────────────────────────────────────────────────────────
 
 let epayPollTimer = null;
 
 async function showEpay() {
-    // Initiate a payment — just get a reference number
     try {
         const res = await fetch("/api/epay/initiate", {
             method: "POST",
@@ -504,7 +554,6 @@ async function showEpay() {
             return;
         }
 
-        // Show QR screen with reference
         document.getElementById("epay-ref-num").textContent = data.reference_number;
         document.getElementById("epay-processing-msg").textContent = "Waiting for payment";
         document.getElementById("epay-step-qr").classList.remove("hidden");
@@ -532,12 +581,9 @@ function startEpayPolling() {
         try {
             const res = await fetch("/api/epay/pending");
             const data = await res.json();
-            // If pending is null and we're on the epay screen, payment was confirmed
             if (data === null && state.screen === "epay") {
                 clearInterval(epayPollTimer);
                 epayPollTimer = null;
-                // The epay_confirmed event handler will show the confirmed screen
-                // and then navigate to fee screen
             }
         } catch (e) { /* silent */ }
     }, 1500);
