@@ -1,0 +1,272 @@
+================================================================================
+COINVERGE — SOLDERING & WIRING INSTRUCTIONS
+Complete step-by-step guide for Coin Acceptor, Servo Motors, and Bill Inhibit
+================================================================================
+
+IMPORTANT RULES:
+- All GNDs must be connected together (ESP32, 12V supply, 5V supply, all devices)
+- Do NOT power servos from ESP32 directly (use separate 5V supply)
+- Double-check all connections before powering on
+- If unsure, use a multimeter to verify continuity
+
+
+================================================================================
+A. COIN ACCEPTOR (Allan 1299 Pro Max) → GPIO27
+================================================================================
+
+Your coin acceptor has 4 pins on the back (labeled on the board):
+
+    Pin Label     Function
+    ---------     --------
+    DC 12V        Power input (+12V)
+    GND           Ground
+    COIN          Signal output (pulses) ← this goes to ESP32
+    COUNTER       (not used — ignore this pin)
+
+STEP 1: Power the coin acceptor
+    - DC 12V pin → connect wire to 12V power supply positive (+)
+    - GND pin → connect wire to 12V power supply negative (-)
+    (Same 12V supply that powers your bill acceptor)
+
+STEP 2: Connect the signal wire
+    - COIN pin → solder a wire to GPIO27 on ESP32
+
+STEP 3: Share the ground
+    - Connect coin acceptor GND to any GND pin on ESP32
+    (If 12V supply GND is already connected to ESP32 GND, this is done)
+
+STEP 4: Add a 10kΩ pull-up resistor (IMPORTANT)
+    - Solder a 10kΩ resistor between COIN pin and 3.3V on ESP32
+    - This ensures stable HIGH signal when no coin is being detected
+
+WIRING DIAGRAM:
+
+    COIN ACCEPTOR              ESP32
+    ─────────────              ─────
+    DC 12V ──────────────────→ 12V Power Supply (+)
+    GND ─────────────────────→ 12V Power Supply (-) AND ESP32 GND
+    COIN ────────────────────→ GPIO27
+                          │
+                        [10kΩ resistor]
+                          │
+                         3.3V (ESP32)
+
+
+STEP 5: Program the coin acceptor (DIP switches / buttons)
+
+    Set how many pulses per coin denomination:
+
+    Coin      Pulses
+    ----      ------
+    1 peso    1 pulse
+    5 pesos   2 pulses
+    10 pesos  3 pulses
+    20 pesos  4 pulses
+
+    How to program (typical Allan units):
+    1. Press and hold the "SET" or "ADD" button
+    2. Insert sample coins one by one
+    3. Set the pulse count for each coin value
+    4. Exit programming mode
+    (Refer to the sticker/manual on your specific unit)
+
+
+================================================================================
+B. SERVO MOTOR A (routes coins to P1 or P5 hopper) → GPIO13
+================================================================================
+
+Your MG995/MG996R servo has 3 wires:
+
+    Wire Color           Function
+    ----------           --------
+    Brown (or Black)     GND
+    Red                  Power (+5V to 6V)
+    Orange (or Yellow)   Signal (PWM control)
+
+STEP 1: Ground
+    - Brown wire → connect to GND on ESP32
+
+STEP 2: Power (SEPARATE 5V supply — NOT from ESP32!)
+    - Red wire → connect to separate 5V 2A power supply positive (+)
+
+    *** WARNING ***
+    Do NOT connect servo Red wire to ESP32 VIN or 5V pin!
+    The MG995 draws up to 2A which will reset or damage the ESP32.
+    Use a separate 5V power supply (old phone charger works).
+    Connect that supply's GND to ESP32 GND (shared ground).
+
+STEP 3: Signal
+    - Orange wire → solder to GPIO13 on ESP32
+
+WIRING DIAGRAM:
+
+    SERVO A               ESP32              SEPARATE 5V SUPPLY
+    ───────               ─────              ──────────────────
+    Brown ───────────────→ GND ←────────────→ GND (-)
+    Red ──────────────────────────────────→ +5V (+)
+    Orange ──────────────→ GPIO13
+
+
+================================================================================
+C. SERVO MOTOR B (routes coins to P10 or P20 hopper) → GPIO14
+================================================================================
+
+Exact same wiring as Servo A, but orange wire goes to GPIO14:
+
+STEP 1: Ground
+    - Brown wire → connect to GND on ESP32 (same GND as Servo A)
+
+STEP 2: Power
+    - Red wire → connect to same separate 5V supply as Servo A
+
+STEP 3: Signal
+    - Orange wire → solder to GPIO14 on ESP32
+
+WIRING DIAGRAM:
+
+    SERVO B               ESP32              SEPARATE 5V SUPPLY
+    ───────               ─────              (same as Servo A)
+    Brown ───────────────→ GND ←────────────→ GND (-)
+    Red ──────────────────────────────────→ +5V (+)
+    Orange ──────────────→ GPIO14
+
+
+================================================================================
+D. BILL INHIBIT (already done) → GPIO33 via Logic Level Shifter
+================================================================================
+
+Already completed. No changes needed.
+
+    Bill acceptor Yellow (INHIBIT+) → Logic Level Shifter HV side
+    Logic Level Shifter LV side → GPIO33 on ESP32
+    Bill acceptor Green (INHIBIT-) → GND
+    Logic Level Shifter HV → 5V (VIN on ESP32)
+    Logic Level Shifter LV → 3.3V on ESP32
+    Logic Level Shifter GND → GND on ESP32
+
+
+================================================================================
+COMPLETE PIN MAP (ALL CONNECTIONS)
+================================================================================
+
+    ESP32 Pin        Connected To                  Purpose
+    ---------        ────────────                  ───────
+    GPIO5            P1 hopper motor relay         Dispense P1 coins
+    GPIO18           P5 hopper motor relay         Dispense P5 coins
+    GPIO19           P10 hopper motor relay        Dispense P10 coins
+    GPIO17           P20 hopper motor relay        Dispense P20 coins
+    GPIO39 (VN)      P1 hopper sensor (blue)       Count P1 coins out
+    GPIO34           P5 hopper sensor (white)      Count P5 coins out
+    GPIO35           P10 hopper sensor (yellow)    Count P10 coins out
+    GPIO36 (VP)      P20 hopper sensor (green)     Count P20 coins out
+    GPIO32           Bill acceptor signal          Detect bills
+    GPIO33           Bill inhibit (via shifter)    Block/allow bills
+    GPIO27           Coin acceptor COIN pin        Detect coins in
+    GPIO13           Servo A signal (orange)       Route P1/P5 coins
+    GPIO14           Servo B signal (orange)       Route P10/P20 coins
+
+
+================================================================================
+POWER CONNECTIONS
+================================================================================
+
+    Power Source          Feeds
+    ────────────          ─────
+    12V supply (+)        Bill acceptor, Coin acceptor
+    12V supply (-)        → ESP32 GND (shared)
+    5V separate supply    Servo A (red), Servo B (red)
+    5V supply GND (-)     → ESP32 GND (shared)
+    USB (to laptop/RPi)   ESP32 power + serial communication
+
+    *** CRITICAL: ALL GROUNDS MUST BE CONNECTED TOGETHER ***
+    ESP32 GND = 12V supply GND = 5V supply GND
+    If grounds are not shared, signals will not work!
+
+
+================================================================================
+WHAT YOU NEED (parts list)
+================================================================================
+
+    Item                              Quantity
+    ────                              ────────
+    Jumper wires / hookup wire        Several
+    10kΩ resistor                     1 piece
+    Separate 5V 2A power supply       1 (old phone charger works)
+    Soldering iron + solder           (you already have)
+    Wire stripper / cutter            (you already have)
+
+
+================================================================================
+AFTER SOLDERING — TESTING
+================================================================================
+
+1. Power on everything:
+   - Plug in 12V supply (bill acceptor + coin acceptor)
+   - Plug in 5V supply (servos)
+   - Plug USB into ESP32 (connects to laptop)
+
+2. Flash the firmware:
+   - Open Arduino IDE
+   - Open: CoinVerge\Coinverge\Coinverge.ino
+   - Board: ESP32 Dev Module
+   - Port: COM3 (or whatever your port is)
+   - Click Upload
+
+3. Open Serial Monitor (115200 baud)
+
+4. Test coin acceptor:
+   - Insert a P1 coin → should see: COIN:1
+   - Insert a P5 coin → should see: COIN:5
+   - Servo should briefly move to route the coin
+
+5. Test servos:
+   - Type in Serial Monitor: SERVO:A:45
+   - Servo A should move to 45 degrees
+   - Type: SERVO:A:135
+   - Servo A should move to 135 degrees
+   - Same for: SERVO:B:45 and SERVO:B:135
+
+6. Test bill acceptor:
+   - Insert a P50 bill → should see: BILL:50
+
+7. If everything works:
+   - Close Serial Monitor
+   - Run: python app.py --port COM3
+   - Open: http://localhost:8080
+   - Full system test!
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+PROBLEM: Coin acceptor not detecting coins
+- Check 12V power (is the acceptor lit up?)
+- Check COIN wire connected to GPIO27
+- Check 10kΩ resistor between COIN and 3.3V
+- Check GND is shared between coin acceptor and ESP32
+- Check programming (did you set pulse counts?)
+
+PROBLEM: Servo not moving
+- Check 5V power supply is ON
+- Check orange wire is on correct GPIO (13 or 14)
+- Check GND is shared between servo supply and ESP32
+- DO NOT power servo from ESP32 — use separate supply
+
+PROBLEM: Servo moves randomly / ESP32 resets
+- Servo is drawing too much current from ESP32
+- Make sure servo Red wire goes to SEPARATE 5V supply
+- Make sure all GNDs are connected together
+
+PROBLEM: Bill acceptor always rejecting (red light)
+- GPIO33 might be HIGH at boot
+- Check logic level shifter connections
+- In Serial Monitor type: LOW 33 (should enable acceptor)
+
+PROBLEM: Serial Monitor shows garbage characters
+- Check baud rate is set to 115200
+- Check correct COM port selected
+
+================================================================================
+END OF INSTRUCTIONS
+================================================================================
