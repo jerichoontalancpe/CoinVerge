@@ -103,7 +103,8 @@ function handleEvent(ev) {
             if (state.screen === "idle" || state.screen === "empty") {
                 showFeeScreen();
             } else if (state.screen === "fee") {
-                updateFeeScreen();
+                // Refresh from server to get updated fee/available for new balance
+                refreshStock().then(() => { updateFeeScreen(); });
             } else if (state.screen === "picker") {
                 showFeeScreen();
             }
