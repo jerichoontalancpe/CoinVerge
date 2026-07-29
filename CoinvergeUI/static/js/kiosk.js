@@ -3,7 +3,6 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const DENOMS = [1, 5, 10, 20];
-const TIMEOUT_MS = 60000; // 60 seconds inactivity timeout on picker
 
 const state = {
     screen: "idle",
@@ -17,10 +16,14 @@ const state = {
     adminTaps: 0,
     adminTimer: null,
     inactivityTimer: null,
+    warningTimer: null,
+    countdownTimer: null,
     lastDispense: null,
     maintenanceMode: false,
     lowStock: [],
     paymentSource: "none",  // "none", "bill", "coin", "epay", "mixed"
+    timeoutSeconds: 60,
+    timeoutAction: "largest",
 };
 
 // ── Init ────────────────────────────────────────────────────────────────────
@@ -41,6 +44,8 @@ async function fetchStatus() {
         state.maintenanceMode = data.maintenance_mode || false;
         state.lowStock = data.low_stock || [];
         state.paymentSource = data.payment_source || "none";
+        state.timeoutSeconds = data.timeout_seconds || 60;
+        state.timeoutAction = data.timeout_action || "largest";
         state.stock = {};
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
@@ -71,6 +76,8 @@ async function refreshStock() {
         state.maintenanceMode = data.maintenance_mode || false;
         state.lowStock = data.low_stock || [];
         state.paymentSource = data.payment_source || "none";
+        state.timeoutSeconds = data.timeout_seconds || 60;
+        state.timeoutAction = data.timeout_action || "largest";
     } catch (e) { /* use cached */ }
 }
 
@@ -179,6 +186,9 @@ function showScreen(name) {
 
     if (name !== "picker") {
         clearTimeout(state.inactivityTimer);
+        clearTimeout(state.warningTimer);
+        clearInterval(state.countdownTimer);
+        hideCountdown();
     }
 }
 
@@ -331,12 +341,119 @@ function showDone() {
 
 function resetInactivityTimer() {
     clearTimeout(state.inactivityTimer);
+    clearTimeout(state.warningTimer);
+    clearInterval(state.countdownTimer);
+    hideCountdown();
+
+    const timeoutMs = state.timeoutSeconds * 1000;
+    const warningMs = timeoutMs - 10000; // 10 seconds before timeout
+
+    // Warning toast 10 seconds before timeout
+    if (warningMs > 0) {
+        state.warningTimer = setTimeout(() => {
+            if (state.screen === "picker") {
+                toast("Session expiring in 10 seconds...");
+            }
+        }, warningMs);
+    }
+
+    // Countdown display when < 15 seconds remaining
+    const countdownStartMs = timeoutMs - 15000;
+    if (countdownStartMs > 0) {
+        setTimeout(() => {
+            if (state.screen === "picker") {
+                startCountdown(15);
+            }
+        }, countdownStartMs);
+    } else {
+        // If timeout is <= 15 seconds, start countdown immediately
+        startCountdown(Math.floor(state.timeoutSeconds));
+    }
+
+    // Main timeout action
     state.inactivityTimer = setTimeout(() => {
         if (state.screen === "picker") {
-            toast("Session timed out");
-            cancelTransaction();
+            handleTimeout();
         }
-    }, TIMEOUT_MS);
+    }, timeoutMs);
+}
+
+function startCountdown(seconds) {
+    clearInterval(state.countdownTimer);
+    let remaining = seconds;
+    showCountdown(remaining);
+    state.countdownTimer = setInterval(() => {
+        remaining--;
+        if (remaining <= 0 || state.screen !== "picker") {
+            clearInterval(state.countdownTimer);
+            hideCountdown();
+        } else {
+            showCountdown(remaining);
+        }
+    }, 1000);
+}
+
+function showCountdown(seconds) {
+    let el = document.getElementById("timeout-countdown");
+    if (!el) {
+        el = document.createElement("div");
+        el.id = "timeout-countdown";
+        el.className = "timeout-countdown";
+        const pickerScreen = document.getElementById("screen-picker");
+        if (pickerScreen) pickerScreen.appendChild(el);
+    }
+    el.textContent = seconds + "s";
+    el.classList.remove("hidden");
+}
+
+function hideCountdown() {
+    const el = document.getElementById("timeout-countdown");
+    if (el) el.classList.add("hidden");
+}
+
+function handleTimeout() {
+    clearTimeout(state.warningTimer);
+    clearInterval(state.countdownTimer);
+    hideCountdown();
+
+    const action = state.timeoutAction;
+    if (action === "cancel") {
+        toast("Session timed out");
+        cancelTransaction();
+    } else {
+        // Auto-dispense with largest or smallest strategy
+        autoDispense(action);
+    }
+}
+
+function autoDispense(strategy) {
+    // strategy: "largest" or "smallest"
+    const available = state.available;
+    const combo = {};
+    let remaining = available;
+
+    const order = strategy === "largest" ? [20, 10, 5, 1] : [1, 5, 10, 20];
+
+    for (const d of order) {
+        const stockAvail = state.stock[d] || 0;
+        const maxCoins = Math.floor(remaining / d);
+        const coins = Math.min(maxCoins, stockAvail);
+        if (coins > 0) {
+            combo[d] = coins;
+            remaining -= coins * d;
+        }
+    }
+
+    if (Object.keys(combo).length > 0 && remaining === 0) {
+        // Submit dispense
+        state.selection = { 1: combo[1] || 0, 5: combo[5] || 0, 10: combo[10] || 0, 20: combo[20] || 0 };
+        toast("Auto-dispensing due to timeout");
+        confirmDispense();
+    } else {
+        // Cannot dispense exact amount -- just cancel
+        toast("Session timed out");
+        cancelTransaction();
+    }
 }
 
 // ── Picker Logic ────────────────────────────────────────────────────────────
@@ -511,6 +628,9 @@ function startDispenseProgress() {
 
 async function cancelTransaction() {
     clearTimeout(state.inactivityTimer);
+    clearTimeout(state.warningTimer);
+    clearInterval(state.countdownTimer);
+    hideCountdown();
     await fetch("/api/reset", { method: "POST" });
     state.balance = 0;
     state.fee = 0;

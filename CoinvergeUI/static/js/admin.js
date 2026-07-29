@@ -78,7 +78,7 @@ function switchTab(tab) {
     if (tab === "stock") loadStock();
     else if (tab === "history") loadHistory();
     else if (tab === "reports") loadReport(currentPeriod);
-    else if (tab === "settings") { loadFeeTiers(); loadServoPositions(); loadCoinFeeStatus(); }
+    else if (tab === "settings") { loadFeeTiers(); loadServoPositions(); loadCoinFeeStatus(); loadTimeoutSettings(); }
 }
 
 async function logout() {
@@ -728,6 +728,46 @@ async function loadCoinFeeStatus() {
             }
         }
     } catch (e) { /* silent */ }
+}
+
+// ── Session Timeout Settings ────────────────────────────────────────────────
+
+async function loadTimeoutSettings() {
+    try {
+        const res = await fetch("/api/settings/timeout");
+        if (!res.ok) return;
+        const data = await res.json();
+        const secondsInput = document.getElementById("timeout-seconds-input");
+        const actionSelect = document.getElementById("timeout-action-select");
+        if (secondsInput) secondsInput.value = data.timeout_seconds || 60;
+        if (actionSelect) actionSelect.value = data.timeout_action || "largest";
+    } catch (e) { /* silent */ }
+}
+
+async function saveTimeoutSettings() {
+    const seconds = parseInt(document.getElementById("timeout-seconds-input").value);
+    const action = document.getElementById("timeout-action-select").value;
+
+    if (isNaN(seconds) || seconds < 30 || seconds > 300) {
+        alert("Timeout must be between 30 and 300 seconds");
+        return;
+    }
+
+    try {
+        const res = await fetch("/api/admin/timeout_settings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ timeout_seconds: seconds, timeout_action: action }),
+        });
+        if (res.ok) {
+            alert("Timeout settings saved!");
+        } else {
+            const data = await res.json();
+            alert("Error: " + (data.error || "Failed to save"));
+        }
+    } catch (e) {
+        alert("Connection error");
+    }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

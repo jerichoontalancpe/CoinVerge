@@ -285,6 +285,25 @@
                 </div>
             </div>
             <div class="settings-section">
+                <h3>Session Timeout</h3>
+                <p class="settings-info">Configure inactivity timeout for the coin picker screen</p>
+                <div class="timeout-settings">
+                    <div class="timeout-row">
+                        <label class="timeout-label">Timeout Duration (seconds):</label>
+                        <input type="number" id="timeout-seconds-input" class="fee-input" min="30" max="300" value="60" style="width:80px">
+                    </div>
+                    <div class="timeout-row" style="margin-top:8px">
+                        <label class="timeout-label">Timeout Action:</label>
+                        <select id="timeout-action-select" class="export-select" style="width:auto;min-width:220px">
+                            <option value="largest">Auto-dispense (largest coins)</option>
+                            <option value="smallest">Auto-dispense (smallest coins)</option>
+                            <option value="cancel">Cancel (no dispense)</option>
+                        </select>
+                    </div>
+                    <button class="settings-btn" onclick="saveTimeoutSettings()" style="margin-top:10px">Save Timeout Settings</button>
+                </div>
+            </div>
+            <div class="settings-section">
                 <h3>Coin Exchange Fee</h3>
                 <p class="settings-info">When disabled, coin-to-coin exchange is free (no service fee)</p>
                 <button class="settings-btn" id="coin-fee-toggle" onclick="toggleCoinFee()">

@@ -125,12 +125,21 @@ def init_db():
             ("admin_pin", "1234"),
             ("machine_name", "CoinVerge Unit 1"),
             ("maintenance_mode", "0"),
+            ("timeout_seconds", "60"),
+            ("timeout_action", "largest"),
         ])
     else:
         # Ensure maintenance_mode exists (for upgrades)
         row = conn.execute("SELECT value FROM settings WHERE key = 'maintenance_mode'").fetchone()
         if row is None:
             conn.execute("INSERT INTO settings (key, value) VALUES (?, ?)", ("maintenance_mode", "0"))
+        # Ensure timeout settings exist (for upgrades)
+        row = conn.execute("SELECT value FROM settings WHERE key = 'timeout_seconds'").fetchone()
+        if row is None:
+            conn.execute("INSERT INTO settings (key, value) VALUES (?, ?)", ("timeout_seconds", "60"))
+        row = conn.execute("SELECT value FROM settings WHERE key = 'timeout_action'").fetchone()
+        if row is None:
+            conn.execute("INSERT INTO settings (key, value) VALUES (?, ?)", ("timeout_action", "largest"))
 
     conn.commit()
     conn.close()

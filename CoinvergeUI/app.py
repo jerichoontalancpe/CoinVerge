@@ -391,6 +391,10 @@ def api_status():
         # bill, epay, mixed, none — all get tiered fee
         fee = get_fee(balance) if balance > 0 else 0
 
+    # Timeout settings
+    timeout_seconds = int(get_setting("timeout_seconds") or 60)
+    timeout_action = get_setting("timeout_action") or "largest"
+
     return jsonify({
         "connected": esp32.connected,
         "simulate": esp32.simulate,
@@ -403,6 +407,8 @@ def api_status():
         "low_stock": low_stock,
         "refill_threshold": REFILL_THRESHOLD,
         "payment_source": payment_source,
+        "timeout_seconds": timeout_seconds,
+        "timeout_action": timeout_action,
     })
 
 
@@ -951,6 +957,45 @@ def api_admin_coin_fee_status():
         return jsonify({"error": "Unauthorized"}), 401
     current = get_setting('coin_fee_enabled')
     return jsonify({"coin_fee_enabled": current == '1'})
+
+
+@app.route("/api/settings/timeout")
+def api_settings_timeout():
+    """Get timeout settings (public endpoint for kiosk)."""
+    timeout_seconds = int(get_setting("timeout_seconds") or 60)
+    timeout_action = get_setting("timeout_action") or "largest"
+    return jsonify({
+        "timeout_seconds": timeout_seconds,
+        "timeout_action": timeout_action,
+    })
+
+
+@app.route("/api/admin/timeout_settings", methods=["POST"])
+def api_admin_timeout_settings():
+    """Save timeout settings (requires admin)."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json()
+    timeout_seconds = data.get("timeout_seconds")
+    timeout_action = data.get("timeout_action")
+
+    if timeout_seconds is not None:
+        timeout_seconds = int(timeout_seconds)
+        if timeout_seconds < 30 or timeout_seconds > 300:
+            return jsonify({"error": "Timeout must be between 30 and 300 seconds"}), 400
+        set_setting("timeout_seconds", str(timeout_seconds))
+
+    if timeout_action is not None:
+        if timeout_action not in ("largest", "smallest", "cancel"):
+            return jsonify({"error": "Invalid timeout action. Use largest, smallest, or cancel"}), 400
+        set_setting("timeout_action", timeout_action)
+
+    return jsonify({
+        "status": "ok",
+        "timeout_seconds": int(get_setting("timeout_seconds") or 60),
+        "timeout_action": get_setting("timeout_action") or "largest",
+    })
 
 
 @app.route("/api/admin/sync_stock", methods=["POST"])
