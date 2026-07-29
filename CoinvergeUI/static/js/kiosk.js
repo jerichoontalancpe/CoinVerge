@@ -198,8 +198,23 @@ function showScreen(name) {
 
 async function showFeeScreen() {
     showScreen("fee");        // Set screen immediately (prevents re-entry)
-    await refreshStock();     // Then fetch latest data
-    updateFeeScreen();        // Then update display
+    // Compute fee locally first for instant display
+    const b = state.balance;
+    if (state.paymentSource === "coin") {
+        state.fee = 0;
+    } else if (b >= 100) {
+        state.fee = 5;
+    } else if (b >= 50) {
+        state.fee = 3;
+    } else if (b >= 20) {
+        state.fee = 2;
+    } else {
+        state.fee = 0;
+    }
+    state.available = b - state.fee;
+    updateFeeScreen();        // Show immediately with local data
+    await refreshStock();     // Then fetch latest (updates stock display)
+    updateFeeScreen();        // Update again with server data (if balance unchanged)
 }
 
 function updateFeeScreen() {
