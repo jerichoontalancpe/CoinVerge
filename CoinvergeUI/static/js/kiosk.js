@@ -88,6 +88,7 @@ async function pollEvents() {
 }
 
 function handleEvent(ev) {
+    console.log("[EVENT]", ev.type, ev.data);
     switch (ev.type) {
         case "bill":
             if (state.maintenanceMode) {
