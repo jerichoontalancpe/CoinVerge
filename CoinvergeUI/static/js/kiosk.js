@@ -20,7 +20,7 @@ const state = {
     lastDispense: null,
     maintenanceMode: false,
     lowStock: [],
-    paymentSource: "bill",  // "bill", "coin", or "epay"
+    paymentSource: "none",  // "none", "bill", "coin", "epay", "mixed"
 };
 
 // ── Init ────────────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ async function fetchStatus() {
         state.available = data.available || 0;
         state.maintenanceMode = data.maintenance_mode || false;
         state.lowStock = data.low_stock || [];
-        state.paymentSource = data.payment_source || "bill";
+        state.paymentSource = data.payment_source || "none";
         state.stock = {};
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
@@ -69,7 +69,7 @@ async function refreshStock() {
         state.available = data.available || 0;
         state.maintenanceMode = data.maintenance_mode || false;
         state.lowStock = data.low_stock || [];
-        state.paymentSource = data.payment_source || "bill";
+        state.paymentSource = data.payment_source || "none";
     } catch (e) { /* use cached */ }
 }
 
@@ -284,7 +284,7 @@ function showDone() {
             state.fee = 0;
             state.available = 0;
             state.lastDispense = null;
-            state.paymentSource = "bill";
+            state.paymentSource = "none";
             fetchStatus();
             showScreen("idle");
         }
