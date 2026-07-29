@@ -102,25 +102,15 @@ function handleEvent(ev) {
             state.balance = ev.data.balance;
             state.paymentSource = "bill";
             if (state.screen === "idle" || state.screen === "empty") {
-                showFeeScreen();
-            } else if (state.screen === "fee") {
-                // Immediately recompute fee from new balance and update display
-                const b = state.balance;
-                if (state.paymentSource === "coin") {
-                    state.fee = 0;
-                } else if (b >= 100) {
-                    state.fee = 5;
-                } else if (b >= 50) {
-                    state.fee = 3;
-                } else if (b >= 20) {
-                    state.fee = 2;
-                } else {
-                    state.fee = 0;
-                }
-                state.available = b - state.fee;
-                updateFeeScreen();
+                showPicker();
             } else if (state.screen === "picker") {
-                showFeeScreen();
+                // Additional bill while on picker — refresh display
+                refreshStock().then(() => {
+                    updateBalanceDisplay();
+                    updateStockDisplay();
+                    updateRemaining();
+                    updateConfirm();
+                });
             }
             break;
         case "coin":
@@ -135,11 +125,9 @@ function handleEvent(ev) {
             state.balance = ev.data.balance;
             state.paymentSource = "coin";
             if (state.screen === "idle" || state.screen === "empty") {
-                showFeeScreen();
-            } else if (state.screen === "fee") {
-                updateFeeScreen();
+                showPicker();
             } else if (state.screen === "picker") {
-                // Coin arrived during picker — update balance in-place without navigating
+                // Coin arrived during picker — update balance in-place
                 refreshStock().then(() => {
                     updateBalanceDisplay();
                     updateRemaining();
@@ -161,7 +149,7 @@ function handleEvent(ev) {
                 setTimeout(() => {
                     document.getElementById("epay-step-confirmed").classList.add("hidden");
                     document.getElementById("epay-step-qr").classList.remove("hidden");
-                    showFeeScreen();
+                    showPicker();
                 }, 2000);
             }
             break;
