@@ -309,7 +309,17 @@ class ESP32Connection:
 # ── Flask App ────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
-app.secret_key = "coinverge-secret-key-change-in-production"
+
+# Generate a random secret key on first run, persist it across restarts
+import os as _os
+SECRET_KEY_FILE = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '.secret_key')
+if _os.path.exists(SECRET_KEY_FILE):
+    with open(SECRET_KEY_FILE, 'r') as _f:
+        app.secret_key = _f.read().strip()
+else:
+    app.secret_key = _os.urandom(24).hex()
+    with open(SECRET_KEY_FILE, 'w') as _f:
+        _f.write(app.secret_key)
 
 esp32 = None
 event_queue = []
@@ -354,9 +364,13 @@ def api_status():
     balance = esp32.balance
     payment_source = esp32.payment_source
 
-    # Fee logic: coins = 0 fee, bills/epay = tiered fee
+    # Fee logic: coins = 0 fee (unless coin_fee_enabled), bills/epay = tiered fee
     if payment_source == "coin":
-        fee = 0
+        coin_fee_enabled = get_setting('coin_fee_enabled')
+        if coin_fee_enabled == '1':
+            fee = get_fee(balance) if balance > 0 else 0
+        else:
+            fee = 0
     else:
         fee = get_fee(balance) if balance > 0 else 0
 
@@ -403,9 +417,13 @@ def api_dispense():
             total += d * q
             int_combo[d] = q
 
-    # Fee depends on payment source (coins = free)
+    # Fee depends on payment source (coins = free unless coin_fee_enabled)
     if esp32.payment_source == "coin":
-        fee = 0
+        coin_fee_enabled = get_setting('coin_fee_enabled')
+        if coin_fee_enabled == '1':
+            fee = get_fee(esp32.balance)
+        else:
+            fee = 0
     else:
         fee = get_fee(esp32.balance)
     available = esp32.balance - fee
@@ -431,24 +449,18 @@ def api_dispense():
     bill_value = esp32.balance
     payment_method = esp32.payment_method
 
-    # Store pending transaction (will be committed when ESP32 confirms)
-    esp32.pending_dispense = {
-        "bill_value": bill_value,
-        "combo": int_combo,
-        "total_coins": sum(int_combo.values()),
-        "fee": fee,
-        "payment_method": payment_method,
-    }
-
     # Sync ESP32 balance before dispensing (needed for e-payment where no physical bill)
-    esp32.send_command(f"CREDIT:{bill_value}")
+    # Send the post-fee total so ESP32's g_totalMoney matches the DISPENSE total
+    esp32.send_command(f"CREDIT:{total}")
     import time as _time
     _time.sleep(0.1)  # give ESP32 a moment to process CREDIT
 
     esp32.send_command(cmd)
     esp32.balance = 0
 
-    # Deduct stock immediately (optimistic — coins are physically leaving)
+    # Optimistic deduction: stock is deducted immediately as coins are physically
+    # dispensed. If ESP32 reports an error (jam/timeout), admin should use the
+    # "Count" feature to re-verify actual hopper contents.
     deduct_stock(int_combo)
     log_transaction(bill_value, int_combo, sum(int_combo.values()), fee=fee, payment_method=payment_method)
 
@@ -902,6 +914,27 @@ def api_admin_maintenance():
     return jsonify({"status": "ok", "maintenance_mode": get_maintenance_mode()})
 
 
+@app.route("/api/admin/coin_fee_toggle", methods=["POST"])
+def api_admin_coin_fee_toggle():
+    """Toggle coin exchange fee on/off. When off, coin-to-coin exchange is free."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    current = get_setting('coin_fee_enabled')
+    new_value = '0' if current == '1' else '1'
+    set_setting('coin_fee_enabled', new_value)
+    return jsonify({"status": "ok", "coin_fee_enabled": new_value == '1'})
+
+
+@app.route("/api/admin/coin_fee_status")
+def api_admin_coin_fee_status():
+    """Get current coin fee enabled status."""
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    current = get_setting('coin_fee_enabled')
+    return jsonify({"coin_fee_enabled": current == '1'})
+
+
 @app.route("/api/admin/sync_stock", methods=["POST"])
 def api_admin_sync_stock():
     """
@@ -1180,7 +1213,7 @@ def api_admin_export_html():
     if stock_count_records:
         stock_counts_section = f"""
         <div class="section">
-            <h2>📊 Stock Counts</h2>
+            <h2>Stock Counts</h2>
             <table>
                 <thead>
                     <tr><th>Date/Time</th><th>Denomination</th><th>Count</th><th>Value</th></tr>
@@ -1211,7 +1244,7 @@ def api_admin_export_html():
     if stock_event_records:
         inventory_section = f"""
         <div class="section">
-            <h2>📦 Inventory Activity</h2>
+            <h2>Inventory Activity</h2>
             <table>
                 <thead>
                     <tr><th>Date/Time</th><th>Denomination</th><th>Type</th><th>Details</th></tr>
@@ -1328,7 +1361,7 @@ def api_admin_export_html():
     </div>
 
     <div class="section">
-        <h2>💰 Denomination Breakdown</h2>
+        <h2>Denomination Breakdown</h2>
         <div class="denom-grid">
             <div class="denom-item">
                 <div class="denom">₱1</div>
@@ -1354,7 +1387,7 @@ def api_admin_export_html():
     </div>
 
     <div class="section">
-        <h2>📋 Transaction Details</h2>
+        <h2>Transaction Details</h2>
         <table>
             <thead>
                 <tr><th>#</th><th>Date/Time</th><th>Bill</th><th>Fee</th><th>Coins</th><th>Total</th><th>Method</th></tr>

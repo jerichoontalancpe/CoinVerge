@@ -78,7 +78,7 @@ function switchTab(tab) {
     if (tab === "stock") loadStock();
     else if (tab === "history") loadHistory();
     else if (tab === "reports") loadReport(currentPeriod);
-    else if (tab === "settings") { loadFeeTiers(); loadServoPositions(); }
+    else if (tab === "settings") { loadFeeTiers(); loadServoPositions(); loadCoinFeeStatus(); }
 }
 
 async function logout() {
@@ -435,7 +435,7 @@ async function loadFeeTiers() {
                     <input type="number" class="fee-input" id="fee-max-${i}" value="${tier.max_amount}" min="0" placeholder="Max">
                     <span class="fee-tier-label">→ Fee: ₱</span>
                     <input type="number" class="fee-input" id="fee-val-${i}" value="${tier.fee}" min="0" placeholder="Fee">
-                    <button class="fee-remove-btn" onclick="removeFeeRow(${i})">✕</button>
+                    <button class="fee-remove-btn" onclick="removeFeeRow(${i})">&times;</button>
                 </div>
             `;
         });
@@ -464,7 +464,7 @@ function addFeeRow() {
         <input type="number" class="fee-input" id="fee-max-${i}" value="0" min="0" placeholder="Max">
         <span class="fee-tier-label">→ Fee: ₱</span>
         <input type="number" class="fee-input" id="fee-val-${i}" value="0" min="0" placeholder="Fee">
-        <button class="fee-remove-btn" onclick="removeFeeRow(${i})">✕</button>
+        <button class="fee-remove-btn" onclick="removeFeeRow(${i})">&times;</button>
     `;
     container.appendChild(div);
 
@@ -590,42 +590,6 @@ async function loadMaintenanceStatus() {
     } catch (e) { /* silent */ }
 }
 
-// ── Sync Stock ──────────────────────────────────────────────────────────────
-
-async function syncStock() {
-    const stock = {};
-    const denoms = [1, 5, 10, 20];
-    for (const d of denoms) {
-        const currentEl = document.getElementById(`scount-${d}`);
-        const current = currentEl ? currentEl.textContent.replace(/,/g, '') : "0";
-        const input = prompt(`Physical count for ₱${d} coins (current in system: ${current}):`, current);
-        if (input === null) return;
-        const count = parseInt(input);
-        if (isNaN(count) || count < 0) {
-            alert(`Invalid number for ₱${d}`);
-            return;
-        }
-        stock[String(d)] = count;
-    }
-
-    try {
-        const res = await fetch("/api/admin/sync_stock", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ stock: stock }),
-        });
-        if (res.ok) {
-            alert("Stock synced successfully!");
-            loadStock();
-        } else {
-            const data = await res.json();
-            alert("Sync failed: " + (data.error || "Unknown error"));
-        }
-    } catch (e) {
-        alert("Connection error");
-    }
-}
-
 // ── Test Bill (Simulation) ──────────────────────────────────────────────────
 
 async function testBill(amount) {
@@ -733,15 +697,37 @@ async function loadServoPositions() {
 // ── Coin Exchange Fee Toggle ────────────────────────────────────────────────
 
 async function toggleCoinFee() {
-    // This is a placeholder — coin fee is always disabled by default (free)
-    // Toggle would store a setting to enable/disable fee for coin exchange
-    const statusEl = document.getElementById("coin-fee-status");
-    const current = statusEl.textContent.includes("Disabled");
-    const newState = current ? "Enabled" : "Disabled (Free)";
-    statusEl.textContent = newState;
-    alert(current
-        ? "Coin exchange fee ENABLED — coins will now incur service fee."
-        : "Coin exchange fee DISABLED — coin exchange is free!");
+    try {
+        const res = await fetch("/api/admin/coin_fee_toggle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+        });
+        if (res.ok) {
+            const data = await res.json();
+            const statusEl = document.getElementById("coin-fee-status");
+            statusEl.textContent = data.coin_fee_enabled ? "Enabled" : "Disabled (Free)";
+            alert(data.coin_fee_enabled
+                ? "Coin exchange fee ENABLED — coins will now incur service fee."
+                : "Coin exchange fee DISABLED — coin exchange is free!");
+        } else {
+            alert("Failed to toggle coin fee setting");
+        }
+    } catch (e) {
+        alert("Connection error");
+    }
+}
+
+async function loadCoinFeeStatus() {
+    try {
+        const res = await fetch("/api/admin/coin_fee_status");
+        if (res.ok) {
+            const data = await res.json();
+            const statusEl = document.getElementById("coin-fee-status");
+            if (statusEl) {
+                statusEl.textContent = data.coin_fee_enabled ? "Enabled" : "Disabled (Free)";
+            }
+        }
+    } catch (e) { /* silent */ }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

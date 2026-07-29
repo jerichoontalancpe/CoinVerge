@@ -76,7 +76,7 @@ const int HOPPER_MAP[DENOM_COUNT][3] = {
 //    Insert each bill and count how many pulses appear on GPIO32.
 //    Update the table below with your findings.
 // -----------------------------------------------------------------------------
-#define BILL_PIN            32      // ✅ confirmed GPIO32
+#define BILL_PIN            32      // confirmed GPIO32
 #define BILL_IDLE_STATE     HIGH    // INPUT_PULLUP: pin idles HIGH, pulses go LOW (open-collector)
 #define BILL_INHIBIT_PIN    33      // GPIO33 — confirmed wired (Yellow=INHIBIT+, Green=GND)
 #define BILL_INHIBIT_ACTIVE HIGH    // HIGH = acceptor disabled (rejects/spits back bills)
@@ -88,12 +88,12 @@ const int HOPPER_MAP[DENOM_COUNT][3] = {
 #define BILL_PULSE_TABLE_SIZE  6
 const int BILL_PULSE_TABLE[BILL_PULSE_TABLE_SIZE][2] = {
     // { pulse_count, peso_value }
-    {   2,   20  },  // ✅ ₱20  = 2 pulses  (1 pulse per ₱10)
-    {   5,   50  },  // ✅ ₱50  = 5 pulses  (confirmed)
-    {  10,  100  },  // ✅ ₱100 = 10 pulses (confirmed)
-    {  20,  200  },  // ₱200 = 20 pulses (predicted)
-    {  50,  500  },  // ₱500 = 50 pulses (predicted)
-    { 100, 1000  },  // ₱1000 = 100 pulses (predicted)
+    {   2,   20  },  // P20  = 2 pulses  (1 pulse per P10)
+    {   5,   50  },  // P50  = 5 pulses  (confirmed)
+    {  10,  100  },  // P100 = 10 pulses (confirmed)
+    {  20,  200  },  // P200 = 20 pulses (predicted)
+    {  50,  500  },  // P500 = 50 pulses (predicted)
+    { 100, 1000  },  // P1000 = 100 pulses (predicted)
 };
 
 // -----------------------------------------------------------------------------
@@ -103,6 +103,9 @@ const int BILL_PULSE_TABLE[BILL_PULSE_TABLE_SIZE][2] = {
 // -----------------------------------------------------------------------------
 #define COIN_PIN            27      // Coin acceptor signal wire (GPIO27)
 #define COIN_ACCEPT_PIN     27      // Alias for clarity
+#define COIN_INHIBIT_PIN    26      // GPIO26 — relay cuts 12V power to coin acceptor
+#define COIN_INHIBIT_ACTIVE HIGH    // HIGH = relay ON = coin acceptor powered (accepting)
+                                    // LOW = relay OFF = coin acceptor off (rejecting)
 #define COIN_DEBOUNCE_MS    30      // Debounce between pulses
 #define COIN_WINDOW_MS      150     // Wait after last pulse to decode (must be > pulse gap)
 

@@ -73,7 +73,6 @@ static int           g_servoB_pos20 = SERVO_B_POS_20;
 void openhop(int denomIndex);
 void closehop(int denomIndex);
 void closeAllHoppers();
-void exchangeTerminate();
 void sendStockReport();
 void processCommand(String cmd);
 bool executeDispense(String args);
@@ -133,6 +132,13 @@ void setup() {
     if (COIN_PIN >= 0) {
         pinMode(COIN_PIN, INPUT_PULLUP);
         Serial.printf("[COIN] Acceptor pin GPIO%d ready (idle=HIGH, pulses LOW)\n", COIN_PIN);
+    }
+
+    // ── Coin acceptor inhibit pin ────────────────────────────
+    if (COIN_INHIBIT_PIN >= 0) {
+        pinMode(COIN_INHIBIT_PIN, OUTPUT);
+        digitalWrite(COIN_INHIBIT_PIN, COIN_INHIBIT_ACTIVE);  // Enable coin acceptor at boot
+        Serial.printf("[COIN] Inhibit pin GPIO%d ready (enabled)\n", COIN_INHIBIT_PIN);
     }
 
     // ── Servo motors (coin routing) ─────────────────────────
@@ -223,6 +229,11 @@ void loop() {
                         digitalWrite(BILL_INHIBIT_PIN, BILL_INHIBIT_ACTIVE);
                         Serial.println("[BILL] Acceptor DISABLED (max balance reached)");
                     }
+                    // Disable coin acceptor if balance reached max
+                    if (COIN_INHIBIT_PIN >= 0 && g_totalMoney >= MAX_BILL_VALUE) {
+                        digitalWrite(COIN_INHIBIT_PIN, !COIN_INHIBIT_ACTIVE);
+                        Serial.println("[COIN] Acceptor DISABLED (max balance reached)");
+                    }
                 }
             } else if (value > MAX_BILL_VALUE) {
                 // Bill accepted by hardware but exceeds our software limit
@@ -300,6 +311,11 @@ void loop() {
                         digitalWrite(BILL_INHIBIT_PIN, BILL_INHIBIT_ACTIVE);
                         Serial.println("[COIN] Acceptor DISABLED (max balance reached)");
                     }
+                    // Disable coin acceptor if balance reached max
+                    if (COIN_INHIBIT_PIN >= 0 && g_totalMoney >= MAX_BILL_VALUE) {
+                        digitalWrite(COIN_INHIBIT_PIN, !COIN_INHIBIT_ACTIVE);
+                        Serial.println("[COIN] Coin acceptor DISABLED (max balance reached)");
+                    }
                 }
             } else {
                 Serial.println("[COIN] Unknown pulse count — check DIP switch settings");
@@ -336,6 +352,10 @@ void processCommand(String cmd) {
         if (BILL_INHIBIT_PIN >= 0) {
             digitalWrite(BILL_INHIBIT_PIN, !BILL_INHIBIT_ACTIVE);
         }
+        // Re-enable coin acceptor
+        if (COIN_INHIBIT_PIN >= 0) {
+            digitalWrite(COIN_INHIBIT_PIN, COIN_INHIBIT_ACTIVE);
+        }
         Serial.println("RESET:OK");
         Serial.printf("Total Money: %d\n", g_totalMoney);
 
@@ -349,6 +369,10 @@ void processCommand(String cmd) {
             // Disable bill acceptor since balance is set
             if (BILL_INHIBIT_PIN >= 0) {
                 digitalWrite(BILL_INHIBIT_PIN, BILL_INHIBIT_ACTIVE);
+            }
+            // Disable coin acceptor since balance is set
+            if (COIN_INHIBIT_PIN >= 0) {
+                digitalWrite(COIN_INHIBIT_PIN, !COIN_INHIBIT_ACTIVE);
             }
         } else {
             Serial.printf("CREDIT:ERROR:INVALID_AMOUNT:%d\n", amount);
@@ -524,6 +548,12 @@ bool executeDispense(String args) {
     // ── Execute dispensing ───────────────────────────────────
     Serial.printf("exchangeMoney: %d\n", requestTotal);
 
+    // Disable coin acceptor during dispensing
+    if (COIN_INHIBIT_PIN >= 0) {
+        digitalWrite(COIN_INHIBIT_PIN, !COIN_INHIBIT_ACTIVE);
+        Serial.println("[COIN] Acceptor DISABLED (dispensing)");
+    }
+
     for (int i = DENOM_COUNT - 1; i >= 0; i--) {
         int need  = requestCounts[i];
         int denom = HOPPER_MAP[i][0];
@@ -595,6 +625,12 @@ bool executeDispense(String args) {
         Serial.println("[BILL] Acceptor RE-ENABLED");
     }
 
+    // Re-enable coin acceptor for next customer
+    if (COIN_INHIBIT_PIN >= 0) {
+        digitalWrite(COIN_INHIBIT_PIN, COIN_INHIBIT_ACTIVE);
+        Serial.println("[COIN] Acceptor RE-ENABLED");
+    }
+
     return true;
 }
 
@@ -639,15 +675,6 @@ void closeAllHoppers() {
         digitalWrite(HOPPER_MAP[i][1], !HOP_ACTIVE);
 #endif
     }
-}
-
-// ============================================================================
-//  exchangeTerminate() — legacy name kept for reference
-// ============================================================================
-
-void exchangeTerminate() {
-    closeAllHoppers();
-    g_totalMoney = 0;
 }
 
 // ============================================================================

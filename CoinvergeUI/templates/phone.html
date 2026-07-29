@@ -95,7 +95,7 @@
         <div class="app-screen" id="screen-scanner">
             <div class="scanner-container">
                 <div class="scanner-header">
-                    <button class="scanner-close-btn" onclick="goHome()">✕</button>
+                    <button class="scanner-close-btn" onclick="goHome()">&times;</button>
                     <span class="scanner-title">Scan QR Code</span>
                     <span class="scanner-spacer"></span>
                 </div>
@@ -240,7 +240,7 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <div class="app-screen" id="screen-error">
             <div class="error-content">
-                <div class="error-circle">✕</div>
+                <div class="error-circle">&times;</div>
                 <h2 class="error-title">Payment Failed</h2>
                 <p class="error-msg" id="error-msg">Something went wrong. Please try again.</p>
                 <button class="retry-btn" onclick="goHome()">Try Again</button>
@@ -323,7 +323,7 @@
                         // Found the kiosk payment — show payment screen
                         currentPayment = data;
                         document.getElementById('pay-ref').textContent = data.reference_number;
-                        document.getElementById('scanner-status').textContent = '✓ QR Code detected!';
+                        document.getElementById('scanner-status').textContent = 'QR Code detected!';
 
                         setTimeout(() => {
                             showPaymentScreen();
@@ -379,7 +379,12 @@
 
             // Highlight selected amount
             document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            // Find the button with matching amount text
+            document.querySelectorAll('.amount-btn').forEach(b => {
+                if (b.textContent.trim() === '\u20B1' + amount) {
+                    b.classList.add('active');
+                }
+            });
 
             updatePaymentDetails();
         }

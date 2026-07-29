@@ -32,7 +32,12 @@ FLASK_PID=$!
 sleep 3
 
 # Launch Chromium in kiosk mode
-chromium-browser \
+CHROMIUM=$(which chromium-browser 2>/dev/null || which chromium 2>/dev/null)
+if [ -z "$CHROMIUM" ]; then
+    echo "ERROR: Chromium not found"
+    exit 1
+fi
+$CHROMIUM \
     --kiosk \
     --noerrdialogs \
     --disable-infobars \

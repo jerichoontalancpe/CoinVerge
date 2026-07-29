@@ -123,7 +123,14 @@ function handleEvent(ev) {
             } else if (state.screen === "fee") {
                 updateFeeScreen();
             } else if (state.screen === "picker") {
-                showFeeScreen();
+                // Coin arrived during picker — update balance in-place without navigating
+                refreshStock().then(() => {
+                    updateBalanceDisplay();
+                    updateRemaining();
+                    updateConfirm();
+                    updateQuickCounts();
+                    resetInactivityTimer();
+                });
             }
             break;
         case "epay_confirmed":
@@ -224,6 +231,17 @@ async function showPicker() {
     updateRemaining();
     updateConfirm();
     updateQuickCounts();
+
+    // Show cancel button only for e-payment and coin (no physical bill trapped)
+    const cancelBtn = document.getElementById("picker-cancel");
+    if (cancelBtn) {
+        if (state.paymentSource === "epay" || state.paymentSource === "coin") {
+            cancelBtn.classList.remove("hidden");
+        } else {
+            cancelBtn.classList.add("hidden");
+        }
+    }
+
     showScreen("picker");
     resetInactivityTimer();
 }
@@ -463,23 +481,6 @@ async function cancelTransaction() {
     state.paymentSource = "bill";
     resetSelection();
     showScreen("idle");
-}
-
-// ── Simulation ──────────────────────────────────────────────────────────────
-
-async function simulateBill(amount) {
-    try {
-        const res = await fetch("/api/simulate_bill", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amount }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-            state.balance = data.balance;
-            showFeeScreen();
-        }
-    } catch (e) { toast("Simulation error"); }
 }
 
 // ── Admin Tap (5 taps on top-right corner) ──────────────────────────────────

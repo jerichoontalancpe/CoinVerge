@@ -182,7 +182,7 @@
                     <p class="epay-ref">Ref: <span id="epay-ref-num">000000000000</span></p>
                 </div>
             </div>
-            <p class="epay-processing" id="epay-processing-msg">Waiting for payment</p>
+            <p class="epay-processing" id="epay-processing-msg">Waiting for payment<span class="waiting-dots"><span>.</span><span>.</span><span>.</span></span></p>
             <div class="epay-qr-actions">
                 <button class="epay-cancel-btn" onclick="cancelEpay()">Cancel</button>
             </div>
@@ -296,6 +296,7 @@
         </div>
 
         <div class="picker-actions">
+            <button class="action-btn cancel hidden" id="picker-cancel" onclick="cancelTransaction()">Cancel</button>
             <button class="action-btn confirm disabled" id="btn-confirm" onclick="confirmDispense()">Confirm Exchange</button>
         </div>
     </div>
