@@ -61,6 +61,7 @@ async function refreshStock() {
     try {
         const res = await fetch("/api/status");
         const data = await res.json();
+        state.balance = data.balance;
         state.stock = {};
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
