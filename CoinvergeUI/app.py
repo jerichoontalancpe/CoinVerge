@@ -48,7 +48,7 @@ class ESP32Connection:
         self.connected = False
         self._listeners = []
         self.payment_method = "cash"  # Track current payment method
-        self.payment_source = "bill"  # Track payment source: "bill", "coin", or "epay"
+        self.payment_source = "none"  # Track payment source: "bill", "coin", "epay", "mixed"
         self.servo_positions = {"A": 90, "B": 90, "A1": 45, "A5": 135, "B10": 45, "B20": 135}
 
         if simulate:
@@ -117,7 +117,12 @@ class ESP32Connection:
                     return
                 self.balance += amount
                 self.payment_method = "cash"
-                self.payment_source = "bill"
+                # Track source: if coins were already inserted, it's mixed
+                if self.payment_source == "coin":
+                    self.payment_source = "mixed"
+                elif self.payment_source == "none":
+                    self.payment_source = "bill"
+                # else: already "bill" or "mixed", keep as is
                 self._notify("bill", {"amount": amount, "balance": self.balance})
             except ValueError:
                 pass
@@ -130,7 +135,12 @@ class ESP32Connection:
                     return
                 self.balance += amount
                 self.payment_method = "coin"
-                self.payment_source = "coin"
+                # Track source: if bills were already inserted, it's mixed
+                if self.payment_source == "bill":
+                    self.payment_source = "mixed"
+                elif self.payment_source == "none":
+                    self.payment_source = "coin"
+                # else: already "coin" or "mixed", keep as is
                 # Increment stock in database (coin goes INTO the hopper)
                 from database import get_stock, update_stock as db_update_stock
                 stock = get_stock()
@@ -218,7 +228,7 @@ class ESP32Connection:
             return True
         elif cmd_upper == "RESET":
             self.balance = 0
-            self.payment_source = "bill"
+            self.payment_source = "none"
             return True
         elif cmd_upper.startswith("SERVO:") and not cmd_upper.startswith("SERVO_"):
             # Simulate servo movement: SERVO:A:90
@@ -282,7 +292,10 @@ class ESP32Connection:
         if amount > 0:
             self.balance += amount
             self.payment_method = "cash"
-            self.payment_source = "bill"
+            if self.payment_source == "coin":
+                self.payment_source = "mixed"
+            elif self.payment_source in ("none", "bill"):
+                self.payment_source = "bill"
             self._notify("bill", {"amount": amount, "balance": self.balance})
             return True
         return False
@@ -292,7 +305,10 @@ class ESP32Connection:
         if amount > 0:
             self.balance += amount
             self.payment_method = "coin"
-            self.payment_source = "coin"
+            if self.payment_source == "bill":
+                self.payment_source = "mixed"
+            elif self.payment_source in ("none", "coin"):
+                self.payment_source = "coin"
             # Increment stock in database (coin goes INTO the hopper)
             stock = get_stock()
             denom_stock = stock.get(amount, {})
@@ -364,7 +380,7 @@ def api_status():
     balance = esp32.balance
     payment_source = esp32.payment_source
 
-    # Fee logic: coins = 0 fee (unless coin_fee_enabled), bills/epay = tiered fee
+    # Fee logic: pure coin-only = free (unless coin_fee_enabled), all others = tiered fee
     if payment_source == "coin":
         coin_fee_enabled = get_setting('coin_fee_enabled')
         if coin_fee_enabled == '1':
@@ -372,6 +388,7 @@ def api_status():
         else:
             fee = 0
     else:
+        # bill, epay, mixed, none — all get tiered fee
         fee = get_fee(balance) if balance > 0 else 0
 
     return jsonify({
@@ -457,6 +474,7 @@ def api_dispense():
 
     esp32.send_command(cmd)
     esp32.balance = 0
+    esp32.payment_source = "none"
 
     # Optimistic deduction: stock is deducted immediately as coins are physically
     # dispensed. If ESP32 reports an error (jam/timeout), admin should use the
@@ -627,7 +645,7 @@ def api_reset():
     esp32.send_command("RESET")
     esp32.balance = 0
     esp32.payment_method = "cash"
-    esp32.payment_source = "bill"
+    esp32.payment_source = "none"
     return jsonify({"status": "ok"})
 
 

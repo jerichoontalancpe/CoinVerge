@@ -205,6 +205,7 @@ function updateFeeScreen() {
         if (feeMessageEn) feeMessageEn.innerHTML = 'No service fee \u2014 free exchange!';
         if (feeBadgeArea) feeBadgeArea.innerHTML = '<span class="fee-badge">FREE EXCHANGE</span>';
     } else {
+        // bill, epay, mixed — show fee
         if (feeBadgeArea) feeBadgeArea.innerHTML = '';
         feeAmountFil.textContent = `\u20B1${fee}`;
         feeAmountEn.textContent = `\u20B1${fee}`;
