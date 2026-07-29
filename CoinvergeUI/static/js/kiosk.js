@@ -196,9 +196,9 @@ function showScreen(name) {
 // ── Fee Screen ──────────────────────────────────────────────────────────────
 
 async function showFeeScreen() {
-    await refreshStock();
-    updateFeeScreen();
-    showScreen("fee");
+    showScreen("fee");        // Set screen immediately (prevents re-entry)
+    await refreshStock();     // Then fetch latest data
+    updateFeeScreen();        // Then update display
 }
 
 function updateFeeScreen() {
