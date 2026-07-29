@@ -190,8 +190,25 @@ async function showFeeScreen() {
 
 function updateFeeScreen() {
     const balance = state.balance;
-    const fee = state.fee;
-    const receive = state.available;
+    // Compute fee locally based on balance (same tiers as server)
+    let fee = state.fee;
+    let receive = state.available;
+    
+    // If fee/available seem stale (0 when balance > 0), compute locally
+    if (balance > 0 && receive === 0) {
+        if (state.paymentSource === "coin") {
+            fee = 0;
+        } else if (balance >= 100) {
+            fee = 5;
+        } else if (balance >= 50) {
+            fee = 3;
+        } else if (balance >= 20) {
+            fee = 2;
+        } else {
+            fee = 0;
+        }
+        receive = balance - fee;
+    }
 
     const feeAmountFil = document.getElementById("fee-amount-fil");
     const feeAmountEn = document.getElementById("fee-amount-en");
