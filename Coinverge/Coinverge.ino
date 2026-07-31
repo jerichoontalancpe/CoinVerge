@@ -130,8 +130,8 @@ void setup() {
 
     // ── Coin acceptor pulse pin ──────────────────────────────
     if (COIN_PIN >= 0) {
-        pinMode(COIN_PIN, INPUT_PULLUP);
-        Serial.printf("[COIN] Acceptor pin GPIO%d ready (idle=HIGH, pulses LOW)\n", COIN_PIN);
+        pinMode(COIN_PIN, INPUT);  // Allan 1299: idles LOW, pulses HIGH — no pull-up needed
+        Serial.printf("[COIN] Acceptor pin GPIO%d ready (idle=LOW, pulses HIGH)\n", COIN_PIN);
     }
 
     // ── Coin acceptor inhibit pin ────────────────────────────
@@ -251,12 +251,12 @@ void loop() {
         static unsigned long lastCoinPulseMs = 0;
         static unsigned int  coinPulseCount  = 0;
         static bool          coinInWindow    = false;
-        static bool          lastCoinState   = HIGH;  // idles HIGH with INPUT_PULLUP
+        static bool          lastCoinState   = LOW;   // Allan 1299 idles LOW
 
         bool currentCoinState = (bool)digitalRead(COIN_PIN);
 
-        // Detect falling edge (HIGH → LOW = active pulse)
-        if (currentCoinState == LOW && lastCoinState == HIGH) {
+        // Detect rising edge (LOW → HIGH = active pulse, Allan 1299 idles LOW)
+        if (currentCoinState == HIGH && lastCoinState == LOW) {
             unsigned long now = millis();
             if (now - lastCoinPulseMs > COIN_DEBOUNCE_MS) {
                 coinPulseCount++;
