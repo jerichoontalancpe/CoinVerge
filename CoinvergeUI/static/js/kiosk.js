@@ -55,7 +55,7 @@ async function fetchStatus() {
         if (!data.any_stock || data.maintenance_mode) {
             showUnavailable(data.maintenance_mode, !data.any_stock);
         } else if (state.balance > 0) {
-            showFeeScreen();
+            showPicker();
         } else {
             updateLowStockBanner();
         }

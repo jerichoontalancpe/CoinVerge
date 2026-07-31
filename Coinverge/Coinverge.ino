@@ -247,7 +247,7 @@ void loop() {
     }
 
     // ── Poll coin acceptor (GPIO27, pulse-type, Allan 1299 Pro Max) ─────
-    if (COIN_PIN >= 0) {
+    if (COIN_PIN >= 0 && millis() > 2000) {  // Skip first 2 seconds (boot noise)
         static unsigned long lastCoinPulseMs = 0;
         static unsigned int  coinPulseCount  = 0;
         static bool          coinInWindow    = false;
