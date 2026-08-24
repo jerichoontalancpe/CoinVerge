@@ -28,8 +28,38 @@ const state = {
 
 // ── Init ────────────────────────────────────────────────────────────────────
 
+let tutorialTimer = null;
+let tutorialSlide = 0;
+const TUTORIAL_INTERVAL = 4000;
+
+function startTutorial() {
+    tutorialSlide = 0;
+    showTutorialSlide(0);
+    tutorialTimer = setInterval(() => {
+        tutorialSlide = (tutorialSlide + 1) % 4;
+        showTutorialSlide(tutorialSlide);
+    }, TUTORIAL_INTERVAL);
+}
+
+function stopTutorial() {
+    if (tutorialTimer) {
+        clearInterval(tutorialTimer);
+        tutorialTimer = null;
+    }
+}
+
+function showTutorialSlide(index) {
+    document.querySelectorAll('.tutorial-slide').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tutorial-dot').forEach(d => d.classList.remove('active'));
+    const slide = document.querySelector(`.tutorial-slide[data-slide="${index}"]`);
+    const dot = document.querySelector(`.tutorial-dot[data-dot="${index}"]`);
+    if (slide) slide.classList.add('active');
+    if (dot) dot.classList.add('active');
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     await fetchStatus();
+    startTutorial();
     setInterval(pollEvents, 600);
 });
 
@@ -183,6 +213,13 @@ function showScreen(name) {
     document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
     document.getElementById(`screen-${name}`).classList.add("active");
     state.screen = name;
+
+    // Tutorial slideshow: start on idle, stop on any other screen
+    if (name === "idle") {
+        startTutorial();
+    } else {
+        stopTutorial();
+    }
 
     if (name !== "picker") {
         clearTimeout(state.inactivityTimer);
