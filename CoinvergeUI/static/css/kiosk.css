@@ -39,16 +39,24 @@ html, body {
     font-size: 15px;
 }
 
-/* Circuit board pattern overlay */
+/* PCB / Circuit board trace pattern overlay */
 body::before {
     content: '';
     position: fixed;
     inset: 0;
-    background:
-        radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px),
-        radial-gradient(circle, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 40px 40px, 20px 20px;
-    background-position: 0 0, 10px 10px;
+    opacity: 0.04;
+    background-image:
+        /* Horizontal traces */
+        linear-gradient(90deg, transparent 0%, transparent 20%, rgba(252,209,22,0.3) 20%, rgba(252,209,22,0.3) 20.4%, transparent 20.4%, transparent 48%, rgba(252,209,22,0.3) 48%, rgba(252,209,22,0.3) 48.4%, transparent 48.4%, transparent 75%, rgba(252,209,22,0.3) 75%, rgba(252,209,22,0.3) 75.4%, transparent 75.4%, transparent 100%),
+        /* Vertical traces */
+        linear-gradient(0deg, transparent 0%, transparent 15%, rgba(252,209,22,0.3) 15%, rgba(252,209,22,0.3) 15.4%, transparent 15.4%, transparent 45%, rgba(252,209,22,0.3) 45%, rgba(252,209,22,0.3) 45.4%, transparent 45.4%, transparent 72%, rgba(252,209,22,0.3) 72%, rgba(252,209,22,0.3) 72.4%, transparent 72.4%, transparent 100%),
+        /* Diagonal short traces */
+        linear-gradient(45deg, transparent 0%, transparent 49%, rgba(252,209,22,0.2) 49%, rgba(252,209,22,0.2) 49.5%, transparent 49.5%, transparent 100%),
+        /* Pads / nodes */
+        radial-gradient(circle 2px, rgba(252,209,22,0.4) 100%, transparent 100%),
+        radial-gradient(circle 1.5px, rgba(252,209,22,0.3) 100%, transparent 100%);
+    background-size: 80px 80px, 120px 120px, 60px 60px, 40px 40px, 80px 80px;
+    background-position: 0 0, 0 0, 10px 10px, 0 0, 20px 20px;
     pointer-events: none;
     z-index: 0;
 }
@@ -67,156 +75,189 @@ body::before {
 /* ── IDLE SCREEN ─────────────────────────────────────────────────────────── */
 
 .idle-container {
-    text-align: center;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    height: 100%; width: 100%;
-    padding: 1.2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
     position: relative;
 }
 
-.idle-brand {
-    margin-bottom: 0.6rem;
-    text-align: center;
+/* ── Idle Top Bar ────────────────────────────────────────────────────────── */
+
+.idle-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(252, 209, 22, 0.15);
+    flex-shrink: 0;
 }
 
-.brand-logo {
-    width: 120px;
-    height: 120px;
+.idle-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.idle-topbar-logo {
+    width: 40px;
+    height: 40px;
     object-fit: cover;
     border-radius: 50%;
-    border: 3px solid rgba(252, 209, 22, 0.7);
-    box-shadow: 0 0 20px rgba(252, 209, 22, 0.15), 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(252, 209, 22, 0.6);
     background: rgba(255, 255, 255, 0.95);
-    padding: 6px;
-    animation: floatLogo 4s ease-in-out infinite;
+    padding: 2px;
 }
 
-@keyframes floatLogo {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-}
-
-/* ── Step Guide ──────────────────────────────────────────────────────────── */
-
-.step-guide {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 0.8rem;
-    opacity: 0;
-    animation: fadeInGuide 0.8s ease forwards;
-    animation-delay: 2s;
-}
-
-@keyframes fadeInGuide {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.step {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.step-number {
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    background: rgba(252, 209, 22, 0.15);
-    border: 1.5px solid var(--gold-dim);
-    color: var(--gold);
-    font-size: 0.75rem;
+.idle-topbar-brand {
+    font-size: 1.3rem;
     font-weight: 800;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+}
+
+.idle-topbar-right {
     display: flex;
     align-items: center;
+    gap: 8px;
+}
+
+.idle-status-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.3px;
+}
+
+.idle-status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(0, 200, 83, 0.6), 0 0 16px rgba(0, 200, 83, 0.3);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(0, 200, 83, 0.6), 0 0 16px rgba(0, 200, 83, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(0, 200, 83, 0.8), 0 0 24px rgba(0, 200, 83, 0.5); }
+}
+
+/* ── Idle Panels (Main Content) ──────────────────────────────────────────── */
+
+.idle-panels {
+    display: flex;
+    gap: 20px;
+    padding: 20px 24px;
+    flex: 1;
+    align-items: stretch;
+}
+
+.idle-panel {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-}
-
-.step-label {
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    font-weight: 500;
-}
-
-.step-arrow {
-    width: 20px;
-    height: 2px;
-    background: rgba(252, 209, 22, 0.3);
+    text-align: center;
     position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
 }
-.step-arrow::after {
+
+.idle-panel::before {
     content: '';
     position: absolute;
-    right: 0; top: 50%;
-    transform: translateY(-50%);
-    width: 0; height: 0;
-    border-left: 5px solid rgba(252, 209, 22, 0.4);
-    border-top: 3px solid transparent;
-    border-bottom: 3px solid transparent;
+    inset: 0;
+    border-radius: 16px;
+    padding: 2px;
+    background: linear-gradient(135deg, transparent, transparent);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
 }
 
-/* ── Idle CTA ────────────────────────────────────────────────────────────── */
-
-.idle-cta {
-    text-align: center;
+/* Cash panel - blue glow */
+.idle-panel-cash {
+    border: 2px solid rgba(0, 56, 168, 0.5);
+    box-shadow: 0 0 20px rgba(0, 56, 168, 0.15), inset 0 0 30px rgba(0, 56, 168, 0.05);
 }
 
-.cta-arrow {
-    font-size: 1.5rem; color: var(--gold);
-    animation: bounce 1.2s ease-in-out infinite;
-    display: inline-block;
-}
-.cta-arrow::before {
-    content: '';
-    display: inline-block;
-    width: 16px; height: 16px;
-    border-right: 3px solid var(--gold);
-    border-bottom: 3px solid var(--gold);
-    transform: rotate(45deg);
-    margin-bottom: 4px;
+/* E-Payment panel - green glow, tappable */
+.idle-panel-epay {
+    border: 2px solid rgba(0, 200, 83, 0.4);
+    box-shadow: 0 0 20px rgba(0, 200, 83, 0.15), inset 0 0 30px rgba(0, 200, 83, 0.05);
+    cursor: pointer;
 }
 
-.cta-text {
-    font-size: 1.6rem;
-    font-weight: 600;
-    margin: 0.3rem 0 0.1rem;
-    letter-spacing: 0.2px;
-    animation: pulseText 3s ease-in-out infinite;
+.idle-panel-epay:active {
+    transform: scale(0.97);
+    background: rgba(0, 200, 83, 0.08);
+    border-color: rgba(0, 200, 83, 0.7);
+    box-shadow: 0 0 30px rgba(0, 200, 83, 0.3), inset 0 0 40px rgba(0, 200, 83, 0.1);
 }
 
-@keyframes pulseText {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.cta-sub {
-    font-size: 0.95rem;
-    color: var(--text-dim);
-    font-style: italic;
-    margin-bottom: 0.6rem;
-}
-
-.accepted-bills {
-    display: flex; gap: 0.6rem; justify-content: center;
-    margin-top: 0.5rem;
-}
-
-.bill-chip {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 2px solid var(--gold-dim);
-    padding: 0.4rem 1rem; border-radius: 20px;
-    font-weight: 700; color: var(--gold);
+.idle-panel-title {
     font-size: 1.2rem;
-    animation: shimmerChip 3s ease-in-out infinite;
+    font-weight: 800;
+    color: var(--gold);
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
+
+.idle-panel-subtitle {
+    font-size: 1rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    line-height: 1.3;
+}
+
+/* ── Denomination Box (Cash Panel) ───────────────────────────────────────── */
+
+.idle-denom-box {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(252, 209, 22, 0.2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.idle-denom-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.idle-denom-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.idle-denom-chip {
+    background: rgba(252, 209, 22, 0.08);
+    border: 2px solid var(--gold-dim);
+    color: var(--gold);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 1rem;
+    font-weight: 700;
     position: relative;
     overflow: hidden;
 }
 
-.bill-chip::after {
+.idle-denom-chip::after {
     content: '';
     position: absolute;
     top: -50%; left: -100%;
@@ -225,70 +266,46 @@ body::before {
     animation: shimmerPass 4s ease-in-out infinite;
 }
 
-@keyframes shimmerPass {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.accepted-coins {
-    display: flex; gap: 8px; justify-content: center;
-    margin-top: 8px;
-}
-
-.coin-chip {
-    background: linear-gradient(135deg, rgba(252, 209, 22, 0.15), rgba(252, 209, 22, 0.05));
-    border: 1px solid var(--gold-dim);
-    color: var(--gold);
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 1rem;
-    position: relative;
-    overflow: hidden;
-}
-.coin-chip::after {
-    content: '';
-    position: absolute;
-    top: -50%; left: -100%;
-    width: 200%; height: 200%;
-    background: linear-gradient(90deg, transparent 0%, rgba(252,209,22,0.08) 50%, transparent 100%);
-    animation: shimmerPass 5s ease-in-out infinite;
-    animation-delay: 1s;
-}
-
-.epay-section {
-    margin-top: 0.8rem;
-}
-
-.epay-btn {
-    padding: 10px 24px;
-    border-radius: var(--radius);
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    color: var(--gold);
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-}
-.epay-btn:active {
-    transform: scale(0.95);
-    background: rgba(255, 255, 255, 0.1);
-}
-.epay-btn-main {
-    font-size: 1.1rem;
-    font-weight: 700;
-}
-.epay-btn-sub {
-    font-size: 0.75rem;
+.idle-panel-note {
+    font-size: 0.8rem;
     color: var(--text-dim);
-    font-weight: 400;
+    margin-top: 12px;
+    font-style: italic;
+}
+
+/* ── E-Payment Box ───────────────────────────────────────────────────────── */
+
+.idle-epay-box {
+    background: rgba(0, 200, 83, 0.06);
+    border: 1px solid rgba(0, 200, 83, 0.25);
+    border-radius: 12px;
+    padding: 20px 16px;
+    width: 100%;
+    max-width: 280px;
+}
+
+.idle-epay-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+}
+
+/* ── Bottom Bar ──────────────────────────────────────────────────────────── */
+
+.idle-bottombar {
+    padding: 10px 20px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(252, 209, 22, 0.15);
+    flex-shrink: 0;
+}
+
+.idle-step-guide {
+    font-size: 0.95rem;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: 0.3px;
 }
 
 .admin-trigger {
@@ -300,7 +317,7 @@ body::before {
 
 .low-stock-banner {
     position: absolute;
-    bottom: 30px;
+    bottom: 50px;
     left: 50%; transform: translateX(-50%);
     background: rgba(252, 209, 22, 0.1);
     backdrop-filter: var(--glass-blur);
@@ -1003,6 +1020,10 @@ body::before {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-6px); }
 }
+@keyframes shimmerPass {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
 @keyframes coinDrop {
     0%, 100% { transform: translateY(0); opacity: 1; }
     50% { transform: translateY(10px); opacity: 0.5; }
@@ -1035,9 +1056,11 @@ body::before {
 
 /* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
 @media (max-height: 480px) {
-    .brand-logo { max-height: 100px; width: 100px; height: 100px; }
-    .idle-cta { margin-top: 0; }
-    .cta-text { font-size: 1.4rem; }
+    .idle-panels { padding: 10px 16px; gap: 12px; }
+    .idle-panel { padding: 12px 10px; }
+    .idle-panel-title { font-size: 1rem; }
+    .idle-panel-subtitle { font-size: 0.85rem; margin-bottom: 10px; }
+    .idle-denom-chip { font-size: 0.85rem; padding: 3px 8px; }
 }
 
 /* ── TIMEOUT COUNTDOWN ───────────────────────────────────────────────────── */

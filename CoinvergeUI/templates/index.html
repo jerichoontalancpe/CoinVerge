@@ -10,47 +10,54 @@
     <!-- SCREEN: IDLE -->
     <div id="screen-idle" class="screen active">
         <div class="idle-container">
-            <div class="idle-brand">
-                <img src="/static/img/logo.png" alt="CoinVerge" class="brand-logo">
-            </div>
-            <div class="step-guide">
-                <div class="step">
-                    <span class="step-number">1</span>
-                    <span class="step-label">Insert Money</span>
+            <!-- Top Bar -->
+            <div class="idle-topbar">
+                <div class="idle-topbar-left">
+                    <img src="/static/img/logo.png" alt="CoinVerge" class="idle-topbar-logo">
+                    <span class="idle-topbar-brand">CoinVerge</span>
                 </div>
-                <span class="step-arrow"></span>
-                <div class="step">
-                    <span class="step-number">2</span>
-                    <span class="step-label">Choose Coins</span>
-                </div>
-                <span class="step-arrow"></span>
-                <div class="step">
-                    <span class="step-number">3</span>
-                    <span class="step-label">Collect</span>
+                <div class="idle-topbar-right">
+                    <span class="idle-status-text">STATUS: READY</span>
+                    <span class="idle-status-dot"></span>
                 </div>
             </div>
-            <div class="idle-cta">
-                <div class="cta-arrow"></div>
-                <p class="cta-text">Insert bill or coins below</p>
-                <p class="cta-sub">Maglagay ng pera sa ibaba</p>
-                <div class="accepted-bills">
-                    <span class="bill-chip">&#8369;20</span>
-                    <span class="bill-chip">&#8369;50</span>
-                    <span class="bill-chip">&#8369;100</span>
+
+            <!-- Main Content: Two Panels -->
+            <div class="idle-panels">
+                <!-- Left Panel: Cash / Coin Slot -->
+                <div class="idle-panel idle-panel-cash">
+                    <div class="idle-panel-title">METHOD 1: CASH / COIN SLOT</div>
+                    <div class="idle-panel-subtitle">Insert Cash Below to Start Automatic Exchange</div>
+                    <div class="idle-denom-box">
+                        <div class="idle-denom-label">TINATANGGAP NA PERA:</div>
+                        <div class="idle-denom-chips">
+                            <span class="idle-denom-chip">&#8369;1</span>
+                            <span class="idle-denom-chip">&#8369;5</span>
+                            <span class="idle-denom-chip">&#8369;10</span>
+                            <span class="idle-denom-chip">&#8369;20</span>
+                            <span class="idle-denom-chip">&#8369;50</span>
+                            <span class="idle-denom-chip">&#8369;100</span>
+                        </div>
+                    </div>
+                    <div class="idle-panel-note">(Auto-detects insert)</div>
                 </div>
-                <div class="accepted-coins">
-                    <span class="coin-chip">&#8369;1</span>
-                    <span class="coin-chip">&#8369;5</span>
-                    <span class="coin-chip">&#8369;10</span>
-                    <span class="coin-chip">&#8369;20</span>
-                </div>
-                <div class="epay-section">
-                    <button class="epay-btn" onclick="showEpay()">
-                        <span class="epay-btn-main">Pay with GCash / Maya</span>
-                        <span class="epay-btn-sub">Scan QR code from your phone</span>
-                    </button>
+
+                <!-- Right Panel: E-Payment (tappable) -->
+                <div class="idle-panel idle-panel-epay" onclick="showEpay()">
+                    <div class="idle-panel-title">METHOD 2: E-PAYMENT</div>
+                    <div class="idle-panel-subtitle">Tap Screen to Buy Coins with E-Wallet</div>
+                    <div class="idle-epay-box">
+                        <div class="idle-epay-text">MAGPAPALIT GAMIT ANG GCASH / MAYA</div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Bottom Bar -->
+            <div class="idle-bottombar">
+                <span class="idle-step-guide">(1) Maghulog / Tap QR &nbsp;&rarr;&nbsp; (2) Nilalabas &nbsp;&rarr;&nbsp; (3) Kunin Ang Barya</span>
+            </div>
+
+            <!-- Low Stock Banner -->
             <div id="low-stock-banner" class="low-stock-banner hidden">
                 Limited stock available
             </div>
