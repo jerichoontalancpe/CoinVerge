@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Alert</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #ff0033;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .alert-container {
+            text-align: center;
+            padding: 40px;
+            border: 3px solid #ff0033;
+            background: rgba(255, 0, 51, 0.05);
+            max-width: 700px;
+            width: 90%;
+            animation: borderPulse 1.5s infinite;
+        }
+
+        @keyframes borderPulse {
+            0%, 100% { border-color: #ff0033; box-shadow: 0 0 20px rgba(255, 0, 51, 0.3); }
+            50% { border-color: #ff3366; box-shadow: 0 0 40px rgba(255, 0, 51, 0.6); }
+        }
+
+        .warning-icon {
+            font-size: 80px;
+            animation: shake 0.5s infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .main-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(255, 0, 51, 0.8);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #ff6680;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .countdown-container {
+            margin: 30px 0;
+        }
+
+        .countdown-label {
+            font-size: 0.9rem;
+            color: #cc0029;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .countdown {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #ff0033;
+            text-shadow: 0 0 15px rgba(255, 0, 51, 0.9);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #1a1a1a;
+            margin: 25px 0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0033, #ff3366);
+            width: 0%;
+            animation: progressAnim 60s linear forwards;
+        }
+
+        @keyframes progressAnim {
+            to { width: 100%; }
+        }
+
+        .blinking-text {
+            animation: blink 1s infinite;
+            font-size: 0.85rem;
+            color: #ff4466;
+            margin-top: 20px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Reveal screen */
+        .reveal-container {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            max-width: 700px;
+            width: 90%;
+        }
+
+        .reveal-container .check-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .reveal-container h1 {
+            font-size: 2rem;
+            color: #00ff88;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .reveal-container p {
+            font-size: 1.1rem;
+            color: #aaffcc;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .reveal-container .lesson {
+            border: 2px solid #00ff88;
+            padding: 25px;
+            margin-top: 25px;
+            background: rgba(0, 255, 136, 0.05);
+            border-radius: 5px;
+        }
+
+        .reveal-container .lesson h2 {
+            color: #00ff88;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .reveal-container .lesson ul {
+            text-align: left;
+            color: #88ffbb;
+            list-style: none;
+            padding: 0;
+        }
+
+        .reveal-container .lesson ul li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+        }
+
+        .reveal-container .lesson ul li::before {
+            content: "✓ ";
+            color: #00ff88;
+            font-weight: bold;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.1) 2px,
+                rgba(0, 0, 0, 0.1) 4px
+            );
+            z-index: 1000;
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: transparent;
+            border: 1px solid #333;
+            color: #333;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            z-index: 1001;
+            opacity: 0.3;
+        }
+
+        .fullscreen-btn:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanline"></div>
+
+    <button class="fullscreen-btn" onclick="goFullscreen()">⛶ Fullscreen</button>
+
+    <!-- ALERT SCREEN -->
+    <div class="alert-container" id="alertScreen">
+        <div class="warning-icon">⚠️</div>
+        <div class="main-title">Critical Security Breach Detected</div>
+        <div class="subtitle">
+            Unauthorized access has been initiated from this device.<br>
+            Your session has been flagged and logged.
+        </div>
+
+        <div class="countdown-container">
+            <div class="countdown-label">System lockout in:</div>
+            <div class="countdown" id="countdown">02:00</div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        <div class="blinking-text">
+            ⚠ DO NOT CLOSE THIS WINDOW — SESSION IS BEING MONITORED ⚠
+        </div>
+    </div>
+
+    <!-- REVEAL SCREEN -->
+    <div class="reveal-container" id="revealScreen">
+        <div class="check-icon">✅</div>
+        <h1>Relax — This Was a Test!</h1>
+        <p>
+            Your system is completely safe. Nothing was compromised.<br>
+            This was a <strong style="color: #00ff88;">cybersecurity awareness exercise</strong>.
+        </p>
+        <p style="font-size: 0.95rem; color: #77ddaa;">
+            You clicked an unverified link without checking where it leads.<br>
+            In a real scenario, this could have been dangerous.
+        </p>
+
+        <div class="lesson">
+            <h2>🔐 Key Takeaways</h2>
+            <ul>
+                <li>Always verify URLs before clicking — hover to preview the destination</li>
+                <li>Be suspicious of links from unexpected or unverified sources</li>
+                <li>Check for misspellings, unusual domains, and shortened URLs</li>
+                <li>When in doubt, type the address manually in your browser</li>
+                <li>Real security alerts never ask you to stay on a webpage</li>
+                <li>Maging mapagmatyag sa bawat click — it only takes one to get compromised</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Countdown timer (fake - does nothing harmful)
+        let timeLeft = 120; // 2 minutes
+        const countdownEl = document.getElementById('countdown');
+
+        const timer = setInterval(() => {
+            timeLeft--;
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                showReveal();
+            }
+        }, 1000);
+
+        // Press 'R' to reveal (teacher control)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                showReveal();
+            }
+        });
+
+        function showReveal() {
+            clearInterval(timer);
+            document.getElementById('alertScreen').style.display = 'none';
+            document.getElementById('revealScreen').style.display = 'block';
+            document.body.style.background = '#0a1a0f';
+        }
+
+        function goFullscreen() {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+
+        // Prevent easy closing (just removes right-click, doesn't actually lock anything)
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
