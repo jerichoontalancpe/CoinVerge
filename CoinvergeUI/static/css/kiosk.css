@@ -44,19 +44,25 @@ body::before {
     content: '';
     position: fixed;
     inset: 0;
-    opacity: 0.04;
+    opacity: 0.12;
     background-image:
-        /* Horizontal traces */
-        linear-gradient(90deg, transparent 0%, transparent 20%, rgba(252,209,22,0.3) 20%, rgba(252,209,22,0.3) 20.4%, transparent 20.4%, transparent 48%, rgba(252,209,22,0.3) 48%, rgba(252,209,22,0.3) 48.4%, transparent 48.4%, transparent 75%, rgba(252,209,22,0.3) 75%, rgba(252,209,22,0.3) 75.4%, transparent 75.4%, transparent 100%),
-        /* Vertical traces */
-        linear-gradient(0deg, transparent 0%, transparent 15%, rgba(252,209,22,0.3) 15%, rgba(252,209,22,0.3) 15.4%, transparent 15.4%, transparent 45%, rgba(252,209,22,0.3) 45%, rgba(252,209,22,0.3) 45.4%, transparent 45.4%, transparent 72%, rgba(252,209,22,0.3) 72%, rgba(252,209,22,0.3) 72.4%, transparent 72.4%, transparent 100%),
-        /* Diagonal short traces */
-        linear-gradient(45deg, transparent 0%, transparent 49%, rgba(252,209,22,0.2) 49%, rgba(252,209,22,0.2) 49.5%, transparent 49.5%, transparent 100%),
-        /* Pads / nodes */
-        radial-gradient(circle 2px, rgba(252,209,22,0.4) 100%, transparent 100%),
-        radial-gradient(circle 1.5px, rgba(252,209,22,0.3) 100%, transparent 100%);
-    background-size: 80px 80px, 120px 120px, 60px 60px, 40px 40px, 80px 80px;
-    background-position: 0 0, 0 0, 10px 10px, 0 0, 20px 20px;
+        /* Main horizontal traces */
+        linear-gradient(90deg, transparent 0%, transparent 18%, rgba(252,209,22,0.6) 18%, rgba(252,209,22,0.6) 18.8%, transparent 18.8%, transparent 45%, rgba(252,209,22,0.6) 45%, rgba(252,209,22,0.6) 45.8%, transparent 45.8%, transparent 72%, rgba(252,209,22,0.6) 72%, rgba(252,209,22,0.6) 72.8%, transparent 72.8%, transparent 100%),
+        /* Main vertical traces */
+        linear-gradient(0deg, transparent 0%, transparent 12%, rgba(252,209,22,0.6) 12%, rgba(252,209,22,0.6) 12.8%, transparent 12.8%, transparent 38%, rgba(252,209,22,0.6) 38%, rgba(252,209,22,0.6) 38.8%, transparent 38.8%, transparent 65%, rgba(252,209,22,0.6) 65%, rgba(252,209,22,0.6) 65.8%, transparent 65.8%, transparent 88%, rgba(252,209,22,0.6) 88%, rgba(252,209,22,0.6) 88.8%, transparent 88.8%, transparent 100%),
+        /* Secondary horizontal traces */
+        linear-gradient(90deg, transparent 0%, transparent 32%, rgba(0,150,255,0.4) 32%, rgba(0,150,255,0.4) 32.5%, transparent 32.5%, transparent 60%, rgba(0,150,255,0.4) 60%, rgba(0,150,255,0.4) 60.5%, transparent 60.5%, transparent 100%),
+        /* Secondary vertical traces */
+        linear-gradient(0deg, transparent 0%, transparent 28%, rgba(0,150,255,0.4) 28%, rgba(0,150,255,0.4) 28.5%, transparent 28.5%, transparent 55%, rgba(0,150,255,0.4) 55%, rgba(0,150,255,0.4) 55.5%, transparent 55.5%, transparent 100%),
+        /* Large pads / connection points */
+        radial-gradient(circle 3px, rgba(252,209,22,0.7) 0%, rgba(252,209,22,0.7) 60%, transparent 60%),
+        /* Small vias */
+        radial-gradient(circle 1.5px, rgba(0,150,255,0.5) 0%, rgba(0,150,255,0.5) 60%, transparent 60%),
+        /* Corner traces (45 degree) */
+        linear-gradient(45deg, transparent 0%, transparent 48%, rgba(252,209,22,0.4) 48%, rgba(252,209,22,0.4) 49%, transparent 49%, transparent 100%),
+        linear-gradient(135deg, transparent 0%, transparent 48%, rgba(0,150,255,0.3) 48%, rgba(0,150,255,0.3) 49%, transparent 49%, transparent 100%);
+    background-size: 100px 100px, 140px 140px, 180px 180px, 200px 200px, 50px 50px, 70px 70px, 80px 80px, 120px 120px;
+    background-position: 0 0, 10px 10px, 25px 5px, 15px 30px, 5px 5px, 35px 35px, 0 0, 40px 40px;
     pointer-events: none;
     z-index: 0;
 }
