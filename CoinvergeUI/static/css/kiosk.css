@@ -664,15 +664,15 @@ body::before {
     -webkit-backdrop-filter: var(--glass-blur);
     border: 2px solid rgba(252, 209, 22, 0.3);
     border-radius: var(--radius);
-    padding: 12px 8px;
+    padding: 16px 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 62px;
+    min-height: 80px;
 }
 .quick-card:active {
     transform: scale(0.95);
@@ -680,12 +680,12 @@ body::before {
     border-color: var(--gold);
 }
 .quick-card-denom {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1.4rem;
+    font-weight: 800;
     color: var(--gold);
 }
 .quick-card-count {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
     color: var(--text-dim);
 }
 
@@ -702,7 +702,7 @@ body::before {
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border-radius: var(--radius);
-    padding: 8px 4px; text-align: center;
+    padding: 12px 6px; text-align: center;
     border: 2px solid var(--glass-border);
     transition: all 0.3s ease;
 }
@@ -729,20 +729,20 @@ body::before {
     box-shadow: 0 0 16px rgba(252, 209, 22, 0.3);
 }
 
-.card-header { margin-bottom: 4px; }
-.card-denom { font-size: 1.2rem; font-weight: 800; color: var(--gold); }
+.card-header { margin-bottom: 6px; }
+.card-denom { font-size: 1.5rem; font-weight: 800; color: var(--gold); }
 .card-stock { display: block; font-size: 0.65rem; color: var(--text-dim); margin-top: 1px; }
 
 .card-controls {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
 }
 
 .ctrl-btn {
-    width: 36px; height: 36px; border-radius: 50%; border: none;
-    font-size: 1.3rem; font-weight: 700; cursor: pointer;
+    width: 44px; height: 44px; border-radius: 50%; border: none;
+    font-size: 1.5rem; font-weight: 700; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: transform 0.15s ease;
-    min-width: 40px; min-height: 40px;
+    min-width: 44px; min-height: 44px;
 }
 .ctrl-btn:active { transform: scale(0.85); }
 .ctrl-btn.minus {
