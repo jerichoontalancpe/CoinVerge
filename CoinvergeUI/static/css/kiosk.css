@@ -1060,6 +1060,217 @@ body::before {
     font-size: 0.75rem; font-weight: 600; cursor: pointer;
 }
 
+/* ── MONEY SCATTER (Cash Panel) ───────────────────────────────────────────── */
+
+.money-scatter {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 240px;
+    height: 120px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bill {
+    position: absolute;
+    width: 80px;
+    height: 40px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.3px;
+}
+
+.bill-100 {
+    background: rgba(64, 96, 176, 0.75);
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-5deg);
+}
+
+.bill-50 {
+    background: rgba(201, 64, 64, 0.75);
+    top: 25px;
+    left: 50%;
+    transform: translateX(-50%) rotate(0deg) translateX(-10px);
+}
+
+.bill-20 {
+    background: rgba(232, 160, 48, 0.75);
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%) rotate(5deg) translateX(10px);
+}
+
+.coin-visual {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #f0d060, #c8a020);
+    border: 2px solid #9a7a10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.5rem;
+    font-weight: 800;
+    color: #4a3a00;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.coin-visual.c1 {
+    top: 0;
+    left: 10px;
+    width: 26px;
+    height: 26px;
+}
+
+.coin-visual.c5 {
+    top: 70px;
+    left: 20px;
+    width: 28px;
+    height: 28px;
+}
+
+.coin-visual.c10 {
+    top: 5px;
+    right: 15px;
+    left: auto;
+    width: 30px;
+    height: 30px;
+}
+
+.coin-visual.c20 {
+    top: 75px;
+    right: 10px;
+    left: auto;
+    width: 32px;
+    height: 32px;
+}
+
+/* Ensure panel content stays above the scatter */
+.idle-panel-cash .idle-panel-title,
+.idle-panel-cash .idle-panel-subtitle,
+.idle-panel-cash .idle-denom-box,
+.idle-panel-cash .idle-panel-note {
+    position: relative;
+    z-index: 1;
+}
+
+/* ── E-PAYMENT BRANDS (E-Pay Panel) ─────────────────────────────────────── */
+
+.epay-phone-icon {
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
+}
+
+.phone-outline {
+    width: 40px;
+    height: 60px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.phone-outline::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10px;
+    height: 2px;
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.phone-qr-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 2px;
+    width: 22px;
+    height: 22px;
+}
+
+.phone-qr-grid span {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 1px;
+}
+
+.phone-qr-grid span:nth-child(2),
+.phone-qr-grid span:nth-child(5),
+.phone-qr-grid span:nth-child(8),
+.phone-qr-grid span:nth-child(11),
+.phone-qr-grid span:nth-child(14) {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.epay-brands {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 14px;
+}
+
+.brand-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.brand-badge:active {
+    transform: scale(0.95);
+}
+
+.gcash-badge {
+    background: linear-gradient(135deg, #007bff, #0056d6);
+    box-shadow: 0 3px 12px rgba(0, 123, 255, 0.3);
+}
+
+.maya-badge {
+    background: linear-gradient(135deg, #00b900, #008800);
+    box-shadow: 0 3px 12px rgba(0, 185, 0, 0.3);
+}
+
+.brand-letter {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.brand-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.3px;
+}
+
 /* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
 @media (max-height: 480px) {
     .idle-panels { padding: 10px 16px; gap: 12px; }
@@ -1067,6 +1278,12 @@ body::before {
     .idle-panel-title { font-size: 1rem; }
     .idle-panel-subtitle { font-size: 0.85rem; margin-bottom: 10px; }
     .idle-denom-chip { font-size: 0.85rem; padding: 3px 8px; }
+    .money-scatter { top: 15%; }
+    .bill { width: 60px; height: 30px; font-size: 0.55rem; }
+    .coin-visual { width: 22px; height: 22px; font-size: 0.5rem; }
+    .epay-brands { gap: 6px; margin-bottom: 8px; }
+    .brand-badge { padding: 5px 8px; }
+    .phone-outline { width: 30px; height: 46px; }
 }
 
 /* ── TIMEOUT COUNTDOWN ───────────────────────────────────────────────────── */
