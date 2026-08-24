@@ -220,104 +220,98 @@
     <!-- SCREEN: PICKER -->
     <div id="screen-picker" class="screen">
         <div class="picker-top">
-            <div class="picker-balance">
-                <span class="bal-label">Inserted:</span>
-                <span id="bal-amount" class="bal-value">&#8369;100</span>
+            <div class="picker-stat">
+                <span class="picker-stat-label">Inserted</span>
+                <span id="bal-amount" class="picker-stat-value bal-value">&#8369;100</span>
             </div>
-            <div class="picker-fee-info">
-                <span class="fee-info-label">Fee: <span id="picker-fee-amount">&#8369;0</span></span>
+            <div class="picker-stat">
+                <span class="picker-stat-label">Fee</span>
+                <span id="picker-fee-amount" class="picker-stat-value fee-val">&#8369;0</span>
             </div>
-            <div class="picker-remaining">
-                <span class="rem-label">Remaining:</span>
-                <span id="rem-amount" class="rem-value zero">&#8369;0</span>
+            <div class="picker-stat">
+                <span class="picker-stat-label">Available</span>
+                <span id="rem-amount" class="picker-stat-value rem-value zero">&#8369;0</span>
             </div>
         </div>
 
-        <div class="picker-section-title">
-            <span class="picker-section-main">Quick Exchange</span>
-            <span class="picker-section-sub">Pumili ng isa — one tap lang</span>
-        </div>
-
-        <div class="quick-exchange-grid">
-            <button class="quick-card" onclick="quickSelect(1)">
-                <span class="quick-card-denom">All &#8369;1 coins</span>
-                <span class="quick-card-count" id="quick-count-1"></span>
-            </button>
-            <button class="quick-card" onclick="quickSelect(5)">
-                <span class="quick-card-denom">All &#8369;5 coins</span>
-                <span class="quick-card-count" id="quick-count-5"></span>
-            </button>
-            <button class="quick-card" onclick="quickSelect(10)">
-                <span class="quick-card-denom">All &#8369;10 coins</span>
-                <span class="quick-card-count" id="quick-count-10"></span>
-            </button>
-            <button class="quick-card" onclick="quickSelect(20)">
-                <span class="quick-card-denom">All &#8369;20 coins</span>
-                <span class="quick-card-count" id="quick-count-20"></span>
-            </button>
-        </div>
-
-        <div class="picker-section-title customize-title">
-            <span class="picker-section-main">Or customize:</span>
-        </div>
-
-        <div class="picker-grid">
-            <div class="coin-card" data-denom="1" id="card-1">
-                <div class="card-header">
-                    <span class="card-denom">&#8369;1</span>
-                    <span class="card-stock" id="stock-1">200 pcs</span>
-                </div>
-                <div class="card-controls">
-                    <button class="ctrl-btn minus" onclick="adjust(1,-1)">-</button>
-                    <span class="ctrl-count" id="count-1">0</span>
-                    <button class="ctrl-btn plus" onclick="adjust(1,1)">+</button>
-                </div>
-                <div class="card-sub" id="sub-1">&#8369;0</div>
+        <div class="picker-body">
+            <div class="picker-section-title">
+                <span class="picker-section-main">QUICK EXCHANGE</span>
             </div>
 
-            <div class="coin-card" data-denom="5" id="card-5">
-                <div class="card-header">
-                    <span class="card-denom">&#8369;5</span>
-                    <span class="card-stock" id="stock-5">200 pcs</span>
-                </div>
-                <div class="card-controls">
-                    <button class="ctrl-btn minus" onclick="adjust(5,-1)">-</button>
-                    <span class="ctrl-count" id="count-5">0</span>
-                    <button class="ctrl-btn plus" onclick="adjust(5,1)">+</button>
-                </div>
-                <div class="card-sub" id="sub-5">&#8369;0</div>
+            <div class="quick-exchange-grid">
+                <button class="quick-card" onclick="quickSelect(1)">
+                    <span class="quick-card-denom">ALL &#8369;1</span>
+                    <span class="quick-card-count" id="quick-count-1">0 coins</span>
+                </button>
+                <button class="quick-card" onclick="quickSelect(5)">
+                    <span class="quick-card-denom">ALL &#8369;5</span>
+                    <span class="quick-card-count" id="quick-count-5">0 coins</span>
+                </button>
+                <button class="quick-card" onclick="quickSelect(10)">
+                    <span class="quick-card-denom">ALL &#8369;10</span>
+                    <span class="quick-card-count" id="quick-count-10">0 coins</span>
+                </button>
+                <button class="quick-card" onclick="quickSelect(20)">
+                    <span class="quick-card-denom">ALL &#8369;20</span>
+                    <span class="quick-card-count" id="quick-count-20">0 coins</span>
+                </button>
             </div>
 
-            <div class="coin-card" data-denom="10" id="card-10">
-                <div class="card-header">
-                    <span class="card-denom">&#8369;10</span>
-                    <span class="card-stock" id="stock-10">200 pcs</span>
-                </div>
-                <div class="card-controls">
-                    <button class="ctrl-btn minus" onclick="adjust(10,-1)">-</button>
-                    <span class="ctrl-count" id="count-10">0</span>
-                    <button class="ctrl-btn plus" onclick="adjust(10,1)">+</button>
-                </div>
-                <div class="card-sub" id="sub-10">&#8369;0</div>
+            <div class="picker-section-title customize-title">
+                <span class="picker-section-main">OR CUSTOMIZE</span>
             </div>
 
-            <div class="coin-card" data-denom="20" id="card-20">
-                <div class="card-header">
-                    <span class="card-denom">&#8369;20</span>
-                    <span class="card-stock" id="stock-20">200 pcs</span>
+            <div class="picker-grid">
+                <div class="coin-card" data-denom="1" id="card-1">
+                    <div class="card-denom">&#8369;1</div>
+                    <div class="card-stock" id="stock-1">200 pcs</div>
+                    <div class="card-controls">
+                        <button class="ctrl-btn minus" onclick="adjust(1,-1)">-</button>
+                        <span class="ctrl-count" id="count-1">0</span>
+                        <button class="ctrl-btn plus" onclick="adjust(1,1)">+</button>
+                    </div>
+                    <div class="card-sub" id="sub-1">&#8369;0</div>
                 </div>
-                <div class="card-controls">
-                    <button class="ctrl-btn minus" onclick="adjust(20,-1)">-</button>
-                    <span class="ctrl-count" id="count-20">0</span>
-                    <button class="ctrl-btn plus" onclick="adjust(20,1)">+</button>
+
+                <div class="coin-card" data-denom="5" id="card-5">
+                    <div class="card-denom">&#8369;5</div>
+                    <div class="card-stock" id="stock-5">200 pcs</div>
+                    <div class="card-controls">
+                        <button class="ctrl-btn minus" onclick="adjust(5,-1)">-</button>
+                        <span class="ctrl-count" id="count-5">0</span>
+                        <button class="ctrl-btn plus" onclick="adjust(5,1)">+</button>
+                    </div>
+                    <div class="card-sub" id="sub-5">&#8369;0</div>
                 </div>
-                <div class="card-sub" id="sub-20">&#8369;0</div>
+
+                <div class="coin-card" data-denom="10" id="card-10">
+                    <div class="card-denom">&#8369;10</div>
+                    <div class="card-stock" id="stock-10">200 pcs</div>
+                    <div class="card-controls">
+                        <button class="ctrl-btn minus" onclick="adjust(10,-1)">-</button>
+                        <span class="ctrl-count" id="count-10">0</span>
+                        <button class="ctrl-btn plus" onclick="adjust(10,1)">+</button>
+                    </div>
+                    <div class="card-sub" id="sub-10">&#8369;0</div>
+                </div>
+
+                <div class="coin-card" data-denom="20" id="card-20">
+                    <div class="card-denom">&#8369;20</div>
+                    <div class="card-stock" id="stock-20">200 pcs</div>
+                    <div class="card-controls">
+                        <button class="ctrl-btn minus" onclick="adjust(20,-1)">-</button>
+                        <span class="ctrl-count" id="count-20">0</span>
+                        <button class="ctrl-btn plus" onclick="adjust(20,1)">+</button>
+                    </div>
+                    <div class="card-sub" id="sub-20">&#8369;0</div>
+                </div>
             </div>
         </div>
 
         <div class="picker-actions">
             <button class="action-btn cancel hidden" id="picker-cancel" onclick="cancelTransaction()">Cancel</button>
-            <button class="action-btn confirm disabled" id="btn-confirm" onclick="confirmDispense()">Confirm Exchange</button>
+            <button class="action-btn confirm disabled" id="btn-confirm" onclick="confirmDispense()">CONFIRM</button>
         </div>
     </div>
 
