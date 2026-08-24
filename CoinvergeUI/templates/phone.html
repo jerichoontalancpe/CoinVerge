@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CoinVerge Pay</title>
     <link rel="stylesheet" href="/static/css/phone.css">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CoinVerge Pay">
+    <link rel="apple-touch-icon" href="/static/img/logo.png">
+    <meta name="theme-color" content="#0038a8">
 </head>
 <body>
     <div class="phone-app">
@@ -90,30 +96,21 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <!-- SCREEN: SCANNER (simulated camera view)                        -->
+        <!-- SCREEN: SCANNER (fake camera view)                             -->
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <div class="app-screen" id="screen-scanner">
-            <div class="scanner-container">
-                <div class="scanner-header">
-                    <button class="scanner-close-btn" onclick="goHome()">&times;</button>
-                    <span class="scanner-title">Scan QR Code</span>
-                    <span class="scanner-spacer"></span>
-                </div>
-                <div class="scanner-viewfinder">
-                    <div class="scanner-bg">
-                        <!-- Simulated camera with dark overlay -->
-                        <div class="scanner-noise"></div>
+            <div class="scanner-view">
+                <div class="scanner-overlay">
+                    <div class="scanner-corners">
+                        <span class="corner tl"></span>
+                        <span class="corner tr"></span>
+                        <span class="corner bl"></span>
+                        <span class="corner br"></span>
                     </div>
-                    <div class="scanner-frame">
-                        <div class="frame-corner tl"></div>
-                        <div class="frame-corner tr"></div>
-                        <div class="frame-corner bl"></div>
-                        <div class="frame-corner br"></div>
-                        <div class="scanner-line"></div>
-                    </div>
+                    <div class="scanner-line"></div>
                 </div>
-                <p class="scanner-hint">Point your camera at the QR code on the kiosk</p>
-                <p class="scanner-status" id="scanner-status">Scanning...</p>
+                <p class="scanner-text">Point camera at QR code on the kiosk</p>
+                <p class="scanner-detecting" id="scanner-status">Scanning...</p>
             </div>
         </div>
 
@@ -308,37 +305,37 @@
 
         // ── Scanner Flow ────────────────────────────────────────────────────
 
-        async function openScanner() {
-            // Check if there's a pending payment at the kiosk
-            try {
-                const res = await fetch('/api/epay/pending');
-                const data = await res.json();
+        function openScanner() {
+            showScreen('screen-scanner');
+            document.getElementById('scanner-status').textContent = 'Scanning...';
 
-                showScreen('screen-scanner');
-                document.getElementById('scanner-status').textContent = 'Scanning...';
+            // Simulate scanning delay (2.5 seconds)
+            scanTimeout = setTimeout(() => {
+                document.getElementById('scanner-status').textContent = 'QR Detected!';
 
-                // Simulate scanning delay (2 seconds)
-                scanTimeout = setTimeout(() => {
-                    if (data && data.reference_number) {
-                        // Found the kiosk payment — show payment screen
-                        currentPayment = data;
-                        document.getElementById('pay-ref').textContent = data.reference_number;
-                        document.getElementById('scanner-status').textContent = 'QR Code detected!';
+                // After 0.5 seconds, check for pending payment
+                scanTimeout = setTimeout(async () => {
+                    try {
+                        const res = await fetch('/api/epay/pending');
+                        const data = await res.json();
 
-                        setTimeout(() => {
+                        if (data && data.reference_number) {
+                            // Found the kiosk payment — show payment screen
+                            currentPayment = data;
+                            document.getElementById('pay-ref').textContent = data.reference_number;
                             showPaymentScreen();
-                        }, 500);
-                    } else {
-                        document.getElementById('scanner-status').textContent = 'No QR code found. Try again.';
-                        setTimeout(() => {
-                            goHome();
-                        }, 2000);
+                        } else {
+                            document.getElementById('scanner-status').textContent = 'No payment found. Please initiate payment on the kiosk first.';
+                            setTimeout(() => {
+                                goHome();
+                            }, 2500);
+                        }
+                    } catch (e) {
+                        document.getElementById('scanner-status').textContent = 'Connection error. Please try again.';
+                        setTimeout(goHome, 2000);
                     }
-                }, 2000);
-            } catch (e) {
-                document.getElementById('scanner-status').textContent = 'Connection error';
-                setTimeout(goHome, 2000);
-            }
+                }, 500);
+            }, 2500);
         }
 
         // ── Payment Screen ──────────────────────────────────────────────────
@@ -452,6 +449,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateTime();
         });
+
+        // ── Service Worker Registration ─────────────────────────────────────
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js');
+        }
     </script>
 </body>
 </html>
