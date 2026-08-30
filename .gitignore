@@ -6,3 +6,7 @@ __pycache__/
 .DS_Store
 *.log
 .secret_key
+Coinverge_BACKUP_2026-07-27
+Coinverge.zip
+Coinverge-session.json
+*.zip
