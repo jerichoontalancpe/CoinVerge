@@ -347,6 +347,15 @@
         </div>
     </div>
 
+    <!-- Report Overlay (in-app HTML report viewer) -->
+    <div id="report-overlay" class="report-overlay hidden">
+        <div class="report-overlay-bar">
+            <span class="report-overlay-title">Transaction Report</span>
+            <button class="report-close-btn" onclick="closeReportOverlay()">&#10005; Close</button>
+        </div>
+        <iframe id="report-frame" class="report-frame" src="about:blank"></iframe>
+    </div>
+
     <script src="/static/js/admin.js"></script>
 </body>
 </html>

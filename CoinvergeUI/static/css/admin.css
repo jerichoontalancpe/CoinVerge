@@ -985,3 +985,45 @@ body::before {
 .count-ok-btn.hidden { display: none; }
 
 /* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+
+/* ── Report Overlay (in-app HTML report viewer) ──────────────────────────── */
+.report-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+}
+.report-overlay.hidden { display: none; }
+.report-overlay-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--navy, #0a1628);
+    color: #fff;
+    flex-shrink: 0;
+}
+.report-overlay-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--gold, #fcd116);
+}
+.report-close-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    background: var(--danger, #ff3d3d);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.report-close-btn:active { transform: scale(0.95); }
+.report-frame {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: #fff;
+}

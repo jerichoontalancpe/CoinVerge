@@ -305,7 +305,22 @@ async function exportCSV() {
 function exportHTMLReport() {
     const url = getExportUrl("/api/admin/export_html");
     if (!url) return;
-    window.open(url, "_blank");
+    // Open in an in-app overlay (iframe) instead of a new tab so kiosk users can close it
+    const overlay = document.getElementById("report-overlay");
+    const frame = document.getElementById("report-frame");
+    if (overlay && frame) {
+        frame.src = url;
+        overlay.classList.remove("hidden");
+    } else {
+        window.open(url, "_blank");
+    }
+}
+
+function closeReportOverlay() {
+    const overlay = document.getElementById("report-overlay");
+    const frame = document.getElementById("report-frame");
+    if (overlay) overlay.classList.add("hidden");
+    if (frame) frame.src = "about:blank";
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
