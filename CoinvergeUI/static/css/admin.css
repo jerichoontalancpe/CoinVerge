@@ -164,6 +164,24 @@ body::before {
     padding: 0 8px;
 }
 
+.back-to-kiosk-btn {
+    width: 90%;
+    padding: 10px 8px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--gold-dim);
+    background: rgba(252, 209, 22, 0.1);
+    color: var(--gold);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.back-to-kiosk-btn:active {
+    background: rgba(252, 209, 22, 0.25);
+    transform: scale(0.96);
+}
+
 .header-actions {
     display: flex;
     flex-direction: column;
