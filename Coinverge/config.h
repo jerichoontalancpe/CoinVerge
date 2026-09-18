@@ -125,21 +125,42 @@ const int COIN_ACCEPT_TABLE[][2] = {
 #define COIN_PULSE_TABLE       COIN_ACCEPT_TABLE
 
 // -----------------------------------------------------------------------------
-//  SERVO MOTORS — Route coins to correct hopper
-//  Servo A: routes ₱1 and ₱5 coins
-//  Servo B: routes ₱10 and ₱20 coins
+//  SERVO MOTORS — 2-STAGE coin routing (confirmed mechanism 2026-09-18)
+//
+//  Stage 1 = Servo A (3-way):  P20  |  pass-through to Servo B  |  P1
+//  Stage 2 = Servo B (2-way):  P5   |  P10
+//
+//  Confirmed routing table (angles in degrees):
+//    P20 : A=45  (=A neutral, no A movement needed) , B=neutral
+//    P1  : A=0                                       , B=neutral
+//    P5  : A=100 (pass-through)                      , B=0
+//    P10 : A=100 (pass-through)                      , B=75 (=B neutral)
 // -----------------------------------------------------------------------------
-#define SERVO_A_PIN         13      // Servo A PWM pin (₱1/₱5 routing)
-#define SERVO_B_PIN         14      // Servo B PWM pin (₱10/₱20 routing)
+#define SERVO_A_PIN         13      // Servo A PWM pin (stage 1: P20 / pass / P1)
+#define SERVO_B_PIN         14      // Servo B PWM pin (stage 2: P5 / P10)
 
-// Default servo positions (degrees) — calibrate via admin panel
-#define SERVO_A_POS_1       45      // Servo A position for ₱1 hopper
-#define SERVO_A_POS_5       135     // Servo A position for ₱5 hopper
-#define SERVO_B_POS_10      45      // Servo B position for ₱10 hopper
-#define SERVO_B_POS_20      135     // Servo B position for ₱20 hopper
+// Per-servo neutral (rest) positions
+#define SERVO_A_NEUTRAL     45      // Servo A rest = P20 lane (P20 needs no movement)
+#define SERVO_B_NEUTRAL     75      // Servo B rest = P10 lane (P10 needs no B movement)
 
-// Neutral (center) servo position
-#define SERVO_NEUTRAL       90
+// Stage-1 (Servo A) target angles
+#define SERVO_A_P20         45      // route P20  (same as A neutral)
+#define SERVO_A_P1          0       // route P1
+#define SERVO_A_PASS        100     // pass-through to Servo B (for P5 and P10)
+
+// Stage-2 (Servo B) target angles
+#define SERVO_B_P5          0       // route P5
+#define SERVO_B_P10         75      // route P10 (same as B neutral)
+
+// --- Legacy macros kept so older references still compile (not used by the
+//     new 2-stage routing logic). ---
+#define SERVO_A_POS_1       SERVO_A_P1
+#define SERVO_A_POS_5       SERVO_A_PASS
+#define SERVO_B_POS_10      SERVO_B_P10
+#define SERVO_B_POS_20      SERVO_A_P20
+
+// Generic neutral kept for backward compatibility (defaults to Servo A neutral)
+#define SERVO_NEUTRAL       SERVO_A_NEUTRAL
 
 // PWM signal parameters for ESP32Servo. Setting these explicitly makes the
 // servo respond crisply; a bare attach() can produce sluggish/incorrect pulses.

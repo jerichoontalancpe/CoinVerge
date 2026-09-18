@@ -57,8 +57,8 @@ static int           g_countIndex   = -1;     // hopper index being counted
 // ── Servo Motors (coin routing) ─────────────────────────────────────────────
 static Servo         servoA;                  // Routes ₱1 and ₱5 coins
 static Servo         servoB;                  // Routes ₱10 and ₱20 coins
-static int           g_servoAPos    = SERVO_NEUTRAL;  // Current position of Servo A
-static int           g_servoBPos    = SERVO_NEUTRAL;  // Current position of Servo B
+static int           g_servoAPos    = SERVO_A_NEUTRAL;  // Current position of Servo A
+static int           g_servoBPos    = SERVO_B_NEUTRAL;  // Current position of Servo B
 
 // Configurable servo positions (can be updated via admin calibration)
 static int           g_servoA_pos1  = SERVO_A_POS_1;
@@ -173,12 +173,12 @@ void setup() {
     servoB.setPeriodHertz(SERVO_FREQ_HZ);
     servoA.attach(SERVO_A_PIN, SERVO_MIN_US, SERVO_MAX_US);
     servoB.attach(SERVO_B_PIN, SERVO_MIN_US, SERVO_MAX_US);
-    servoA.write(SERVO_NEUTRAL);
-    servoB.write(SERVO_NEUTRAL);
-    g_servoAPos = SERVO_NEUTRAL;
-    g_servoBPos = SERVO_NEUTRAL;
-    Serial.printf("[SERVO] A=GPIO%d B=GPIO%d (neutral=%d°)\n",
-                  SERVO_A_PIN, SERVO_B_PIN, SERVO_NEUTRAL);
+    servoA.write(SERVO_A_NEUTRAL);
+    servoB.write(SERVO_B_NEUTRAL);
+    g_servoAPos = SERVO_A_NEUTRAL;
+    g_servoBPos = SERVO_B_NEUTRAL;
+    Serial.printf("[SERVO] A=GPIO%d(neutral=%d) B=GPIO%d(neutral=%d)\n",
+                  SERVO_A_PIN, SERVO_A_NEUTRAL, SERVO_B_PIN, SERVO_B_NEUTRAL);
 #endif
 
     // Init coin stock
@@ -844,59 +844,55 @@ void executeCount(int hopperIndex) {
 }
 
 // ============================================================================
-//  routeCoinToHopper() — move servo to route coin into correct hopper
+//  routeCoinToHopper() — 2-STAGE routing (final, authoritative).
+//  Sets BOTH servos for the decoded denomination per the confirmed table:
+//    P20 : A=45(neutral) B=neutral   -> no real movement
+//    P1  : A=0           B=neutral
+//    P5  : A=100(pass)   B=0
+//    P10 : A=100(pass)   B=75(neutral)
+//  After SERVO_HOLD_MS, serviceServoReturn() brings both servos back to their
+//  own neutral (A=45, B=75) without blocking the loop.
 // ============================================================================
 
 void routeCoinToHopper(int coinValue) {
-    int targetAngle = SERVO_NEUTRAL;
-    bool useServoA = false;
+    int angleA = SERVO_A_NEUTRAL;
+    int angleB = SERVO_B_NEUTRAL;
 
     switch (coinValue) {
+        case 20:
+            angleA = SERVO_A_P20;   angleB = SERVO_B_NEUTRAL;   // A only (rest lane)
+            break;
         case 1:
-            targetAngle = g_servoA_pos1;
-            useServoA = true;
+            angleA = SERVO_A_P1;    angleB = SERVO_B_NEUTRAL;   // A only
             break;
         case 5:
-            targetAngle = g_servoA_pos5;
-            useServoA = true;
+            angleA = SERVO_A_PASS;  angleB = SERVO_B_P5;        // A pass-through + B
             break;
         case 10:
-            targetAngle = g_servoB_pos10;
-            useServoA = false;
-            break;
-        case 20:
-            targetAngle = g_servoB_pos20;
-            useServoA = false;
+            angleA = SERVO_A_PASS;  angleB = SERVO_B_P10;       // A pass-through (B rest lane)
             break;
         default:
             Serial.printf("[SERVO] Unknown denomination P%d\n", coinValue);
             return;
     }
 
-    Serial.printf("[SERVO] Routing P%d → Servo %s → %d°\n",
-                  coinValue, useServoA ? "A" : "B", targetAngle);
+    Serial.printf("[SERVO] Routing P%d -> A=%d B=%d\n", coinValue, angleA, angleB);
 
 #if !DEBUG_MODE
-    if (useServoA) {
-        servoA.write(targetAngle);
-        g_servoAPos = targetAngle;
-    } else {
-        servoB.write(targetAngle);
-        g_servoBPos = targetAngle;
-    }
+    servoA.write(angleA);
+    servoB.write(angleB);
+    g_servoAPos = angleA;
+    g_servoBPos = angleB;
 #endif
 
-    // Non-blocking hold: schedule the return-to-neutral instead of delay().
-    // serviceServoReturn() (called from loop()) moves it back after SERVO_HOLD_MS
-    // so the loop never freezes and pulses/servo reactions are never delayed.
-    g_servoReturnIsA     = useServoA;
+    // Non-blocking hold: schedule return-to-neutral (both servos) instead of delay().
     g_servoMoveMs        = millis();
     g_servoReturnPending = true;
 }
 
 // ============================================================================
-//  serviceServoReturn() — non-blocking return of the routing servo to neutral.
-//  Called every loop(); returns the servo to neutral SERVO_HOLD_MS after it was
+//  serviceServoReturn() — non-blocking return of BOTH servos to their own
+//  neutral. Called every loop(); returns SERVO_HOLD_MS after the move was
 //  commanded, without ever blocking the loop.
 // ============================================================================
 
@@ -906,13 +902,10 @@ void serviceServoReturn() {
 
     g_servoReturnPending = false;
 #if !DEBUG_MODE
-    if (g_servoReturnIsA) {
-        servoA.write(SERVO_NEUTRAL);
-        g_servoAPos = SERVO_NEUTRAL;
-    } else {
-        servoB.write(SERVO_NEUTRAL);
-        g_servoBPos = SERVO_NEUTRAL;
-    }
+    servoA.write(SERVO_A_NEUTRAL);
+    servoB.write(SERVO_B_NEUTRAL);
+    g_servoAPos = SERVO_A_NEUTRAL;
+    g_servoBPos = SERVO_B_NEUTRAL;
 #endif
 }
 
@@ -939,12 +932,12 @@ void IRAM_ATTR coinPulseISR() {
 //  the full pulse train + decode window.
 //
 //  Pulse->denomination (from COIN_ACCEPT_TABLE): 1=P1, 5=P5, 10=P10, 20=P20.
-//  Best guess as pulses arrive:
-//    1      -> could still be P1 or P5  -> Servo A (P1 gate)
-//    2..5   -> the only A-coin left is P5 -> Servo A (P5 gate)
-//    6..10  -> must be P10 -> Servo B (P10 gate), A back to neutral
-//    11+    -> must be P20 -> Servo B (P20 gate), A back to neutral
-//  The final routeCoinToHopper(value) call still sets the authoritative angle
+//  2-stage best guess as pulses arrive (both servos set each step):
+//    1      -> likely P1  -> A=0,   B=neutral
+//    2..5   -> P5         -> A=pass,B=0
+//    6..10  -> P10        -> A=pass,B=75(neutral lane)
+//    11+    -> P20        -> A=45(neutral lane), B=neutral
+//  The final routeCoinToHopper(value) call still sets the authoritative angles
 //  after decode, so any early mis-guess is corrected with 3-5s of coin travel
 //  time to spare. Does NOT touch pulse counting, debounce, or the decode table.
 // ============================================================================
@@ -964,22 +957,26 @@ void prePositionServo(unsigned int pulseCountSoFar) {
     lastGuessPulses = pulseCountSoFar;
 
 #if !DEBUG_MODE
+    // Pulse counts (current acceptor): P1=1, P5=5, P10=10, P20=20.
+    // Pre-position BOTH servos toward the best guess for the live count so the
+    // (slow) servos have maximum time to travel before the coin arrives. The
+    // final routeCoinToHopper() sets the authoritative angles after decode.
     if (pulseCountSoFar <= 1) {
-        servoA.write(g_servoA_pos1);
-        g_servoAPos = g_servoA_pos1;
+        // Likely P1 -> A=0, B=neutral
+        servoA.write(SERVO_A_P1);       g_servoAPos = SERVO_A_P1;
+        servoB.write(SERVO_B_NEUTRAL);  g_servoBPos = SERVO_B_NEUTRAL;
     } else if (pulseCountSoFar <= 5) {
-        servoA.write(g_servoA_pos5);
-        g_servoAPos = g_servoA_pos5;
+        // Heading to P5 -> A=pass-through, B=0
+        servoA.write(SERVO_A_PASS);     g_servoAPos = SERVO_A_PASS;
+        servoB.write(SERVO_B_P5);       g_servoBPos = SERVO_B_P5;
     } else if (pulseCountSoFar <= 10) {
-        servoB.write(g_servoB_pos10);
-        g_servoBPos = g_servoB_pos10;
-        servoA.write(SERVO_NEUTRAL);
-        g_servoAPos = SERVO_NEUTRAL;
+        // Heading to P10 -> A=pass-through, B=75 (B neutral lane)
+        servoA.write(SERVO_A_PASS);     g_servoAPos = SERVO_A_PASS;
+        servoB.write(SERVO_B_P10);      g_servoBPos = SERVO_B_P10;
     } else {
-        servoB.write(g_servoB_pos20);
-        g_servoBPos = g_servoB_pos20;
-        servoA.write(SERVO_NEUTRAL);
-        g_servoAPos = SERVO_NEUTRAL;
+        // Must be P20 -> A=45 (A neutral lane), B=neutral
+        servoA.write(SERVO_A_P20);      g_servoAPos = SERVO_A_P20;
+        servoB.write(SERVO_B_NEUTRAL);  g_servoBPos = SERVO_B_NEUTRAL;
     }
 #endif
 
