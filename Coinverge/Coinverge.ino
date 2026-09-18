@@ -163,8 +163,16 @@ void setup() {
     }
 
     // ── Servo motors (coin routing) ─────────────────────────
-    servoA.attach(SERVO_A_PIN);
-    servoB.attach(SERVO_B_PIN);
+    // Allocate ESP32 hardware timers for the servo library and set an explicit
+    // 50Hz frame with correct pulse-width bounds so the servos respond crisply.
+    ESP32PWM::allocateTimer(0);
+    ESP32PWM::allocateTimer(1);
+    ESP32PWM::allocateTimer(2);
+    ESP32PWM::allocateTimer(3);
+    servoA.setPeriodHertz(SERVO_FREQ_HZ);
+    servoB.setPeriodHertz(SERVO_FREQ_HZ);
+    servoA.attach(SERVO_A_PIN, SERVO_MIN_US, SERVO_MAX_US);
+    servoB.attach(SERVO_B_PIN, SERVO_MIN_US, SERVO_MAX_US);
     servoA.write(SERVO_NEUTRAL);
     servoB.write(SERVO_NEUTRAL);
     g_servoAPos = SERVO_NEUTRAL;

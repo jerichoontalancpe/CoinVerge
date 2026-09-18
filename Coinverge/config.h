@@ -141,6 +141,13 @@ const int COIN_ACCEPT_TABLE[][2] = {
 // Neutral (center) servo position
 #define SERVO_NEUTRAL       90
 
+// PWM signal parameters for ESP32Servo. Setting these explicitly makes the
+// servo respond crisply; a bare attach() can produce sluggish/incorrect pulses.
+// Standard hobby-servo values (SG90/MG90/MG996 all accept this range):
+#define SERVO_FREQ_HZ       50      // 50 Hz = standard servo frame (20ms period)
+#define SERVO_MIN_US        500     // pulse width (us) at 0 degrees
+#define SERVO_MAX_US        2400    // pulse width (us) at 180 degrees
+
 // Time to hold servo in position (ms) — ensures coin drops through
 #define SERVO_HOLD_MS       500
 
