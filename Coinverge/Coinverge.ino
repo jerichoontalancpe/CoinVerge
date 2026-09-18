@@ -80,6 +80,7 @@ void executeCount(int hopperIndex);
 int  lookupBillPulses(int pulses);
 void routeCoinToHopper(int coinValue);
 void sendServoPositions();
+void prePositionServo(unsigned int pulseCountSoFar);
 
 // ============================================================================
 //  setup()
@@ -264,6 +265,10 @@ void loop() {
                 coinInWindow    = true;
                 Serial.printf("[COIN] Pulse %u detected on GPIO%d\n",
                               coinPulseCount, COIN_PIN);
+                // Move the routing servo EARLY based on pulses so far, so it is
+                // already positioned before the coin reaches the gate. The final
+                // routeCoinToHopper() below still sets the authoritative angle.
+                prePositionServo(coinPulseCount);
             }
         }
         lastCoinState = currentCoinState;
@@ -279,6 +284,7 @@ void loop() {
                 }
             }
             coinPulseCount = 0;
+            prePositionServo(0);  // reset early-routing guess for the next coin
 
             if (value > 0) {
                 // Check balance cap (₱100 max)
@@ -849,6 +855,60 @@ void routeCoinToHopper(int coinValue) {
         g_servoBPos = SERVO_NEUTRAL;
     }
 #endif
+}
+
+// ============================================================================
+//  prePositionServo() — move the routing servo EARLY, based on the live pulse
+//  count, BEFORE decode completes. Called on every pulse while a coin is still
+//  being counted. This removes the ~1.5-2s reaction lag caused by waiting for
+//  the full pulse train + decode window.
+//
+//  Pulse->denomination (from COIN_ACCEPT_TABLE): 1=P1, 5=P5, 10=P10, 20=P20.
+//  Best guess as pulses arrive:
+//    1      -> could still be P1 or P5  -> Servo A (P1 gate)
+//    2..5   -> the only A-coin left is P5 -> Servo A (P5 gate)
+//    6..10  -> must be P10 -> Servo B (P10 gate), A back to neutral
+//    11+    -> must be P20 -> Servo B (P20 gate), A back to neutral
+//  The final routeCoinToHopper(value) call still sets the authoritative angle
+//  after decode, so any early mis-guess is corrected with 3-5s of coin travel
+//  time to spare. Does NOT touch pulse counting, debounce, or the decode table.
+// ============================================================================
+
+void prePositionServo(unsigned int pulseCountSoFar) {
+    static unsigned int lastGuessPulses = 0;
+
+    // 0 = reset signal (called after a coin is decoded), so the next coin
+    // re-triggers on its first pulse even if it has the same count.
+    if (pulseCountSoFar == 0) {
+        lastGuessPulses = 0;
+        return;
+    }
+
+    // Only act when the count changes, to avoid spamming servo.write()
+    if (pulseCountSoFar == lastGuessPulses) return;
+    lastGuessPulses = pulseCountSoFar;
+
+#if !DEBUG_MODE
+    if (pulseCountSoFar <= 1) {
+        servoA.write(g_servoA_pos1);
+        g_servoAPos = g_servoA_pos1;
+    } else if (pulseCountSoFar <= 5) {
+        servoA.write(g_servoA_pos5);
+        g_servoAPos = g_servoA_pos5;
+    } else if (pulseCountSoFar <= 10) {
+        servoB.write(g_servoB_pos10);
+        g_servoBPos = g_servoB_pos10;
+        servoA.write(SERVO_NEUTRAL);
+        g_servoAPos = SERVO_NEUTRAL;
+    } else {
+        servoB.write(g_servoB_pos20);
+        g_servoBPos = g_servoB_pos20;
+        servoA.write(SERVO_NEUTRAL);
+        g_servoAPos = SERVO_NEUTRAL;
+    }
+#endif
+
+    Serial.printf("[SERVO] Pre-position @ %u pulse(s)\n", pulseCountSoFar);
 }
 
 // ============================================================================
