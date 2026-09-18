@@ -931,12 +931,12 @@ void IRAM_ATTR coinPulseISR() {
 //  being counted. This removes the ~1.5-2s reaction lag caused by waiting for
 //  the full pulse train + decode window.
 //
-//  Pulse->denomination (from COIN_ACCEPT_TABLE): 1=P1, 5=P5, 10=P10, 20=P20.
+//  Pulse->denomination (new acceptor mapping): 1=P1, 2=P5, 3=P10, 4=P20.
 //  2-stage best guess as pulses arrive (both servos set each step):
-//    1      -> likely P1  -> A=0,   B=neutral
-//    2..5   -> P5         -> A=pass,B=0
-//    6..10  -> P10        -> A=pass,B=75(neutral lane)
-//    11+    -> P20        -> A=45(neutral lane), B=neutral
+//    1  -> P1  -> A=0,   B=neutral
+//    2  -> P5  -> A=pass,B=0
+//    3  -> P10 -> A=pass,B=75(neutral lane)
+//    4+ -> P20 -> A=45(neutral lane), B=neutral
 //  The final routeCoinToHopper(value) call still sets the authoritative angles
 //  after decode, so any early mis-guess is corrected with 3-5s of coin travel
 //  time to spare. Does NOT touch pulse counting, debounce, or the decode table.
@@ -957,7 +957,7 @@ void prePositionServo(unsigned int pulseCountSoFar) {
     lastGuessPulses = pulseCountSoFar;
 
 #if !DEBUG_MODE
-    // Pulse counts (current acceptor): P1=1, P5=5, P10=10, P20=20.
+    // Pulse counts (new acceptor mapping): P1=1, P5=2, P10=3, P20=4.
     // Pre-position BOTH servos toward the best guess for the live count so the
     // (slow) servos have maximum time to travel before the coin arrives. The
     // final routeCoinToHopper() sets the authoritative angles after decode.
@@ -965,16 +965,16 @@ void prePositionServo(unsigned int pulseCountSoFar) {
         // Likely P1 -> A=0, B=neutral
         servoA.write(SERVO_A_P1);       g_servoAPos = SERVO_A_P1;
         servoB.write(SERVO_B_NEUTRAL);  g_servoBPos = SERVO_B_NEUTRAL;
-    } else if (pulseCountSoFar <= 5) {
-        // Heading to P5 -> A=pass-through, B=0
+    } else if (pulseCountSoFar == 2) {
+        // P5 -> A=pass-through, B=0
         servoA.write(SERVO_A_PASS);     g_servoAPos = SERVO_A_PASS;
         servoB.write(SERVO_B_P5);       g_servoBPos = SERVO_B_P5;
-    } else if (pulseCountSoFar <= 10) {
-        // Heading to P10 -> A=pass-through, B=75 (B neutral lane)
+    } else if (pulseCountSoFar == 3) {
+        // P10 -> A=pass-through, B=75 (B neutral lane)
         servoA.write(SERVO_A_PASS);     g_servoAPos = SERVO_A_PASS;
         servoB.write(SERVO_B_P10);      g_servoBPos = SERVO_B_P10;
     } else {
-        // Must be P20 -> A=45 (A neutral lane), B=neutral
+        // 4+ pulses -> P20 -> A=45 (A neutral lane), B=neutral
         servoA.write(SERVO_A_P20);      g_servoAPos = SERVO_A_P20;
         servoB.write(SERVO_B_NEUTRAL);  g_servoBPos = SERVO_B_NEUTRAL;
     }

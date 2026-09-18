@@ -115,9 +115,9 @@ const int BILL_PULSE_TABLE[BILL_PULSE_TABLE_SIZE][2] = {
 #define COIN_ACCEPT_TABLE_SIZE  4
 const int COIN_ACCEPT_TABLE[][2] = {
     { 1,   1 },    // 1 pulse  = P1
-    { 5,   5 },    // 5 pulses = P5
-    { 10,  10 },   // 10 pulses = P10
-    { 20,  20 },   // 20 pulses = P20
+    { 2,   5 },    // 2 pulses = P5
+    { 3,  10 },    // 3 pulses = P10
+    { 4,  20 },    // 4 pulses = P20
 };
 
 // Legacy alias for backward compatibility
