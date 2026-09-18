@@ -107,7 +107,9 @@ const int BILL_PULSE_TABLE[BILL_PULSE_TABLE_SIZE][2] = {
 #define COIN_INHIBIT_ACTIVE HIGH    // HIGH = relay ON = coin acceptor powered (accepting)
                                     // LOW = relay OFF = coin acceptor off (rejecting)
 #define COIN_DEBOUNCE_MS    20      // Debounce between pulses
-#define COIN_WINDOW_MS      500     // Wait after last pulse to decode (needs time for 20 pulses)
+#define COIN_WINDOW_MS      150     // Wait after last pulse to decode. Lowered 500→150 so the
+                                    // routing servo reacts ~350ms sooner. Still >2x the slowest
+                                    // DIP pulse period (65ms), so 20-pulse P20 counting is safe.
 
 // Pulse count → coin value table (configure to match DIP switch settings)
 #define COIN_ACCEPT_TABLE_SIZE  4
