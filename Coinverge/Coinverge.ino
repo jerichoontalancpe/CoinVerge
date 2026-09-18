@@ -284,6 +284,7 @@ void loop() {
     if (COIN_PIN >= 0 && millis() > 5000) {  // Skip first 5 seconds (coin acceptor boot noise)
         static unsigned int  coinLastSeenCount = 0;
         static bool          coinInWindow      = false;
+        static unsigned long coinFirstPulseMs  = 0;  // for latency measurement
 
         // Snapshot volatile ISR state safely.
         noInterrupts();
@@ -295,10 +296,17 @@ void loop() {
 
         // New pulse arrived → pre-position servo immediately based on count.
         if (activity && pulses != coinLastSeenCount) {
+            unsigned long tNow = millis();
+            if (coinLastSeenCount == 0) coinFirstPulseMs = tNow;  // first pulse of this coin
             coinLastSeenCount = pulses;
             coinInWindow      = true;
-            Serial.printf("[COIN] Pulse %u detected on GPIO%d\n", pulses, COIN_PIN);
+            Serial.printf("[COIN] Pulse %u @ %lums (t+%lums from 1st pulse)\n",
+                          pulses, tNow, tNow - coinFirstPulseMs);
+            unsigned long tBefore = millis();
             prePositionServo(pulses);
+            Serial.printf("[TIMING] servo commanded @ t+%lums from 1st pulse "
+                          "(prePosition took %lums)\n",
+                          millis() - coinFirstPulseMs, millis() - tBefore);
         }
 
         // Window expired — decode coin denomination
