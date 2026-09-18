@@ -66,6 +66,21 @@ static int           g_servoA_pos5  = SERVO_A_POS_5;
 static int           g_servoB_pos10 = SERVO_B_POS_10;
 static int           g_servoB_pos20 = SERVO_B_POS_20;
 
+// ── Interrupt-driven coin pulse counting ────────────────────────────────────
+// The coin acceptor pulse edge is captured in an ISR so pulses are NEVER missed,
+// even if the main loop is briefly busy. The ISR does the minimum only (count +
+// timestamp + debounce). All decoding/servo work happens in loop().
+volatile unsigned int  g_coinPulseISR   = 0;   // pulses counted by the ISR
+volatile unsigned long g_lastCoinPulseMs = 0;  // millis() of last accepted pulse
+volatile bool          g_coinActivity   = false; // set true on each new pulse
+
+// ── Non-blocking servo return-to-neutral ────────────────────────────────────
+// routeCoinToHopper() no longer blocks with delay(); loop() returns the servo
+// to neutral after SERVO_HOLD_MS so the loop never freezes.
+static bool          g_servoReturnPending = false;
+static unsigned long g_servoMoveMs        = 0;
+static bool          g_servoReturnIsA     = false;
+
 // ============================================================================
 //  FORWARD DECLARATIONS
 // ============================================================================
@@ -81,6 +96,8 @@ int  lookupBillPulses(int pulses);
 void routeCoinToHopper(int coinValue);
 void sendServoPositions();
 void prePositionServo(unsigned int pulseCountSoFar);
+void IRAM_ATTR coinPulseISR();
+void serviceServoReturn();
 
 // ============================================================================
 //  setup()
@@ -132,7 +149,10 @@ void setup() {
     // ── Coin acceptor pulse pin ──────────────────────────────
     if (COIN_PIN >= 0) {
         pinMode(COIN_PIN, INPUT);  // Allan 1299: idles LOW, pulses HIGH — no pull-up needed
-        Serial.printf("[COIN] Acceptor pin GPIO%d ready (idle=LOW, pulses HIGH)\n", COIN_PIN);
+        // Interrupt-driven counting: fire on the rising edge (LOW→HIGH pulse).
+        // Guarantees pulses are captured even while the loop is busy.
+        attachInterrupt(digitalPinToInterrupt(COIN_PIN), coinPulseISR, RISING);
+        Serial.printf("[COIN] Acceptor pin GPIO%d ready (interrupt on RISING)\n", COIN_PIN);
     }
 
     // ── Coin acceptor inhibit pin ────────────────────────────
@@ -180,6 +200,9 @@ void loop() {
             g_serialBuf += c;
         }
     }
+
+    // Non-blocking servo return-to-neutral (replaces the old blocking delay()).
+    serviceServoReturn();
 
 #if !DEBUG_MODE
     // ── Poll bill acceptor (GPIO32, pulse-type) ──────────────
@@ -248,34 +271,40 @@ void loop() {
     }
 
     // ── Poll coin acceptor (GPIO27, pulse-type, Allan 1299 Pro Max) ─────
+    // Pulses are counted by coinPulseISR() (interrupt). Here we only read the
+    // ISR's volatile counters to pre-position the servo and to decode.
     if (COIN_PIN >= 0 && millis() > 5000) {  // Skip first 5 seconds (coin acceptor boot noise)
-        static unsigned long lastCoinPulseMs = 0;
-        static unsigned int  coinPulseCount  = 0;
-        static bool          coinInWindow    = false;
-        static bool          lastCoinState   = LOW;   // Allan 1299 idles LOW
+        static unsigned int  coinLastSeenCount = 0;
+        static bool          coinInWindow      = false;
 
-        bool currentCoinState = (bool)digitalRead(COIN_PIN);
+        // Snapshot volatile ISR state safely.
+        noInterrupts();
+        unsigned int  pulses    = g_coinPulseISR;
+        unsigned long lastPulse = g_lastCoinPulseMs;
+        bool          activity  = g_coinActivity;
+        g_coinActivity = false;
+        interrupts();
 
-        // Detect rising edge (LOW → HIGH = active pulse, Allan 1299 idles LOW)
-        if (currentCoinState == HIGH && lastCoinState == LOW) {
-            unsigned long now = millis();
-            if (now - lastCoinPulseMs > COIN_DEBOUNCE_MS) {
-                coinPulseCount++;
-                lastCoinPulseMs = now;
-                coinInWindow    = true;
-                Serial.printf("[COIN] Pulse %u detected on GPIO%d\n",
-                              coinPulseCount, COIN_PIN);
-                // Move the routing servo EARLY based on pulses so far, so it is
-                // already positioned before the coin reaches the gate. The final
-                // routeCoinToHopper() below still sets the authoritative angle.
-                prePositionServo(coinPulseCount);
-            }
+        // New pulse arrived → pre-position servo immediately based on count.
+        if (activity && pulses != coinLastSeenCount) {
+            coinLastSeenCount = pulses;
+            coinInWindow      = true;
+            Serial.printf("[COIN] Pulse %u detected on GPIO%d\n", pulses, COIN_PIN);
+            prePositionServo(pulses);
         }
-        lastCoinState = currentCoinState;
 
         // Window expired — decode coin denomination
-        if (coinInWindow && (millis() - lastCoinPulseMs > COIN_WINDOW_MS)) {
+        if (coinInWindow && (millis() - lastPulse > COIN_WINDOW_MS)) {
             coinInWindow = false;
+            unsigned int coinPulseCount = pulses;
+
+            // Race-safe reset: subtract the pulses we just consumed rather than
+            // zeroing, so any pulse that arrives during processing is preserved.
+            noInterrupts();
+            g_coinPulseISR -= coinPulseCount;
+            interrupts();
+            coinLastSeenCount = 0;
+
             int value = 0;
             for (int i = 0; i < COIN_ACCEPT_TABLE_SIZE; i++) {
                 if (COIN_ACCEPT_TABLE[i][0] == (int)coinPulseCount) {
@@ -283,7 +312,6 @@ void loop() {
                     break;
                 }
             }
-            coinPulseCount = 0;
             prePositionServo(0);  // reset early-routing guess for the next coin
 
             if (value > 0) {
@@ -842,12 +870,27 @@ void routeCoinToHopper(int coinValue) {
     }
 #endif
 
-    // Hold position for coin to drop through
-    delay(SERVO_HOLD_MS);
+    // Non-blocking hold: schedule the return-to-neutral instead of delay().
+    // serviceServoReturn() (called from loop()) moves it back after SERVO_HOLD_MS
+    // so the loop never freezes and pulses/servo reactions are never delayed.
+    g_servoReturnIsA     = useServoA;
+    g_servoMoveMs        = millis();
+    g_servoReturnPending = true;
+}
 
-    // Return to neutral
+// ============================================================================
+//  serviceServoReturn() — non-blocking return of the routing servo to neutral.
+//  Called every loop(); returns the servo to neutral SERVO_HOLD_MS after it was
+//  commanded, without ever blocking the loop.
+// ============================================================================
+
+void serviceServoReturn() {
+    if (!g_servoReturnPending) return;
+    if (millis() - g_servoMoveMs < (unsigned long)SERVO_HOLD_MS) return;
+
+    g_servoReturnPending = false;
 #if !DEBUG_MODE
-    if (useServoA) {
+    if (g_servoReturnIsA) {
         servoA.write(SERVO_NEUTRAL);
         g_servoAPos = SERVO_NEUTRAL;
     } else {
@@ -855,6 +898,22 @@ void routeCoinToHopper(int coinValue) {
         g_servoBPos = SERVO_NEUTRAL;
     }
 #endif
+}
+
+// ============================================================================
+//  coinPulseISR() — interrupt handler for coin acceptor pulses (GPIO27 RISING).
+//  MUST be minimal and IRAM-resident: count + timestamp + debounce only.
+//  No Serial, no servo.write(), no delay() here — those are unsafe in an ISR.
+// ============================================================================
+
+void IRAM_ATTR coinPulseISR() {
+    unsigned long now = millis();
+    // Debounce inside the ISR using the same COIN_DEBOUNCE_MS threshold.
+    if (now - g_lastCoinPulseMs > COIN_DEBOUNCE_MS) {
+        g_coinPulseISR++;
+        g_lastCoinPulseMs = now;
+        g_coinActivity = true;
+    }
 }
 
 // ============================================================================
