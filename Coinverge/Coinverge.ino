@@ -917,9 +917,13 @@ void serviceServoReturn() {
 // ============================================================================
 
 void IRAM_ATTR coinPulseISR() {
-    // Confirm the pin is actually HIGH — rejects short noise spikes that would
-    // otherwise be counted as phantom pulses when no coin is inserted.
-    if (digitalRead(COIN_PIN) != HIGH) return;
+    // Reject short noise spikes: a real Allan-1299 pulse stays HIGH for
+    // milliseconds, while electrical noise is a nanosecond-scale glitch.
+    // Require the pin to remain HIGH across several quick samples before
+    // accepting. If it drops during sampling, it was noise — ignore.
+    for (uint8_t i = 0; i < 8; i++) {
+        if (digitalRead(COIN_PIN) != HIGH) return;
+    }
 
     unsigned long now = millis();
     // Debounce inside the ISR using the same COIN_DEBOUNCE_MS threshold.
