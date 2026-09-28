@@ -726,6 +726,13 @@ function updateLowStockBanner() {
     const banner = document.getElementById("low-stock-banner");
     if (!banner) return;
     if (state.lowStock && state.lowStock.length > 0) {
+        // Show exactly which hopper(s) are low, e.g. "Kailangan ng refill: ₱1, ₱10"
+        const denoms = state.lowStock
+            .slice()
+            .sort((a, b) => a - b)
+            .map((d) => "₱" + d)
+            .join(", ");
+        banner.textContent = "Kailangan ng refill: " + denoms;
         banner.classList.remove("hidden");
     } else {
         banner.classList.add("hidden");

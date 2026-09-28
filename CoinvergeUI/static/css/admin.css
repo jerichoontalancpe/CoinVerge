@@ -1027,3 +1027,16 @@ body::before {
     border: none;
     background: #fff;
 }
+
+/* ── Refill alert banner (panelist requirement: notify at/below threshold) ── */
+.refill-alert {
+    background: #ffb020;
+    color: #1a1a1a;
+    font-weight: 700;
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.refill-alert.hidden { display: none; }

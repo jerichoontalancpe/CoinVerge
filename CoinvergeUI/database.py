@@ -9,8 +9,9 @@ from datetime import datetime, timedelta
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "coinverge.db")
 
-# Refill threshold — denominations below this count trigger warnings
-REFILL_THRESHOLD = 20
+# Refill threshold — denominations at or below this count trigger warnings.
+# Panelist requirement: notify when any hopper drops to 100 pcs or below.
+REFILL_THRESHOLD = 100
 
 # Default fee tiers: (min_amount, max_amount, fee)
 DEFAULT_FEE_TIERS = [
@@ -401,11 +402,11 @@ def set_maintenance_mode(active):
 # ── Low Stock Functions ──────────────────────────────────────────────────────
 
 def get_low_stock_denominations():
-    """Return list of denominations below REFILL_THRESHOLD."""
+    """Return list of denominations at or below REFILL_THRESHOLD."""
     stock = get_stock()
     low = []
     for denom, info in stock.items():
-        if info["current"] < REFILL_THRESHOLD:
+        if info["current"] <= REFILL_THRESHOLD:
             low.append(denom)
     return low
 

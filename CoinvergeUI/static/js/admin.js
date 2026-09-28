@@ -159,6 +159,22 @@ async function loadStock() {
         if (statusRes.ok) {
             const statusData = await statusRes.json();
             updateMaintenanceUI(statusData.maintenance_mode || false);
+
+            // Refill alert: show which hopper(s) are at/below the threshold.
+            const alertEl = document.getElementById("refill-alert");
+            if (alertEl) {
+                const low = statusData.low_stock || [];
+                const threshold = statusData.refill_threshold;
+                if (low.length > 0) {
+                    const denoms = low.slice().sort((a, b) => a - b)
+                        .map((d) => "₱" + d).join(", ");
+                    alertEl.textContent =
+                        "⚠ Kailangan ng refill (≤" + threshold + " pcs): " + denoms;
+                    alertEl.classList.remove("hidden");
+                } else {
+                    alertEl.classList.add("hidden");
+                }
+            }
         }
     } catch (e) { /* silent */ }
 }
