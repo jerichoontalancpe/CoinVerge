@@ -21,10 +21,10 @@ from database import (
     get_transaction_count, get_summary, get_stock, update_stock, deduct_stock,
     refill_stock, refill_all, is_any_stock_available, verify_pin, get_setting,
     set_setting, get_maintenance_mode, set_maintenance_mode,
-    get_low_stock_denominations, get_fee, get_fee_tiers, set_fee_tiers,
+    get_low_stock_denominations, get_refill_status, get_fee, get_fee_tiers, set_fee_tiers,
     log_stock_count, get_stock_counts, get_stock_counts_by_date,
     log_stock_event, get_stock_events, get_stock_events_by_date,
-    REFILL_THRESHOLD
+    REFILL_THRESHOLD, REFILL_THRESHOLDS
 )
 
 # ── ESP32 Serial Connection ──────────────────────────────────────────────────
@@ -376,6 +376,7 @@ def phone_page():
 def api_status():
     stock = get_stock()
     low_stock = get_low_stock_denominations()
+    refill_status = get_refill_status()
     maintenance = get_maintenance_mode()
     balance = esp32.balance
     payment_source = esp32.payment_source
@@ -405,6 +406,7 @@ def api_status():
         "any_stock": is_any_stock_available(),
         "maintenance_mode": maintenance,
         "low_stock": low_stock,
+        "refill_status": refill_status,
         "refill_threshold": REFILL_THRESHOLD,
         "payment_source": payment_source,
         "timeout_seconds": timeout_seconds,

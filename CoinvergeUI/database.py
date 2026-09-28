@@ -9,9 +9,20 @@ from datetime import datetime, timedelta
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "coinverge.db")
 
-# Refill threshold — denominations at or below this count trigger warnings.
-# Panelist requirement: notify when any hopper drops to 100 pcs or below.
+# Refill threshold — legacy single value kept for backward compatibility.
+# (Superseded by the 2-level per-hopper thresholds below.)
 REFILL_THRESHOLD = 100
+
+# ── 2-level per-hopper refill thresholds (panelist requirement) ───────────────
+# Lower denominations run out faster (used more as change), so they alert
+# earlier. Two levels: LOW (warning) and CRITICAL (urgent).
+#   denomination -> {"low": pcs, "critical": pcs}
+REFILL_THRESHOLDS = {
+    1:  {"low": 160, "critical": 60},
+    5:  {"low": 130, "critical": 50},
+    10: {"low": 110, "critical": 40},
+    20: {"low": 90,  "critical": 35},
+}
 
 # Default fee tiers: (min_amount, max_amount, fee)
 DEFAULT_FEE_TIERS = [
@@ -402,13 +413,32 @@ def set_maintenance_mode(active):
 # ── Low Stock Functions ──────────────────────────────────────────────────────
 
 def get_low_stock_denominations():
-    """Return list of denominations at or below REFILL_THRESHOLD."""
+    """Return list of denominations at or below their LOW threshold.
+    (Backward-compatible: any hopper at LOW or CRITICAL is included.)"""
     stock = get_stock()
     low = []
     for denom, info in stock.items():
-        if info["current"] <= REFILL_THRESHOLD:
+        t = REFILL_THRESHOLDS.get(denom, {"low": REFILL_THRESHOLD})
+        if info["current"] <= t["low"]:
             low.append(denom)
     return low
+
+
+def get_refill_status():
+    """Return per-hopper refill status with 2 levels.
+    Returns a list of dicts: {denom, current, level} where level is
+    'critical' (<= critical), 'low' (<= low), or omitted if OK.
+    Only hoppers needing attention are returned."""
+    stock = get_stock()
+    result = []
+    for denom, info in stock.items():
+        t = REFILL_THRESHOLDS.get(denom, {"low": REFILL_THRESHOLD, "critical": 0})
+        cur = info["current"]
+        if cur <= t["critical"]:
+            result.append({"denom": denom, "current": cur, "level": "critical"})
+        elif cur <= t["low"]:
+            result.append({"denom": denom, "current": cur, "level": "low"})
+    return result
 
 
 # ── Stock Count Functions ────────────────────────────────────────────────────

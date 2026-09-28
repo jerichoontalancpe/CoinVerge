@@ -160,16 +160,26 @@ async function loadStock() {
             const statusData = await statusRes.json();
             updateMaintenanceUI(statusData.maintenance_mode || false);
 
-            // Refill alert: show which hopper(s) are at/below the threshold.
+            // Refill alert: 2-level per-hopper status (CRITICAL / LOW).
             const alertEl = document.getElementById("refill-alert");
             if (alertEl) {
-                const low = statusData.low_stock || [];
-                const threshold = statusData.refill_threshold;
-                if (low.length > 0) {
-                    const denoms = low.slice().sort((a, b) => a - b)
-                        .map((d) => "₱" + d).join(", ");
-                    alertEl.textContent =
-                        "⚠ Kailangan ng refill (≤" + threshold + " pcs): " + denoms;
+                const rs = statusData.refill_status || [];
+                if (rs.length > 0) {
+                    const critical = rs.filter(r => r.level === "critical")
+                        .map(r => "₱" + r.denom + " (" + r.current + " pcs)");
+                    const low = rs.filter(r => r.level === "low")
+                        .map(r => "₱" + r.denom + " (" + r.current + " pcs)");
+                    let html = "";
+                    if (critical.length > 0) {
+                        html += "🔴 CRITICAL — refill agad: " + critical.join(", ");
+                    }
+                    if (low.length > 0) {
+                        if (html) html += "<br>";
+                        html += "⚠️ LOW — kailangan ng refill: " + low.join(", ");
+                    }
+                    alertEl.innerHTML = html;
+                    // Red if any critical, else yellow
+                    alertEl.classList.toggle("critical", critical.length > 0);
                     alertEl.classList.remove("hidden");
                 } else {
                     alertEl.classList.add("hidden");

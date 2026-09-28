@@ -1040,3 +1040,7 @@ body::before {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 .refill-alert.hidden { display: none; }
+.refill-alert.critical {
+    background: #e53935;
+    color: #ffffff;
+}
