@@ -14,15 +14,18 @@ DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "coinverge.db
 REFILL_THRESHOLD = 100
 
 # ── 2-level per-hopper refill thresholds (panelist requirement) ───────────────
+# DEFAULT values only. Actual live values are admin-editable and stored in the
+# settings table (keys: refill_low_<denom>, refill_critical_<denom>).
 # Lower denominations run out faster (used more as change), so they alert
-# earlier. Two levels: LOW (warning) and CRITICAL (urgent).
-#   denomination -> {"low": pcs, "critical": pcs}
-REFILL_THRESHOLDS = {
+# earlier. Two levels: LOW (warning/yellow) and CRITICAL (urgent/red).
+DEFAULT_REFILL_THRESHOLDS = {
     1:  {"low": 160, "critical": 60},
     5:  {"low": 130, "critical": 50},
     10: {"low": 110, "critical": 40},
     20: {"low": 90,  "critical": 35},
 }
+# Backward-compat alias (some code referenced REFILL_THRESHOLDS).
+REFILL_THRESHOLDS = DEFAULT_REFILL_THRESHOLDS
 
 # Default fee tiers: (min_amount, max_amount, fee)
 DEFAULT_FEE_TIERS = [
@@ -416,23 +419,65 @@ def get_low_stock_denominations():
     """Return list of denominations at or below their LOW threshold.
     (Backward-compatible: any hopper at LOW or CRITICAL is included.)"""
     stock = get_stock()
+    thresholds = get_refill_thresholds()
     low = []
     for denom, info in stock.items():
-        t = REFILL_THRESHOLDS.get(denom, {"low": REFILL_THRESHOLD})
+        t = thresholds.get(denom, {"low": REFILL_THRESHOLD})
         if info["current"] <= t["low"]:
             low.append(denom)
     return low
 
 
+def get_refill_thresholds():
+    """Return current per-hopper thresholds, reading admin-edited values from
+    settings and falling back to defaults. Shape:
+      { denom: {"low": int, "critical": int}, ... }"""
+    result = {}
+    for denom, defaults in DEFAULT_REFILL_THRESHOLDS.items():
+        low_v = get_setting(f"refill_low_{denom}")
+        crit_v = get_setting(f"refill_critical_{denom}")
+        try:
+            low = int(low_v) if low_v is not None else defaults["low"]
+        except (ValueError, TypeError):
+            low = defaults["low"]
+        try:
+            crit = int(crit_v) if crit_v is not None else defaults["critical"]
+        except (ValueError, TypeError):
+            crit = defaults["critical"]
+        result[denom] = {"low": low, "critical": crit}
+    return result
+
+
+def set_refill_thresholds(thresholds):
+    """Save per-hopper thresholds (admin). thresholds: {denom: {low, critical}}.
+    Validates that low >= critical >= 0 before saving each hopper."""
+    saved = {}
+    for denom, vals in thresholds.items():
+        try:
+            d = int(denom)
+            low = int(vals["low"])
+            crit = int(vals["critical"])
+        except (ValueError, TypeError, KeyError):
+            continue
+        if crit < 0 or low < crit:
+            # skip invalid: critical must be >=0 and low must be >= critical
+            continue
+        set_setting(f"refill_low_{d}", str(low))
+        set_setting(f"refill_critical_{d}", str(crit))
+        saved[d] = {"low": low, "critical": crit}
+    return saved
+
+
 def get_refill_status():
     """Return per-hopper refill status with 2 levels.
     Returns a list of dicts: {denom, current, level} where level is
-    'critical' (<= critical), 'low' (<= low), or omitted if OK.
-    Only hoppers needing attention are returned."""
+    'critical' (<= critical) or 'low' (<= low). Only hoppers needing
+    attention are returned. Uses admin-editable thresholds."""
     stock = get_stock()
+    thresholds = get_refill_thresholds()
     result = []
     for denom, info in stock.items():
-        t = REFILL_THRESHOLDS.get(denom, {"low": REFILL_THRESHOLD, "critical": 0})
+        t = thresholds.get(denom, {"low": REFILL_THRESHOLD, "critical": 0})
         cur = info["current"]
         if cur <= t["critical"]:
             result.append({"denom": denom, "current": cur, "level": "critical"})

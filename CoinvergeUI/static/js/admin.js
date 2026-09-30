@@ -75,7 +75,7 @@ function switchTab(tab) {
         if (b.textContent.toLowerCase().includes(tab)) b.classList.add("active");
     });
 
-    if (tab === "stock") loadStock();
+    if (tab === "stock") { loadStock(); loadThresholds(); }
     else if (tab === "history") loadHistory();
     else if (tab === "reports") loadReport(currentPeriod);
     else if (tab === "settings") { loadFeeTiers(); loadServoPositions(); loadCoinFeeStatus(); loadTimeoutSettings(); }
@@ -89,6 +89,56 @@ async function logout() {
 // ══════════════════════════════════════════════════════════════════════════════
 // STOCK TAB — Hopper Frame Cards
 // ══════════════════════════════════════════════════════════════════════════════
+
+async function loadThresholds() {
+    try {
+        const res = await fetch("/api/admin/refill-thresholds");
+        if (!res.ok) return;
+        const t = await res.json();
+        for (const d of [1, 5, 10, 20]) {
+            if (t[d]) {
+                const lowEl = document.getElementById(`thr-low-${d}`);
+                const critEl = document.getElementById(`thr-crit-${d}`);
+                if (lowEl) lowEl.value = t[d].low;
+                if (critEl) critEl.value = t[d].critical;
+            }
+        }
+    } catch (e) { /* silent */ }
+}
+
+async function saveThresholds() {
+    const msg = document.getElementById("threshold-msg");
+    const payload = {};
+    for (const d of [1, 5, 10, 20]) {
+        const low = parseInt(document.getElementById(`thr-low-${d}`).value, 10);
+        const crit = parseInt(document.getElementById(`thr-crit-${d}`).value, 10);
+        if (isNaN(low) || isNaN(crit)) {
+            if (msg) { msg.textContent = "May blangko o mali. Numero lang."; msg.style.color = "#e53935"; }
+            return;
+        }
+        if (low < crit) {
+            if (msg) { msg.textContent = `₱${d}: LOW ay dapat >= CRITICAL.`; msg.style.color = "#e53935"; }
+            return;
+        }
+        payload[d] = { low: low, critical: crit };
+    }
+    try {
+        const res = await fetch("/api/admin/refill-thresholds", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+            if (msg) { msg.textContent = "✓ Na-save ang thresholds."; msg.style.color = "#2e7d32"; }
+            loadStock();  // refresh alert immediately
+        } else {
+            const err = await res.json();
+            if (msg) { msg.textContent = err.error || "Save failed."; msg.style.color = "#e53935"; }
+        }
+    } catch (e) {
+        if (msg) { msg.textContent = "Network error."; msg.style.color = "#e53935"; }
+    }
+}
 
 async function loadStock() {
     try {

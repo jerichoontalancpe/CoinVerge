@@ -21,7 +21,8 @@ from database import (
     get_transaction_count, get_summary, get_stock, update_stock, deduct_stock,
     refill_stock, refill_all, is_any_stock_available, verify_pin, get_setting,
     set_setting, get_maintenance_mode, set_maintenance_mode,
-    get_low_stock_denominations, get_refill_status, get_fee, get_fee_tiers, set_fee_tiers,
+    get_low_stock_denominations, get_refill_status, get_refill_thresholds,
+    set_refill_thresholds, get_fee, get_fee_tiers, set_fee_tiers,
     log_stock_count, get_stock_counts, get_stock_counts_by_date,
     log_stock_event, get_stock_events, get_stock_events_by_date,
     REFILL_THRESHOLD, REFILL_THRESHOLDS
@@ -702,6 +703,25 @@ def api_admin_refill():
         refill_stock(int(denom))
 
     return jsonify({"status": "ok", "stock": get_stock()})
+
+
+@app.route("/api/admin/refill-thresholds", methods=["GET"])
+def api_admin_get_thresholds():
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify(get_refill_thresholds())
+
+
+@app.route("/api/admin/refill-thresholds", methods=["POST"])
+def api_admin_set_thresholds():
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+    data = request.get_json() or {}
+    # Expect: { "1": {"low": 160, "critical": 60}, ... }
+    saved = set_refill_thresholds(data)
+    if not saved:
+        return jsonify({"error": "No valid thresholds. Require low >= critical >= 0."}), 400
+    return jsonify({"status": "ok", "thresholds": get_refill_thresholds()})
 
 
 @app.route("/api/admin/transactions")

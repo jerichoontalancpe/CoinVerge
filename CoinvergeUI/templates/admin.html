@@ -145,6 +145,36 @@
             <div class="hopper-footer">
                 <div class="machine-status" id="machine-status"></div>
             </div>
+
+            <!-- Refill Threshold Editor (admin-editable) -->
+            <div class="threshold-editor">
+                <h3>Refill Alert Thresholds (pcs)</h3>
+                <p class="threshold-hint">
+                    Set kung kailan mag-alert. LOW = dilaw na babala,
+                    CRITICAL = pulang urgent. Dapat LOW ≥ CRITICAL.
+                </p>
+                <table class="threshold-table">
+                    <thead>
+                        <tr><th>Hopper</th><th>LOW (⚠️)</th><th>CRITICAL (🔴)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>₱1</td>
+                            <td><input type="number" id="thr-low-1" min="0"></td>
+                            <td><input type="number" id="thr-crit-1" min="0"></td></tr>
+                        <tr><td>₱5</td>
+                            <td><input type="number" id="thr-low-5" min="0"></td>
+                            <td><input type="number" id="thr-crit-5" min="0"></td></tr>
+                        <tr><td>₱10</td>
+                            <td><input type="number" id="thr-low-10" min="0"></td>
+                            <td><input type="number" id="thr-crit-10" min="0"></td></tr>
+                        <tr><td>₱20</td>
+                            <td><input type="number" id="thr-low-20" min="0"></td>
+                            <td><input type="number" id="thr-crit-20" min="0"></td></tr>
+                    </tbody>
+                </table>
+                <button class="set-btn" onclick="saveThresholds()">Save Thresholds</button>
+                <span id="threshold-msg" class="threshold-msg"></span>
+            </div>
         </div>
 
         <!-- TAB: Transaction History -->

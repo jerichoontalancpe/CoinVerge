@@ -80,6 +80,7 @@ async function fetchStatus() {
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
         }
+        state.refillStatus = data.refill_status || [];
 
         // Show unavailable screen if no stock or maintenance mode
         if (!data.any_stock || data.maintenance_mode) {
@@ -101,6 +102,7 @@ async function refreshStock() {
         for (const [k, v] of Object.entries(data.stock)) {
             state.stock[parseInt(k)] = v;
         }
+        state.refillStatus = data.refill_status || [];
         state.fee = data.fee || 0;
         state.available = data.available || 0;
         state.maintenanceMode = data.maintenance_mode || false;
@@ -532,9 +534,21 @@ function updateBalanceDisplay() {
 }
 
 function updateStockDisplay() {
+    // Privacy: never show exact coin counts on the customer screen (could
+    // signal to thieves how much cash is inside). Show only a status word.
+    const lowSet = new Set(state.lowStock || []);
     for (const d of DENOMS) {
         const count = state.stock[d] || 0;
-        document.getElementById(`stock-${d}`).textContent = `${count} pcs`;
+        const el = document.getElementById(`stock-${d}`);
+        if (el) {
+            if (count === 0) {
+                el.textContent = "Unavailable";
+            } else if (lowSet.has(d)) {
+                el.textContent = "Limited";
+            } else {
+                el.textContent = "Available";
+            }
+        }
         const card = document.getElementById(`card-${d}`);
         card.classList.toggle("disabled", count === 0);
     }
@@ -725,17 +739,25 @@ function showUnavailable(isMaintenance, isNoStock) {
 function updateLowStockBanner() {
     const banner = document.getElementById("low-stock-banner");
     if (!banner) return;
-    if (state.lowStock && state.lowStock.length > 0) {
-        // Show exactly which hopper(s) are low, e.g. "Kailangan ng refill: ₱1, ₱10"
-        const denoms = state.lowStock
-            .slice()
-            .sort((a, b) => a - b)
-            .map((d) => "₱" + d)
-            .join(", ");
-        banner.textContent = "Kailangan ng refill: " + denoms;
+    const rs = state.refillStatus || [];
+    const critical = rs.filter(r => r.level === "critical").map(r => "₱" + r.denom);
+    if (critical.length > 0) {
+        // Panelist requirement: warn customers not to insert cash for a
+        // denomination whose hopper is critically low (can't give change).
+        banner.textContent =
+            "Do not insert your cash — this machine needs refill for: " +
+            critical.join(", ");
+        banner.classList.add("critical");
+        banner.classList.remove("hidden");
+    } else if (state.lowStock && state.lowStock.length > 0) {
+        const denoms = state.lowStock.slice().sort((a, b) => a - b)
+            .map((d) => "₱" + d).join(", ");
+        banner.textContent = "Limited stock: " + denoms;
+        banner.classList.remove("critical");
         banner.classList.remove("hidden");
     } else {
         banner.classList.add("hidden");
+        banner.classList.remove("critical");
     }
 }
 

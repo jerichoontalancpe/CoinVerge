@@ -1044,3 +1044,17 @@ body::before {
     background: #e53935;
     color: #ffffff;
 }
+
+/* ── Refill threshold editor (admin-editable) ── */
+.threshold-editor {
+    margin-top: 20px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+}
+.threshold-editor h3 { margin: 0 0 6px; font-size: 16px; }
+.threshold-hint { font-size: 13px; opacity: 0.8; margin: 0 0 12px; }
+.threshold-table { width: 100%; max-width: 420px; border-collapse: collapse; margin-bottom: 12px; }
+.threshold-table th, .threshold-table td { padding: 6px 10px; text-align: left; }
+.threshold-table input { width: 90px; padding: 6px; border-radius: 6px; border: 1px solid #888; }
+.threshold-msg { margin-left: 12px; font-weight: 700; font-size: 14px; }

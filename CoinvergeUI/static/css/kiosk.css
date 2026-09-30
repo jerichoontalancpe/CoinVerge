@@ -452,6 +452,11 @@ body::before {
     padding-top: 4px;
 }
 .low-stock-banner.hidden { display: none; }
+.low-stock-banner.critical {
+    background: rgba(229, 57, 53, 0.15);
+    border: 1px solid rgba(229, 57, 53, 0.6);
+    color: #ff6b6b;
+}
 
 /* ── EMPTY SCREEN ────────────────────────────────────────────────────────── */
 
