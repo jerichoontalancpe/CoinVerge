@@ -148,12 +148,14 @@ void setup() {
 
     // ── Coin acceptor pulse pin ──────────────────────────────
     if (COIN_PIN >= 0) {
-        // Allan 1299 idles LOW and pulses HIGH. Use INPUT_PULLDOWN so the pin is
-        // held firmly LOW when no coin is present — prevents floating/noise from
-        // firing phantom RISING interrupts (was counting coins with none inserted).
-        pinMode(COIN_PIN, INPUT_PULLDOWN);
-        attachInterrupt(digitalPinToInterrupt(COIN_PIN), coinPulseISR, RISING);
-        Serial.printf("[COIN] Acceptor pin GPIO%d ready (interrupt RISING, pulldown)\n", COIN_PIN);
+        // Actual wiring (confirmed 2026-09-30): external 10k pull-up to 3.3V,
+        // Normally-Open switch. Pin IDLES HIGH; a coin pulls it LOW for each
+        // pulse. So the active edge is FALLING, and we must NOT enable the
+        // internal pulldown (it would fight the external pull-up and cause
+        // floating/ghost pulses). Plain INPUT — the external 10k holds it HIGH.
+        pinMode(COIN_PIN, INPUT);
+        attachInterrupt(digitalPinToInterrupt(COIN_PIN), coinPulseISR, FALLING);
+        Serial.printf("[COIN] Acceptor pin GPIO%d ready (interrupt FALLING, ext pull-up, idle HIGH)\n", COIN_PIN);
     }
 
     // ── Coin acceptor inhibit pin ────────────────────────────
@@ -917,12 +919,12 @@ void serviceServoReturn() {
 // ============================================================================
 
 void IRAM_ATTR coinPulseISR() {
-    // Reject short noise spikes: a real Allan-1299 pulse stays HIGH for
-    // milliseconds, while electrical noise is a nanosecond-scale glitch.
-    // Require the pin to remain HIGH across several quick samples before
-    // accepting. If it drops during sampling, it was noise — ignore.
+    // Active pulse is LOW (idle is HIGH via external pull-up). Reject short
+    // noise spikes: a real pulse stays LOW for milliseconds, noise is a
+    // nanosecond glitch. Require the pin to remain LOW across several quick
+    // samples before accepting. If it goes back HIGH during sampling, ignore.
     for (uint8_t i = 0; i < 8; i++) {
-        if (digitalRead(COIN_PIN) != HIGH) return;
+        if (digitalRead(COIN_PIN) != LOW) return;
     }
 
     unsigned long now = millis();
