@@ -162,12 +162,14 @@ const int COIN_ACCEPT_TABLE[][2] = {
 // Generic neutral kept for backward compatibility (defaults to Servo A neutral)
 #define SERVO_NEUTRAL       SERVO_A_NEUTRAL
 
-// PWM signal parameters for ESP32Servo. Setting these explicitly makes the
-// servo respond crisply; a bare attach() can produce sluggish/incorrect pulses.
-// Standard hobby-servo values (SG90/MG90/MG996 all accept this range):
-#define SERVO_FREQ_HZ       50      // 50 Hz = standard servo frame (20ms period)
-#define SERVO_MIN_US        500     // pulse width (us) at 0 degrees
-#define SERVO_MAX_US        2400    // pulse width (us) at 180 degrees
+// PWM signal parameters for ESP32Servo.
+// SURPASS Hobby 25G Digital Servo specs: 1520µs center, 333Hz frequency.
+// Digital servos need higher frequency than standard 50Hz analog servos;
+// 50Hz causes slowness and jitter ("gumigiling") on digital servos.
+// Pulse range: ~920µs (0°) to ~2120µs (180°), center 1520µs (90°).
+#define SERVO_FREQ_HZ       333     // 333Hz = digital servo frame rate (SURPASS 25G)
+#define SERVO_MIN_US        920     // pulse width (us) at 0 degrees (digital servo)
+#define SERVO_MAX_US        2120    // pulse width (us) at 180 degrees (digital servo)
 
 // Time to hold servo in position (ms) — ensures coin drops through
 #define SERVO_HOLD_MS       500

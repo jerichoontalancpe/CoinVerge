@@ -166,8 +166,8 @@ void setup() {
     }
 
     // ── Servo motors (coin routing) ─────────────────────────
-    // Allocate ESP32 hardware timers for the servo library and set an explicit
-    // 50Hz frame with correct pulse-width bounds so the servos respond crisply.
+    // Allocate ESP32 hardware timers for the servo library and set the
+    // correct frequency + pulse-width bounds for the digital servos.
     ESP32PWM::allocateTimer(0);
     ESP32PWM::allocateTimer(1);
     ESP32PWM::allocateTimer(2);
