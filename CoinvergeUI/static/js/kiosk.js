@@ -19,6 +19,7 @@ const state = {
     warningTimer: null,
     countdownTimer: null,
     lastDispense: null,
+    dispenseFallbackTimer: null,
     maintenanceMode: false,
     lowStock: [],
     paymentSource: "none",  // "none", "bill", "coin", "epay", "mixed"
@@ -193,6 +194,8 @@ function handleEvent(ev) {
             }
             break;
         case "dispensed":
+            // Clear the fallback timer — the real event arrived.
+            clearTimeout(state.dispenseFallbackTimer);
             if (ev.data.status === "ok") {
                 showDone();
             } else {
@@ -627,11 +630,15 @@ async function confirmDispense() {
             showPicker();
             return;
         }
-        // Wait for DISPENSED:OK event from polling or fallback timeout
+        // Wait for DISPENSED:OK event from ESP32 (handled in event handler).
+        // 30-second fallback in case the event never arrives (jam/timeout).
         startDispenseProgress();
-        setTimeout(() => {
-            if (state.screen === "dispensing") showDone();
-        }, 5000);
+        state.dispenseFallbackTimer = setTimeout(() => {
+            if (state.screen === "dispensing") {
+                console.warn("[DISPENSE] Fallback timeout — ESP32 did not confirm");
+                showDone();
+            }
+        }, 30000);
     } catch (e) {
         toast("Connection error");
         showPicker();
