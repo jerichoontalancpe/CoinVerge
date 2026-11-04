@@ -165,23 +165,10 @@ void setup() {
         Serial.printf("[COIN] Inhibit pin GPIO%d ready (enabled)\n", COIN_INHIBIT_PIN);
     }
 
-    // ── Servo motors (coin routing) ─────────────────────────
-    // Allocate ESP32 hardware timers for the servo library and set the
-    // correct frequency + pulse-width bounds for the digital servos.
-    ESP32PWM::allocateTimer(0);
-    ESP32PWM::allocateTimer(1);
-    ESP32PWM::allocateTimer(2);
-    ESP32PWM::allocateTimer(3);
-    servoA.setPeriodHertz(SERVO_FREQ_HZ);
-    servoB.setPeriodHertz(SERVO_FREQ_HZ);
-    servoA.attach(SERVO_A_PIN, SERVO_MIN_US, SERVO_MAX_US);
-    servoB.attach(SERVO_B_PIN, SERVO_MIN_US, SERVO_MAX_US);
-    servoA.write(SERVO_A_NEUTRAL);
-    servoB.write(SERVO_B_NEUTRAL);
-    g_servoAPos = SERVO_A_NEUTRAL;
-    g_servoBPos = SERVO_B_NEUTRAL;
-    Serial.printf("[SERVO] A=GPIO%d(neutral=%d) B=GPIO%d(neutral=%d)\n",
-                  SERVO_A_PIN, SERVO_A_NEUTRAL, SERVO_B_PIN, SERVO_B_NEUTRAL);
+    // ── Servo motors — DISABLED (manual sorting, no servo hardware) ──────
+    // Servo code is removed from setup. Coins are sorted manually.
+    // (Servo A/B objects remain declared but are never attached or used.)
+    Serial.println("[SERVO] Disabled — manual coin sorting mode");
 #endif
 
     // Init coin stock
@@ -881,7 +868,7 @@ void routeCoinToHopper(int coinValue) {
 
     Serial.printf("[SERVO] Routing P%d -> A=%d B=%d\n", coinValue, angleA, angleB);
 
-#if !DEBUG_MODE
+#if !DEBUG_MODE && SERVO_ENABLED
     servoA.write(angleA);
     servoB.write(angleB);
     g_servoAPos = angleA;
@@ -904,7 +891,7 @@ void serviceServoReturn() {
     if (millis() - g_servoMoveMs < (unsigned long)SERVO_HOLD_MS) return;
 
     g_servoReturnPending = false;
-#if !DEBUG_MODE
+#if !DEBUG_MODE && SERVO_ENABLED
     servoA.write(SERVO_A_NEUTRAL);
     servoB.write(SERVO_B_NEUTRAL);
     g_servoAPos = SERVO_A_NEUTRAL;
@@ -967,7 +954,7 @@ void prePositionServo(unsigned int pulseCountSoFar) {
     if (pulseCountSoFar == lastGuessPulses) return;
     lastGuessPulses = pulseCountSoFar;
 
-#if !DEBUG_MODE
+#if !DEBUG_MODE && SERVO_ENABLED
     // Pulse counts (new acceptor mapping): P1=1, P5=2, P10=3, P20=4.
     // Pre-position BOTH servos toward the best guess for the live count so the
     // (slow) servos have maximum time to travel before the coin arrives. The

@@ -62,21 +62,17 @@ const int HOPPER_MAP[DENOM_COUNT][3] = {
 
 // -----------------------------------------------------------------------------
 //  BILL ACCEPTOR — PULSE TYPE
-//  Confirmed: GPIO32, soldered directly to bill acceptor signal wire.
-//  The bill acceptor outputs pulses on this pin when a bill is accepted.
+//  Moved to GPIO25 (GPIO32 was damaged). External 10k pull-up to 3.3V.
 //
 //  HOW IT WORKS (open-collector signal):
-//    - GPIO32 is set to INPUT_PULLUP → idles HIGH (pulled up internally)
+//    - Pin is set to INPUT_PULLUP → idles HIGH (pulled up)
 //    - Bill acceptor pulls the line LOW for each pulse
 //    - Number of LOW pulses = denomination code
 //    - BILL_IDLE_STATE = HIGH, active pulse = LOW
 //
 //  PULSE COUNT → BILL VALUE TABLE:
-//    TODO: confirm exact pulse counts by testing each bill denomination.
-//    Insert each bill and count how many pulses appear on GPIO32.
-//    Update the table below with your findings.
 // -----------------------------------------------------------------------------
-#define BILL_PIN            32      // confirmed GPIO32
+#define BILL_PIN            25      // Moved from GPIO32 (damaged) to GPIO25
 #define BILL_IDLE_STATE     HIGH    // INPUT_PULLUP: pin idles HIGH, pulses go LOW (open-collector)
 #define BILL_INHIBIT_PIN    33      // GPIO33 — confirmed wired (Yellow=INHIBIT+, Green=GND)
 #define BILL_INHIBIT_ACTIVE HIGH    // HIGH = acceptor disabled (rejects/spits back bills)
@@ -123,6 +119,12 @@ const int COIN_ACCEPT_TABLE[][2] = {
 // Legacy alias for backward compatibility
 #define COIN_PULSE_TABLE_SIZE  COIN_ACCEPT_TABLE_SIZE
 #define COIN_PULSE_TABLE       COIN_ACCEPT_TABLE
+
+// -----------------------------------------------------------------------------
+//  SERVO MOTORS — DISABLED (manual coin sorting, 2026-10-26)
+//  Set SERVO_ENABLED to 1 to re-enable servo routing in the future.
+// -----------------------------------------------------------------------------
+#define SERVO_ENABLED       0       // 0 = disabled (manual sort), 1 = enabled
 
 // -----------------------------------------------------------------------------
 //  SERVO MOTORS — 2-STAGE coin routing (confirmed mechanism 2026-09-18)
