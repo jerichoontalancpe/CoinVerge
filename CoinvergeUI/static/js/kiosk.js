@@ -336,15 +336,8 @@ async function showPicker() {
 }
 
 function updateQuickCounts() {
-    for (const d of DENOMS) {
-        const maxByBalance = Math.floor(state.available / d);
-        const maxByStock = state.stock[d] || 0;
-        const qty = Math.min(maxByBalance, maxByStock);
-        const el = document.getElementById(`quick-count-${d}`);
-        if (el) {
-            el.textContent = qty > 0 ? `${qty} coins` : "unavailable";
-        }
-    }
+    // Privacy: coin counts removed from display — no longer shown to customers.
+    // Function kept as no-op so existing callers don't error.
 }
 
 function showDone() {
