@@ -78,7 +78,7 @@ function switchTab(tab) {
     if (tab === "stock") { loadStock(); loadThresholds(); }
     else if (tab === "history") loadHistory();
     else if (tab === "reports") loadReport(currentPeriod);
-    else if (tab === "settings") { loadFeeTiers(); loadServoPositions(); loadCoinFeeStatus(); loadTimeoutSettings(); }
+    else if (tab === "settings") { loadFeeTiers(); loadCoinFeeStatus(); loadTimeoutSettings(); }
 }
 
 async function logout() {
@@ -660,14 +660,37 @@ async function toggleMaintenance() {
     }
 }
 
+async function exitMaintenance() {
+    try {
+        const res = await fetch("/api/admin/maintenance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ active: false }),
+        });
+        if (res.ok) {
+            const data = await res.json();
+            updateMaintenanceUI(data.maintenance_mode);
+        } else {
+            alert("Failed to exit maintenance mode");
+        }
+    } catch (e) {
+        alert("Connection error");
+    }
+}
+
 function updateMaintenanceUI(active) {
     const statusEl = document.getElementById("maintenance-status");
     const toggleBtn = document.getElementById("maintenance-toggle");
+    const exitBtn = document.getElementById("maintenance-exit");
     if (statusEl) {
         statusEl.textContent = active ? "ON" : "OFF";
     }
     if (toggleBtn) {
         toggleBtn.classList.toggle("maintenance-active", active);
+    }
+    // Show the explicit Exit button only when maintenance is ON
+    if (exitBtn) {
+        exitBtn.classList.toggle("hidden", !active);
     }
 }
 
@@ -677,110 +700,6 @@ async function loadMaintenanceStatus() {
         if (res.ok) {
             const data = await res.json();
             updateMaintenanceUI(data.maintenance_mode || false);
-        }
-    } catch (e) { /* silent */ }
-}
-
-// ── Test Bill (Simulation) ──────────────────────────────────────────────────
-
-async function testBill(amount) {
-    try {
-        const res = await fetch("/api/simulate_bill", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amount }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-            alert(`Simulated ₱${amount} bill inserted. Check kiosk screen.`);
-        } else {
-            alert(`Error: ${data.error}`);
-        }
-    } catch (e) { alert("Error: " + e.message); }
-}
-
-// ── Test Coin (Simulation) ──────────────────────────────────────────────────
-
-async function testCoin(amount) {
-    try {
-        const res = await fetch("/api/simulate_coin", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amount }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-            alert(`Simulated ₱${amount} coin inserted. Stock +1, fee = FREE. Check kiosk screen.`);
-            loadStock();
-        } else {
-            alert(`Error: ${data.error}`);
-        }
-    } catch (e) { alert("Error: " + e.message); }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// SERVO CALIBRATION
-// ══════════════════════════════════════════════════════════════════════════════
-
-async function moveServo(servoId) {
-    const sliderId = servoId === "A" ? "servo-a-slider" : "servo-b-slider";
-    const angle = parseInt(document.getElementById(sliderId).value);
-
-    try {
-        const res = await fetch("/api/admin/servo_calibrate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ servo: servoId, angle: angle }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-            console.log(`[SERVO] ${servoId} moved to ${angle}°`);
-        } else {
-            alert(`Error: ${data.error}`);
-        }
-    } catch (e) { alert("Error: " + e.message); }
-}
-
-async function saveServoPos(posKey) {
-    // posKey: "A1", "A5", "B10", "B20"
-    const servoId = posKey.startsWith("A") ? "A" : "B";
-    const sliderId = servoId === "A" ? "servo-a-slider" : "servo-b-slider";
-    const angle = parseInt(document.getElementById(sliderId).value);
-
-    const denomMap = {"A1": "₱1", "A5": "₱5", "B10": "₱10", "B20": "₱20"};
-    const denomLabel = denomMap[posKey] || posKey;
-
-    try {
-        const res = await fetch("/api/admin/servo_save_position", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ key: posKey, angle: angle }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-            alert(`Saved Servo ${servoId} position for ${denomLabel} = ${angle}°`);
-            loadServoPositions();
-        } else {
-            alert(`Error: ${data.error}`);
-        }
-    } catch (e) { alert("Error: " + e.message); }
-}
-
-async function loadServoPositions() {
-    try {
-        const res = await fetch("/api/admin/servo_positions");
-        if (!res.ok) return;
-        const data = await res.json();
-
-        const display = document.getElementById("servo-positions-display");
-        if (display) {
-            display.innerHTML = `
-                <p class="settings-info">
-                    <strong>Saved:</strong>
-                    ₱1=${data.saved.A1}° | ₱5=${data.saved.A5}° |
-                    ₱10=${data.saved.B10}° | ₱20=${data.saved.B20}°
-                </p>
-            `;
         }
     } catch (e) { /* silent */ }
 }

@@ -261,59 +261,13 @@
         <div id="tab-settings" class="tab-content">
             <div class="settings-section">
                 <h3>Machine Control</h3>
-                <button class="settings-btn maintenance-btn" id="maintenance-toggle" onclick="toggleMaintenance()">
-                    Maintenance Mode: <span id="maintenance-status">OFF</span>
-                </button>
-            </div>
-            <div class="settings-section">
-                <h3>Test Mode (Simulation)</h3>
-                <p class="settings-info">Simulate bill insertion for testing without hardware</p>
-                <div class="test-bill-btns">
-                    <button class="settings-btn" onclick="testBill(20)">Insert P20</button>
-                    <button class="settings-btn" onclick="testBill(50)">Insert P50</button>
-                    <button class="settings-btn" onclick="testBill(100)">Insert P100</button>
-                </div>
-                <p class="settings-info" style="margin-top:12px">Simulate coin insertion (coins add to hopper stock)</p>
-                <div class="test-bill-btns">
-                    <button class="settings-btn coin-btn" onclick="testCoin(1)">Insert P1</button>
-                    <button class="settings-btn coin-btn" onclick="testCoin(5)">Insert P5</button>
-                    <button class="settings-btn coin-btn" onclick="testCoin(10)">Insert P10</button>
-                    <button class="settings-btn coin-btn" onclick="testCoin(20)">Insert P20</button>
-                </div>
-            </div>
-            <div class="settings-section">
-                <h3>Servo Calibration</h3>
-                <p class="settings-info">Calibrate servo motors for coin routing (P1/P5 to Servo A, P10/P20 to Servo B)</p>
-                <div class="servo-calibration">
-                    <div class="servo-group">
-                        <h4>Servo A (P1 / P5)</h4>
-                        <div class="servo-control">
-                            <label>Angle: <span id="servo-a-angle-display">90</span> deg</label>
-                            <input type="range" id="servo-a-slider" min="0" max="180" value="90"
-                                   oninput="document.getElementById('servo-a-angle-display').textContent=this.value">
-                            <button class="settings-btn" onclick="moveServo('A')">Move</button>
-                        </div>
-                        <div class="servo-save-btns">
-                            <button class="settings-btn" onclick="saveServoPos('A1')">Save as P1 position</button>
-                            <button class="settings-btn" onclick="saveServoPos('A5')">Save as P5 position</button>
-                        </div>
-                    </div>
-                    <div class="servo-group">
-                        <h4>Servo B (P10 / P20)</h4>
-                        <div class="servo-control">
-                            <label>Angle: <span id="servo-b-angle-display">90</span> deg</label>
-                            <input type="range" id="servo-b-slider" min="0" max="180" value="90"
-                                   oninput="document.getElementById('servo-b-angle-display').textContent=this.value">
-                            <button class="settings-btn" onclick="moveServo('B')">Move</button>
-                        </div>
-                        <div class="servo-save-btns">
-                            <button class="settings-btn" onclick="saveServoPos('B10')">Save as P10 position</button>
-                            <button class="settings-btn" onclick="saveServoPos('B20')">Save as P20 position</button>
-                        </div>
-                    </div>
-                    <div class="servo-current-positions" id="servo-positions-display">
-                        <p class="settings-info">Saved positions: loading...</p>
-                    </div>
+                <div class="maintenance-controls">
+                    <button class="settings-btn maintenance-btn" id="maintenance-toggle" onclick="toggleMaintenance()">
+                        Maintenance Mode: <span id="maintenance-status">OFF</span>
+                    </button>
+                    <button class="settings-btn maintenance-exit-btn hidden" id="maintenance-exit" onclick="exitMaintenance()">
+                        Exit Maintenance Mode
+                    </button>
                 </div>
             </div>
             <div class="settings-section">

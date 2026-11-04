@@ -1045,6 +1045,21 @@ body::before {
     color: #ffffff;
 }
 
+/* ── Maintenance controls ── */
+.maintenance-controls { display: flex; gap: 10px; align-items: center; }
+.maintenance-exit-btn {
+    background: #2e7d32;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+}
+.maintenance-exit-btn:hover { background: #1b5e20; }
+.maintenance-exit-btn.hidden { display: none; }
+
 /* ── Refill threshold editor (admin-editable) ── */
 .threshold-editor {
     margin-top: 20px;
