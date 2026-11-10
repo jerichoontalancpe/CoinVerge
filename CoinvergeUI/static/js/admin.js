@@ -791,6 +791,7 @@ async function startCount(denom) {
     const confirmed = confirm(
         `Place a container below the ₱${denom} hopper.\n\n` +
         `All coins will be dispensed and counted.\n` +
+        `The count will ADD to any previous count for this hopper.\n` +
         `After counting, put coins back into the hopper.\n\n` +
         `Continue?`
     );
@@ -841,13 +842,19 @@ async function pollCountStatus() {
         const counter = document.getElementById("count-modal-counter");
         const value = document.getElementById("count-modal-value");
 
-        counter.textContent = state.count.toLocaleString();
-        value.textContent = `₱${(state.count * state.denomination).toLocaleString()}`;
+        // Show accumulated count (running total across presses)
+        const accumulated = state.accumulated || 0;
+        const sessionCount = state.count || 0;
+        const displayCount = accumulated > 0 ? accumulated + sessionCount : sessionCount;
+        const denom = state.denomination || countingDenom;
+
+        counter.textContent = displayCount.toLocaleString();
+        value.textContent = `₱${(displayCount * denom).toLocaleString()}`;
 
         if (!state.active) {
             clearInterval(countPollingInterval);
             countPollingInterval = null;
-            showCountComplete(state.denomination, state.count);
+            showCountComplete(state.denomination, state.accumulated || sessionCount);
         }
     } catch (e) { /* silent */ }
 }
@@ -861,7 +868,9 @@ function showCountComplete(denom, total) {
     document.getElementById("count-modal-counter").textContent = total.toLocaleString();
     document.getElementById("count-modal-value").textContent = `₱${totalValue.toLocaleString()}`;
     document.getElementById("count-modal-status").textContent =
-        `Put coins back into the ₱${denom} hopper and press Done.\nStock has been updated automatically.`;
+        `Accumulated total: ${total} coins (₱${totalValue.toLocaleString()}).\n` +
+        `Stock updated. Put coins back into the ₱${denom} hopper and press Done.\n` +
+        `Press Count again to add more, or Reset to start over.`;
     document.getElementById("count-modal-bar").className = "count-modal-bar done";
     document.getElementById("count-modal-bar").style.width = "100%";
     document.getElementById("count-stop-btn").classList.add("hidden");
@@ -919,4 +928,29 @@ function closeCountModal() {
     document.getElementById("count-modal-icon").textContent = "#";
     document.getElementById("count-ok-btn").textContent = "OK";
     loadStock();
+}
+
+async function resetCount(denom) {
+    const confirmed = confirm(
+        `Reset the accumulated count for ₱${denom}?\n\n` +
+        `This clears the running total. The next Count press will start from zero.`
+    );
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch("/api/admin/count_reset", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ denomination: denom }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`Accumulated count reset for ₱${denom}.`);
+            loadStock();
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    } catch (e) {
+        alert("Connection error: " + e.message);
+    }
 }

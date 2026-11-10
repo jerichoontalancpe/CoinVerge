@@ -35,7 +35,9 @@ HOPPER_INDEX_MAP = {0: 1, 1: 5, 2: 10, 3: 20}
 DENOM_TO_INDEX = {1: 0, 5: 1, 10: 2, 20: 3}
 
 # Coin counting state (admin feature)
-counting_state = {"active": False, "denomination": 0, "count": 0}
+# "count" = current session count (resets on each new Count press)
+# "accumulated" = running total across presses (only reset by Reset button)
+counting_state = {"active": False, "denomination": 0, "count": 0, "accumulated": 0}
 
 
 class ESP32Connection:
@@ -192,13 +194,16 @@ class ESP32Connection:
                 counting_state["active"] = False
                 counting_state["denomination"] = denom
                 counting_state["count"] = total
-                # Auto-update stock in database
+                # Accumulate across multiple Count presses
+                counting_state["accumulated"] += total
+                accumulated_total = counting_state["accumulated"]
+                # Auto-update stock in database with accumulated total
                 if denom > 0:
-                    update_stock(denom, total)
-                    log_stock_count(denom, total)
-                    log_stock_event(denom, "count", total, total)
-                    print(f"[COUNT] Stock updated: ₱{denom} = {total} coins")
-                self._notify("count_done", {"denomination": denom, "total": total})
+                    update_stock(denom, accumulated_total)
+                    log_stock_count(denom, accumulated_total)
+                    log_stock_event(denom, "count", accumulated_total, accumulated_total)
+                    print(f"[COUNT] Stock updated: ₱{denom} = {accumulated_total} coins (session: {total}, accumulated: {accumulated_total})")
+                self._notify("count_done", {"denomination": denom, "total": accumulated_total})
             except (ValueError, IndexError):
                 pass
         elif line == "READY":
@@ -262,7 +267,7 @@ class ESP32Connection:
                     return False
                 counting_state["active"] = True
                 counting_state["denomination"] = denom
-                counting_state["count"] = 0
+                counting_state["count"] = 0  # session count only, accumulated preserved
 
                 def simulate_counting():
                     global counting_state
@@ -837,7 +842,9 @@ def api_admin_count_coins():
         return jsonify({"error": "Counting already in progress"}), 400
 
     idx = DENOM_TO_INDEX[denom]
-    counting_state = {"active": True, "denomination": denom, "count": 0}
+    # Start a new counting session — preserve accumulated count across presses
+    counting_state = {"active": True, "denomination": denom, "count": 0,
+                      "accumulated": counting_state.get("accumulated", 0)}
 
     cmd = f"COUNT:{idx}"
     print(f"[CMD] {cmd}")
@@ -867,6 +874,42 @@ def api_admin_count_stop():
     esp32.send_command("COUNT_STOP")
     counting_state["active"] = False
     return jsonify({"status": "ok", "final_count": counting_state["count"]})
+
+
+@app.route("/api/admin/count_reset", methods=["POST"])
+def api_admin_count_reset():
+    """Reset the accumulated coin count for a denomination.
+
+    Clears the running total so the next Count press starts fresh.
+    Does NOT affect an active counting session — stop it first.
+    """
+    global counting_state
+    if not require_admin():
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if counting_state["active"]:
+        return jsonify({"error": "Cannot reset while counting is active. Stop first."}), 400
+
+    data = request.get_json() or {}
+    denom = data.get("denomination")
+    if denom is not None:
+        denom = int(denom)
+        if denom not in [1, 5, 10, 20]:
+            return jsonify({"error": "Invalid denomination"}), 400
+        # Only reset if the denomination matches the current counting_state
+        if counting_state["denomination"] == denom or counting_state["denomination"] == 0:
+            counting_state["accumulated"] = 0
+            counting_state["count"] = 0
+            counting_state["denomination"] = denom
+            return jsonify({"status": "ok", "denomination": denom, "accumulated": 0})
+        else:
+            return jsonify({"error": f"Accumulated count is for ₱{counting_state['denomination']}, not ₱{denom}"}), 400
+    else:
+        # Reset all
+        counting_state["accumulated"] = 0
+        counting_state["count"] = 0
+        counting_state["denomination"] = 0
+        return jsonify({"status": "ok", "accumulated": 0})
 
 
 @app.route("/api/admin/servo_calibrate", methods=["POST"])

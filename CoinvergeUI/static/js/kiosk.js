@@ -304,6 +304,11 @@ function updateFeeScreen() {
     document.getElementById("fee-inserted").textContent = `\u20B1${balance}`;
     document.getElementById("fee-charge").textContent = `\u2212\u20B1${fee}`;
     document.getElementById("fee-receive").textContent = `\u20B1${receive}`;
+
+    // Hide cancel button once money is inserted — prevents users from
+    // wasting their money. No cancel for any payment source (bill/coin/epay/mixed).
+    const feeCancelBtn = document.querySelector(".fee-cancel-btn");
+    if (feeCancelBtn) feeCancelBtn.classList.add("hidden");
 }
 
 function proceedFromFee() {
@@ -321,15 +326,10 @@ async function showPicker() {
     updateConfirm();
     updateQuickCounts();
 
-    // Show cancel button only for e-payment and coin (no physical bill trapped)
+    // Hide cancel button once money is inserted — prevents users from
+    // wasting their money. No cancel for any payment source.
     const cancelBtn = document.getElementById("picker-cancel");
-    if (cancelBtn) {
-        if (state.paymentSource === "epay" || state.paymentSource === "coin") {
-            cancelBtn.classList.remove("hidden");
-        } else {
-            cancelBtn.classList.add("hidden");
-        }
-    }
+    if (cancelBtn) cancelBtn.classList.add("hidden");
 
     showScreen("picker");
     resetInactivityTimer();
