@@ -890,7 +890,8 @@ def api_admin_count_stop():
 def api_admin_count_reset():
     """Reset the accumulated coin count for a denomination.
 
-    Clears the running total so the next Count press starts fresh.
+    Clears the running total AND zeroes the stock in the database so the
+    hopper card shows 0. The next Count press will start from scratch.
     Does NOT affect an active counting session — stop it first.
     """
     global counting_state
@@ -907,6 +908,11 @@ def api_admin_count_reset():
         if denom not in [1, 5, 10, 20]:
             return jsonify({"error": "Invalid denomination"}), 400
         counting_state["accumulated"][denom] = 0
+        counting_state["count"] = 0
+        counting_state["denomination"] = denom
+        # Also zero out the stock in the database so the hopper card shows 0
+        update_stock(denom, 0)
+        print(f"[RESET] ₱{denom} accumulated count and stock reset to 0")
         return jsonify({
             "status": "ok",
             "denomination": denom,
@@ -917,6 +923,9 @@ def api_admin_count_reset():
         counting_state["accumulated"] = {1: 0, 5: 0, 10: 0, 20: 0}
         counting_state["count"] = 0
         counting_state["denomination"] = 0
+        for d in [1, 5, 10, 20]:
+            update_stock(d, 0)
+        print(f"[RESET] All denominations reset to 0")
         return jsonify({"status": "ok", "accumulated": counting_state["accumulated"]})
 
 
