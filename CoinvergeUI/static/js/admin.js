@@ -842,11 +842,14 @@ async function pollCountStatus() {
         const counter = document.getElementById("count-modal-counter");
         const value = document.getElementById("count-modal-value");
 
-        // Show accumulated count (running total across presses)
-        const accumulated = state.accumulated || 0;
-        const sessionCount = state.count || 0;
-        const displayCount = accumulated > 0 ? accumulated + sessionCount : sessionCount;
+        // Show accumulated count (running total across presses, per denomination)
+        const accumulatedMap = state.accumulated || {};
         const denom = state.denomination || countingDenom;
+        const accumulated = accumulatedMap[denom] || 0;
+        const sessionCount = state.count || 0;
+        // During active counting: show accumulated + current session
+        // After counting finishes: show accumulated (which now includes session)
+        const displayCount = state.active ? (accumulated + sessionCount) : accumulated;
 
         counter.textContent = displayCount.toLocaleString();
         value.textContent = `₱${(displayCount * denom).toLocaleString()}`;
@@ -854,7 +857,7 @@ async function pollCountStatus() {
         if (!state.active) {
             clearInterval(countPollingInterval);
             countPollingInterval = null;
-            showCountComplete(state.denomination, state.accumulated || sessionCount);
+            showCountComplete(denom, accumulated);
         }
     } catch (e) { /* silent */ }
 }
